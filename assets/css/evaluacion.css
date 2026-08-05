@@ -97,6 +97,37 @@
   height: 38px;
 }
 
+.eval-nivel-buttons{
+  display: inline-flex;
+  gap: 0.35rem;
+}
+
+.eval-nivel-btn{
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background-color: var(--surface-alt);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+}
+.eval-nivel-btn:hover:not(:disabled){
+  border-color: var(--risk-mid);
+  color: var(--text);
+}
+.eval-nivel-btn.active{
+  background-color: var(--risk-mid);
+  border-color: var(--risk-mid);
+  color: #1A1200;
+}
+.eval-nivel-btn:disabled{
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
 .eval-nivel-spinner{
   padding: 0.25rem;
   background-color: var(--surface-alt);
