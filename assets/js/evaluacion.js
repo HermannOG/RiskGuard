@@ -43,28 +43,34 @@
       : valor;
   }
 
-  // ===== Nivel de madurez manual (spinner 0-5) + comentario por pregunta =====
+  // ===== Nivel de madurez manual (botones 0-5) + comentario por pregunta =====
   // El botón de comentario está siempre habilitado en todas las preguntas
   // (el comentario es opcional en general y se guarda en BD si se escribe).
   // Si la respuesta Sí/No/No aplica es "na", el nivel se fuerza a 0 y se
-  // deshabilita. Cuando la respuesta es "na" o el nivel es 0, el cuadro de
-  // comentario se revela automáticamente y pasa a ser obligatorio.
+  // deshabilitan los botones. Cuando la respuesta es "na" o el nivel es 0,
+  // el cuadro de comentario se revela automáticamente y pasa a ser obligatorio.
+  function actualizarBotonesNivel(pid, valorSeleccionado, deshabilitado) {
+    const botones = form.querySelectorAll(`.eval-nivel-btn[data-nivel-btn="${pid}"]`);
+    botones.forEach((b) => {
+      b.classList.toggle("active", Number(b.dataset.valor) === valorSeleccionado);
+      b.disabled = deshabilitado;
+    });
+  }
+
   function actualizarEstadoComentario(pid) {
     const checked = form.querySelector(`input[name="p${pid}"]:checked`);
-    const spinner = document.getElementById(`nivel${pid}`);
+    const nivelInput = document.getElementById(`nivel${pid}`);
     const btn = document.getElementById(`btnComentario${pid}`);
     const caja = document.getElementById(`comentario${pid}`);
-    if (!spinner || !btn || !caja) return;
+    if (!nivelInput || !btn || !caja) return;
 
     const esNA = !!checked && checked.value === "na";
     if (esNA) {
-      spinner.value = "0";
-      spinner.disabled = true;
-    } else {
-      spinner.disabled = false;
+      nivelInput.value = "0";
     }
+    actualizarBotonesNivel(pid, nivelInput.value === "" ? null : Number(nivelInput.value), esNA);
 
-    const nivelActual = spinner.value === "" ? null : Number(spinner.value);
+    const nivelActual = nivelInput.value === "" ? null : Number(nivelInput.value);
     const requiereComentario = esNA || nivelActual === 0;
 
     caja.required = requiereComentario;
@@ -78,16 +84,22 @@
     controles.forEach((c) => {
       c.preguntas.forEach((p) => {
         const grupoRadios = form.querySelectorAll(`input[name="p${p.id}"]`);
-        const spinner = document.getElementById(`nivel${p.id}`);
+        const nivelInput = document.getElementById(`nivel${p.id}`);
+        const botonesNivel = form.querySelectorAll(`.eval-nivel-btn[data-nivel-btn="${p.id}"]`);
         const btn = document.getElementById(`btnComentario${p.id}`);
         const caja = document.getElementById(`comentario${p.id}`);
-        if (!spinner || !btn || !caja) return;
+        if (!nivelInput || !btn || !caja) return;
 
         grupoRadios.forEach((radio) => {
           radio.addEventListener("change", () => actualizarEstadoComentario(p.id));
         });
-        spinner.addEventListener("input", () => actualizarEstadoComentario(p.id));
-        spinner.addEventListener("change", () => actualizarEstadoComentario(p.id));
+        botonesNivel.forEach((boton) => {
+          boton.addEventListener("click", () => {
+            if (boton.disabled) return;
+            nivelInput.value = boton.dataset.valor;
+            actualizarEstadoComentario(p.id);
+          });
+        });
         btn.addEventListener("click", () => {
           const abierto = !caja.classList.toggle("d-none");
           btn.classList.toggle("active", abierto);
