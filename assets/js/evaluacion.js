@@ -81,31 +81,38 @@
   }
 
   function inicializarNivelesManual() {
+    // Delegación de eventos: un solo listener en el <form> en vez de uno por
+    // botón. Así no importa cuándo se creó cada botón ni si algo del navegador
+    // (extensiones, etc.) interfiere con listeners puestos elemento por elemento.
+    form.addEventListener("click", (e) => {
+      const boton = e.target.closest(".eval-nivel-btn");
+      if (boton) {
+        if (boton.disabled) return;
+        const pid = boton.dataset.nivelBtn;
+        const nivelInput = document.getElementById(`nivel${pid}`);
+        if (!nivelInput) return;
+        nivelInput.value = boton.dataset.valor;
+        actualizarEstadoComentario(pid);
+        return;
+      }
+
+      const btnComentario = e.target.closest(".eval-comentario-btn");
+      if (btnComentario) {
+        const caja = document.getElementById(btnComentario.dataset.target);
+        if (!caja) return;
+        const abierto = !caja.classList.toggle("d-none");
+        btnComentario.classList.toggle("active", abierto);
+        if (abierto) caja.focus();
+      }
+    });
+
+    form.addEventListener("change", (e) => {
+      const match = e.target.matches('input[type="radio"]') && e.target.name.match(/^p(\d+)$/);
+      if (match) actualizarEstadoComentario(match[1]);
+    });
+
     controles.forEach((c) => {
       c.preguntas.forEach((p) => {
-        const grupoRadios = form.querySelectorAll(`input[name="p${p.id}"]`);
-        const nivelInput = document.getElementById(`nivel${p.id}`);
-        const botonesNivel = form.querySelectorAll(`.eval-nivel-btn[data-nivel-btn="${p.id}"]`);
-        const btn = document.getElementById(`btnComentario${p.id}`);
-        const caja = document.getElementById(`comentario${p.id}`);
-        if (!nivelInput || !btn || !caja) return;
-
-        grupoRadios.forEach((radio) => {
-          radio.addEventListener("change", () => actualizarEstadoComentario(p.id));
-        });
-        botonesNivel.forEach((boton) => {
-          boton.addEventListener("click", () => {
-            if (boton.disabled) return;
-            nivelInput.value = boton.dataset.valor;
-            actualizarEstadoComentario(p.id);
-          });
-        });
-        btn.addEventListener("click", () => {
-          const abierto = !caja.classList.toggle("d-none");
-          btn.classList.toggle("active", abierto);
-          if (abierto) caja.focus();
-        });
-
         actualizarEstadoComentario(p.id);
       });
     });
