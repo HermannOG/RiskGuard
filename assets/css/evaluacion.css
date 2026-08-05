@@ -1,0 +1,298 @@
+/* ===== Módulo de Evaluación de Riesgos ===== */
+
+.eval-hero{ padding-bottom: 2rem; }
+.eval-title{ max-width: 32ch; }
+
+/* Grupos de preguntas por dimensión */
+.eval-group{ margin-bottom: 3rem; }
+.eval-group:last-child{ margin-bottom: 0; }
+
+.eval-group-title{
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  font-size: 1.2rem;
+  margin-top: 4rem;
+  margin-bottom: 1.5rem;
+}
+
+.eval-group-tag{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #0B1220;
+}
+.eval-group-tag.tag-c{ background: var(--risk-low); }
+.eval-group-tag.tag-i{ background: var(--risk-mid); }
+.eval-group-tag.tag-d{ background: var(--risk-high); }
+
+.eval-questions{ display: flex; flex-direction: column; gap: 1rem; }
+
+/* Tarjeta de control (agrupa 1 o varias preguntas) */
+.eval-control{ margin-bottom: 1rem; }
+.eval-control-titulo{
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+}
+.eval-control-codigo{ color: var(--risk-mid); margin-right: 0.4rem; }
+
+.eval-question{
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.eval-question-text{
+  margin-bottom: 0.9rem;
+  font-size: 0.96rem;
+  line-height: 1.5;
+}
+.eval-question-num{ color: var(--risk-mid); font-family: var(--font-mono); margin-right: 0.3rem; }
+
+.eval-options{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem 1.5rem;
+}
+
+.eval-option{
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.eval-option input{ accent-color: var(--risk-mid); }
+.eval-option:has(input:checked){ color: var(--text); }
+
+.eval-nivel-row{
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-top: 0.9rem;
+  padding-top: 0.9rem;
+  border-top: 1px dashed var(--border);
+}
+.eval-nivel-label{
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  margin-bottom: 0;
+  white-space: nowrap;
+}
+.eval-nivel-spinner,
+.eval-comentario-btn{
+  width: 38px;
+  height: 38px;
+}
+
+.eval-nivel-spinner{
+  padding: 0.25rem;
+  background-color: var(--surface-alt);
+  color: var(--text);
+  border-color: var(--border);
+  text-align: center;
+}
+
+.eval-comentario-btn{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  border: 1px solid var(--risk-mid);
+  background: var(--surface-alt);
+  color: var(--risk-mid);
+  cursor: pointer;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+.eval-comentario-btn:hover,
+.eval-comentario-btn.active{
+  color: #1A1200;
+  background: var(--risk-mid);
+}
+
+.eval-comentario-box{
+  margin-top: 0.75rem;
+  background-color: var(--surface-alt);
+  color: var(--text);
+  border-color: var(--border);
+}
+.eval-comentario-box::placeholder{ color: var(--text-muted); }
+
+.eval-submit-row{
+  margin-top: 2.5rem;
+  text-align: center;
+}
+.eval-submit-hint{
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  margin-top: 0.8rem;
+}
+
+/* ===== Dashboard ===== */
+.eval-dashboard{ border-top: 1px solid var(--border); }
+
+.eval-global-card{
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  flex-wrap: wrap;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 2rem;
+  margin-top: 1.5rem;
+}
+
+.eval-global-score{ text-align: center; min-width: 140px; }
+.eval-global-score span{
+  display: block;
+  font-family: var(--font-display);
+  font-size: 2.6rem;
+  font-weight: 700;
+}
+.eval-global-score small{ color: var(--text-muted); font-size: 0.8rem; }
+
+.eval-global-meta{ flex: 1; min-width: 220px; }
+.eval-global-text{ color: var(--text-muted); margin-top: 0.5rem; margin-bottom: 0; }
+
+.eval-badge{
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #0B1220;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+}
+
+/* Tarjetas de dimensión C / I / D */
+.eval-dim-card{
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--dim-color, var(--risk-mid));
+  border-radius: 14px;
+  padding: 1.5rem;
+  height: 100%;
+}
+.eval-dim-tag{
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.4rem;
+}
+.eval-dim-pct{
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--dim-color, var(--text));
+  margin-bottom: 0.6rem;
+}
+.eval-dim-interp{
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  margin: 0.7rem 0 0;
+  line-height: 1.5;
+}
+
+/* Gráficos */
+.eval-chart-card{
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1.5rem;
+  height: 100%;
+}
+.eval-chart-card h6{ margin-bottom: 1rem; color: var(--text-muted); font-weight: 500; font-size: 0.9rem; }
+
+.eval-chart-preguntas-wrap{
+  position: relative;
+  width: 100%;
+  height: 320px;
+}
+
+.eval-export-row{
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* Recomendaciones y controles débiles */
+.eval-recos-card,
+.eval-weak-card{
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1.5rem 1.75rem;
+}
+.eval-recos-card h6, .eval-weak-card h6{ margin-bottom: 1rem; }
+
+.eval-recos-list,
+.eval-weak-list{
+  margin: 0;
+  padding-left: 1.2rem;
+  color: var(--text-muted);
+  font-size: 0.92rem;
+  line-height: 1.7;
+}
+.eval-recos-list strong{ color: var(--text); }
+
+.eval-weak-list{ list-style: none; padding-left: 0; }
+.eval-weak-list li{ margin-bottom: 0.6rem; }
+
+.eval-weak-estado{
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.15rem 0.6rem;
+  border-radius: 12px;
+  margin-right: 0.5rem;
+  color: #0B1220;
+}
+.eval-weak-estado.estado-0{ background: var(--risk-crit); }
+.eval-weak-estado.estado-1{ background: var(--risk-mid); }
+.eval-weak-estado.estado-2{ background: var(--risk-mid); }
+.eval-weak-estado.estado-3{ background: var(--risk-high); }
+
+@media (max-width: 767px){
+  .eval-global-card{ flex-direction: column; text-align: center; }
+}
+
+/* ===== Datos generales / fecha automática ===== */
+#form-evaluacion .eval-meta-card {
+    margin-bottom: 60px !important;
+}
+
+#form-evaluacion .eval-group:first-of-type {
+    margin-top: 0 !important;
+}
+
+#form-evaluacion .eval-group:first-of-type .eval-group-title {
+    margin-top: 3rem !important;
+}
+
+.eval-fecha-auto{
+  cursor: default;
+  background: var(--surface-alt);
+  color: var(--text);
+}
+.eval-fecha-auto:focus{
+  box-shadow: none;
+  outline: none;
+}

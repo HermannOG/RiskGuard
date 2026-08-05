@@ -1,0 +1,146 @@
+<?php
+return [
+    // Navbar
+    'nav.servicios'    => 'Servicios',
+    'nav.metodologia'  => 'Metodología',
+    'nav.normas'       => 'Normas ISO',
+    'nav.equipo'       => 'Equipo',
+    'nav.contacto'     => 'Contacto',
+    'nav.evaluacion'   => 'Evaluación de riesgos',
+    'nav.toggler'      => 'Abrir menú',
+    'nav.cta'          => 'Solicitar diagnóstico',
+
+    // Footer
+    'footer.tagline'   => 'Administración de riesgos de seguridad de la información con apoyo de Inteligencia Artificial, alineada a ISO/IEC 27001, 27002 y 27007.',
+    'footer.nav'       => 'Navegación',
+    'footer.equipo'    => 'Equipo consultor',
+    'footer.contacto'  => 'Contacto',
+    'footer.copyright' => 'RiskGuard Consulting. Proyecto académico — todos los derechos reservados.',
+
+    'home.pagetitle' => 'Inicio',
+    'meta.description' => 'Consultoría especializada en administración de riesgos de seguridad de la información, cumplimiento ISO/IEC 27001, 27002 y 27007, potenciada con Inteligencia Artificial.',
+
+    // Home - hero
+    'home.eyebrow'          => 'Consultoría en seguridad de la información',
+    'home.hero.title1'      => 'La IA no reemplaza al',
+    'home.hero.title2'      => 'administrador de riesgos.',
+    'home.hero.title3'      => 'Lo hace más preciso.',
+    'home.hero.lead'        => 'Ayudamos a las organizaciones a identificar, evaluar y tratar sus riesgos de seguridad de la información, apoyando el cumplimiento de las normas <strong>ISO/IEC 27001</strong>, <strong>27002</strong> y <strong>27007</strong>, con Inteligencia Artificial como herramienta de apoyo y al administrador siempre al mando de la decisión.',
+    'home.hero.btn.evaluar' => 'Realizar evaluación de riesgos',
+
+    'home.matrix.title'    => 'Matriz de riesgo',
+    'home.matrix.subtitle' => 'probabilidad × impacto',
+    'home.matrix.low'      => 'Bajo',
+    'home.matrix.mid'      => 'Medio',
+    'home.matrix.high'     => 'Alto',
+    'home.matrix.crit'     => 'Crítico',
+
+    // Home - servicios
+    'home.servicios.eyebrow' => 'Servicios',
+    'home.servicios.title'   => 'Donde el criterio humano dirige y la IA acelera',
+    'home.servicios.s1.title' => 'Identificación y evaluación de riesgos',
+    'home.servicios.s1.desc'  => 'Levantamiento de activos, amenazas y vulnerabilidades, con modelos de IA que priorizan los riesgos de mayor probabilidad e impacto para agilizar el análisis del equipo.',
+    'home.servicios.s2.title' => 'Implementación de SGSI (ISO/IEC 27001)',
+    'home.servicios.s2.desc'  => 'Diseño e implementación del Sistema de Gestión de Seguridad de la Información, aplicando el ciclo PHVA y los controles de la ISO/IEC 27002.',
+    'home.servicios.s3.title' => 'Auditoría interna (ISO/IEC 27007)',
+    'home.servicios.s3.desc'  => 'Planificación y ejecución de auditorías del SGSI, con apoyo de IA en la revisión de evidencia documental y detección de no conformidades.',
+
+    // Home - metodología
+    'home.metodologia.eyebrow' => 'Metodología',
+    'home.metodologia.title'   => 'Ciclo de administración de riesgos',
+    'home.metodologia.c1.title' => 'Identificación',
+    'home.metodologia.c1.desc'  => 'Reconocimiento de activos, amenazas y vulnerabilidades de información.',
+    'home.metodologia.c2.title' => 'Análisis y evaluación',
+    'home.metodologia.c2.desc'  => 'Estimación de probabilidad e impacto para priorizar los riesgos críticos.',
+    'home.metodologia.c3.title' => 'Tratamiento',
+    'home.metodologia.c3.desc'  => 'Mitigación, transferencia, aceptación o evitación, según cada caso.',
+    'home.metodologia.c4.title' => 'Monitoreo y revisión',
+    'home.metodologia.c4.desc'  => 'Verificación de controles y ajuste continuo frente a nuevos riesgos.',
+
+    // Home - normas
+    'home.normas.eyebrow' => 'Marco normativo',
+    'home.normas.title'   => 'Normas ISO/IEC que guían nuestro trabajo',
+    'home.normas.n1.desc' => 'Requisitos para establecer, implementar, mantener y mejorar un SGSI.',
+    'home.normas.n2.desc' => 'Directrices y catálogo de controles de seguridad de la información.',
+    'home.normas.n3.desc' => 'Lineamientos para la auditoría de sistemas de gestión de seguridad de la información.',
+
+    // Home - equipo
+    'home.equipo.eyebrow' => 'Equipo consultor',
+    'home.equipo.title'   => 'Quiénes están detrás de RiskGuard',
+
+    // Home - contacto
+    'home.contacto.eyebrow' => 'Contacto',
+    'home.contacto.title'   => 'Conversemos sobre los riesgos de tu organización',
+    'home.contacto.lead'    => 'Escríbenos y te contactamos para agendar un primer diagnóstico.',
+    'home.contacto.ph.nombre'   => 'Nombre',
+    'home.contacto.ph.email'    => 'Correo electrónico',
+    'home.contacto.ph.org'      => 'Organización',
+    'home.contacto.ph.mensaje'  => 'Cuéntanos brevemente tu necesidad',
+    'home.contacto.btn'         => 'Enviar mensaje',
+
+    // Evaluación - intro
+    'eval.pagetitle' => 'Evaluación de riesgos',
+    'eval.eyebrow'    => 'Módulo de evaluación',
+    'eval.title'      => 'Evaluación de riesgos de tu base de datos',
+    'eval.lead'       => 'Cuestionario basado en buenas prácticas de <strong>ISO/IEC 27002</strong>, <strong>ISO/IEC 27005</strong> y <strong>COBIT</strong>. Responde cada control según su nivel de cumplimiento actual; al finalizar obtendrás un panel con el índice de riesgo por dimensión de la triada <strong>Confidencialidad · Integridad · Disponibilidad</strong> y recomendaciones de mejora.',
+
+    // Evaluación - datos generales
+    'eval.meta.title'      => 'Datos generales',
+    'eval.meta.org'        => 'Nombre de la organización',
+    'eval.meta.evaluador'  => 'Nombre del evaluador',
+    'eval.meta.fecha'      => 'Fecha',
+
+    // Evaluación - preguntas / envío
+    'eval.nivel.label'         => 'Nivel de madurez (0-5)',
+    'eval.comentario.btn'      => 'Agregar comentario',
+    'eval.comentario.placeholder' => 'Escribe aquí el motivo por el que no aplica o el nivel es 0...',
+    'eval.btn.calcular'        => 'Calcular resultados',
+    'eval.hint.responder'      => 'Debes responder las 26 preguntas para ver el panel de resultados.',
+    'eval.btn.pdf'             => 'Descargar PDF',
+    'eval.btn.excel'           => 'Descargar Excel',
+
+    // Evaluación - dashboard
+    'eval.dashboard.eyebrow' => 'Resultados',
+    'eval.dashboard.title'   => 'Panel de evaluación',
+    'eval.global.label'      => 'Índice global de seguridad',
+    'eval.chart.dimension'   => 'Cumplimiento por dimensión (C · I · D)',
+    'eval.chart.global'      => 'Nivel general de cumplimiento',
+    'eval.chart.preguntas'   => 'Nivel de madurez por pregunta (autoevaluado)',
+    'eval.recos.title'       => 'Recomendaciones de mejora',
+    'eval.weak.title'        => 'Controles más débiles detectados',
+
+    // JS (embebido vía JSON en evaluacion-riesgos.php)
+    'js.alert.incompleto'   => 'Por favor responde todas las preguntas antes de calcular los resultados.',
+    'js.alert.comentario'   => 'Por favor completa el comentario obligatorio en las preguntas marcadas como "No aplica" o con nivel de madurez 0.',
+    'js.status.guardando'   => 'Guardando evaluación...',
+    'js.status.guardado'    => 'Evaluación guardada correctamente en la base de datos.',
+    'js.status.error'       => 'No se pudo guardar en la base de datos (los resultados siguen visibles abajo).',
+    'js.fallback.sinbrechas' => 'No se detectaron brechas significativas: se recomienda mantener el monitoreo periódico de los controles vigentes.',
+    'js.fallback.madurezok'  => 'Todos los controles evaluados presentan un nivel de madurez adecuado.',
+    'js.chart.pctcumplimiento' => '% de cumplimiento',
+    'js.chart.cumplimiento'    => 'Cumplimiento',
+    'js.chart.brecha'          => 'Brecha',
+    'js.chart.nivelmadurez'    => 'Nivel de madurez (0-5)',
+    'js.madurez.label'         => 'Madurez',
+    'js.semaforo.verde'        => 'Verde',
+    'js.semaforo.amarillo'     => 'Amarillo',
+    'js.semaforo.rojo'         => 'Rojo',
+    'js.semaforo.verde.texto'    => 'Nivel adecuado de implementación de controles.',
+    'js.semaforo.amarillo.texto' => 'Existen oportunidades de mejora.',
+    'js.semaforo.rojo.texto'     => 'Nivel alto de riesgo y necesidad de acciones correctivas.',
+
+    // Exportación PDF / Excel
+    'js.export.titulo'        => 'Reporte de evaluación de riesgos',
+    'js.export.organizacion'  => 'Organización',
+    'js.export.evaluador'     => 'Evaluador',
+    'js.export.fecha'         => 'Fecha',
+    'js.export.global'        => 'Índice global de seguridad',
+    'js.export.dimension'     => 'Dimensión',
+    'js.export.id'            => 'ID',
+    'js.export.control'       => 'Control',
+    'js.export.pregunta'      => 'Pregunta',
+    'js.export.respuesta'     => 'Respuesta',
+    'js.export.nivel'         => 'Nivel de madurez',
+    'js.export.nivelauto'     => 'Nivel automático',
+    'js.export.comentario'    => 'Comentario',
+];
