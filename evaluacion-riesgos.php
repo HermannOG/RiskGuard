@@ -98,8 +98,13 @@ foreach ($controles as $c) {
                                                 <?php endforeach; ?>
                                             </div>
                                             <div class="eval-nivel-row">
-                                                <label class="eval-nivel-label" for="nivel<?php echo $p['id']; ?>"><?php echo t('eval.nivel.label'); ?></label>
-                                                <input type="number" class="form-control eval-nivel-spinner" id="nivel<?php echo $p['id']; ?>" name="nivel<?php echo $p['id']; ?>" min="0" max="5" step="1" required>
+                                                <label class="eval-nivel-label"><?php echo t('eval.nivel.label'); ?></label>
+                                                <div class="eval-nivel-buttons" role="group" aria-label="<?php echo t('eval.nivel.label'); ?> <?php echo $p['id']; ?>">
+                                                    <?php for ($n = 0; $n <= 5; $n++): ?>
+                                                        <button type="button" class="eval-nivel-btn" data-nivel-btn="<?php echo $p['id']; ?>" data-valor="<?php echo $n; ?>"><?php echo $n; ?></button>
+                                                    <?php endfor; ?>
+                                                </div>
+                                                <input type="hidden" id="nivel<?php echo $p['id']; ?>" name="nivel<?php echo $p['id']; ?>" value="">
                                                 <button type="button" class="eval-comentario-btn" id="btnComentario<?php echo $p['id']; ?>" data-target="comentario<?php echo $p['id']; ?>" title="<?php echo t('eval.comentario.btn'); ?>" aria-label="<?php echo t('eval.comentario.btn'); ?>">
                                                     <i class="fa-solid fa-comment-dots"></i>
                                                 </button>
