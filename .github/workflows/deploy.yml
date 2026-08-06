@@ -11,18 +11,32 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Deploy via FTP
+      # Dominio original: riskguard.nfy.fyi (carpeta raíz de la cuenta)
+      - name: Deploy via FTP - htdocs (nfy.fyi)
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
           local-dir: ./
-          # Si este dominio NO es el dominio principal de la cuenta de
-          # InfinityFree, cambia esto a /htdocs/tudominio.com/ (revísalo
-          # en el Panel de Control -> Online File Manager para confirmar
-          # la ruta real).
           server-dir: /htdocs/
+          exclude: |
+            **/.git*
+            **/.github/**
+            **/.idea/**
+            includes/config.php
+
+      # Dominio de respaldo: riskguard.ct.ws (carpeta propia que crea InfinityFree
+      # para dominios agregados aparte). Si cambias/quitas este dominio en el
+      # futuro, borra este segundo paso.
+      - name: Deploy via FTP - riskguard.ct.ws
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          local-dir: ./
+          server-dir: /riskguard.ct.ws/htdocs/
           exclude: |
             **/.git*
             **/.github/**
