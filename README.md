@@ -36,6 +36,7 @@ nunca por `git push`.
 
 ### 3. Primer administrador
 
+
 Sube el sitio, entra a `tudominio.com/crear-admin.php`, crea tu usuario
 admin, y **borra ese archivo del servidor** por seguridad.
 
