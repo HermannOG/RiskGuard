@@ -26,7 +26,10 @@
                     <li class="nav-item"><a class="nav-link" href="index.php#contacto"><?php echo t('nav.contacto'); ?></a></li>
                     <li class="nav-item"><a class="nav-link" href="evaluacion-riesgos.php"><?php echo t('nav.evaluacion'); ?></a></li>
                 </ul>
-
+                <button id="theme-toggle" type="button" class="theme-toggle" aria-label="Cambiar modo día/noche">
+                    <i class="fa-solid fa-sun theme-icon-light"></i>
+                    <i class="fa-solid fa-moon theme-icon-dark"></i>
+                </button>
                 <div class="lang-switch" role="group" aria-label="Language / Idioma">
                     <a href="<?php echo htmlspecialchars(langSwitchUrl('en')); ?>" class="lang-switch-option<?php echo $LANG === 'en' ? ' active' : ''; ?>">EN</a>
                     <span class="lang-switch-sep">/</span>

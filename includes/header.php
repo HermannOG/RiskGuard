@@ -8,6 +8,14 @@ $pageTitle = isset($pageTitleKey) ? t($pageTitleKey) : null;
 <html lang="<?php echo $LANG; ?>">
 <head>
     <meta charset="UTF-8">
+    <script>
+      (function() {
+        var saved = localStorage.getItem('riskguard-theme');
+        if (saved === 'light') {
+          document.documentElement.setAttribute('data-theme', 'light');
+        }
+      })();
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><?php echo isset($pageTitle) ? $pageTitle . ' | RiskGuard Consulting' : 'RiskGuard Consulting — Gestión de Riesgos e ISO 27001'; ?></title>
     <meta name="description" content="<?php echo t('meta.description'); ?>">
