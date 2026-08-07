@@ -471,9 +471,17 @@
   inicializarNivelesManual();
 
   document.addEventListener('DOMContentLoaded', function () {
-    document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach((el) => new bootstrap.Tooltip(el));
-    document.querySelectorAll('[data-bs-toggle="popover"]').forEach((el) => new bootstrap.Popover(el));
+  document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach((el) => new bootstrap.Tooltip(el));
+
+  const popovers = [...document.querySelectorAll('[data-bs-toggle="popover"]')].map((el) => new bootstrap.Popover(el));
+
+  // Al abrir un icono de ayuda, cierra cualquier otro que haya quedado abierto
+  document.addEventListener('show.bs.popover', function (e) {
+    popovers.forEach((p) => {
+      if (p._element !== e.target) p.hide();
+    });
   });
+});
 
   form.addEventListener("submit", function (e) {
     e.preventDefault();
