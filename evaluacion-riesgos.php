@@ -18,7 +18,7 @@ foreach ($controles as $c) {
 }
 ?>
 
-<link rel="stylesheet" href="assets/css/evaluacion.css">
+<link rel="stylesheet" href="<?php echo asset_url('assets/css/evaluacion.css'); ?>">
 
 <main class="flex-grow-1">
 
@@ -247,6 +247,6 @@ foreach ($controles as $c) {
         'exportComentario' => t('js.export.comentario'),
     ],
 ]); ?></script>
-<script src="assets/js/evaluacion.js"></script>
+<script src="<?php echo asset_url('assets/js/evaluacion.js'); ?>"></script>
 
 <?php include "includes/footer.php"; ?>

@@ -48,7 +48,7 @@
         </div>
     </footer>
 
-    <script src="assets/js/bootstrap.bundle.min.js"></script>
-    <script src="assets/js/theme.js"></script>
+    <script src="<?php echo asset_url('assets/js/bootstrap.bundle.min.js'); ?>"></script>
+    <script src="<?php echo asset_url('assets/js/theme.js'); ?>"></script>
 </body>
 </html>
