@@ -88,7 +88,7 @@ foreach ($controles as $c) {
                                             <p class="eval-question-text">
                                                 <span class="eval-question-num"><?php echo $p['id']; ?>.</span>
                                                 <?php echo htmlspecialchars($p['texto']); ?>
-                                                <button type="button" class="eval-info-btn" data-bs-toggle="popover" data-bs-trigger="focus click" data-bs-placement="top" data-bs-content="<?php echo htmlspecialchars($p['ayuda']); ?>" aria-label="<?php echo t('eval.ayuda.label'); ?>">
+                                                <button type="button" class="eval-info-btn" data-bs-toggle="popover" data-bs-trigger="click" data-bs-placement="top" data-bs-content="<?php echo htmlspecialchars($p['ayuda']); ?>" aria-label="<?php echo t('eval.ayuda.label'); ?>">
                                                     <i class="fa-solid fa-circle-info"></i>
                                                 </button>
                                             </p>

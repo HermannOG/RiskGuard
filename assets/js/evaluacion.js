@@ -471,17 +471,31 @@
   inicializarNivelesManual();
 
   document.addEventListener('DOMContentLoaded', function () {
-  document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach((el) => new bootstrap.Tooltip(el));
+    document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach((el) => new bootstrap.Tooltip(el));
 
-  const popovers = [...document.querySelectorAll('[data-bs-toggle="popover"]')].map((el) => new bootstrap.Popover(el));
+    const popoverEls = [...document.querySelectorAll('[data-bs-toggle="popover"]')];
+    const popovers = popoverEls.map((el) => new bootstrap.Popover(el));
 
-  // Al abrir un icono de ayuda, cierra cualquier otro que haya quedado abierto
-  document.addEventListener('show.bs.popover', function (e) {
-    popovers.forEach((p) => {
-      if (p._element !== e.target) p.hide();
+    // Al abrir uno, cierra cualquier otro que haya quedado abierto
+    document.addEventListener('show.bs.popover', function (e) {
+      popovers.forEach((p) => {
+        if (p._element !== e.target) p.hide();
+      });
+    });
+
+    // Cerrar si se hace clic en cualquier otro lugar de la pagina
+    document.addEventListener('click', function (e) {
+      popoverEls.forEach((trigger, i) => {
+        const popoverId = trigger.getAttribute('aria-describedby');
+        const popoverEl = popoverId ? document.getElementById(popoverId) : null;
+        const clickedTrigger = trigger.contains(e.target);
+        const clickedInsidePopover = popoverEl && popoverEl.contains(e.target);
+        if (!clickedTrigger && !clickedInsidePopover) {
+          popovers[i].hide();
+        }
+      });
     });
   });
-});
 
   form.addEventListener("submit", function (e) {
     e.preventDefault();
