@@ -1,6 +1,7 @@
 <?php
 if (session_status() === PHP_SESSION_NONE) { session_start(); }
 date_default_timezone_set('America/Costa_Rica');
+require_once __DIR__ . '/i18n.php';
 require_once __DIR__ . '/assets.php';
 $pageTitle = isset($pageTitleKey) ? t($pageTitleKey) : null;
 ?>
