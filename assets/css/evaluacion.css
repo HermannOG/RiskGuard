@@ -327,3 +327,16 @@
   box-shadow: none;
   outline: none;
 }
+.eval-info-btn{
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  padding: 0 0.3rem;
+  cursor: pointer;
+  vertical-align: middle;
+  transition: color 0.15s ease;
+}
+.eval-info-btn:hover,
+.eval-info-btn:focus{
+  color: var(--risk-mid);
+}

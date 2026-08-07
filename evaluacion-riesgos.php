@@ -88,6 +88,9 @@ foreach ($controles as $c) {
                                             <p class="eval-question-text">
                                                 <span class="eval-question-num"><?php echo $p['id']; ?>.</span>
                                                 <?php echo htmlspecialchars($p['texto']); ?>
+                                                <button type="button" class="eval-info-btn" data-bs-toggle="popover" data-bs-trigger="focus click" data-bs-placement="top" data-bs-content="<?php echo htmlspecialchars($p['ayuda']); ?>" aria-label="<?php echo t('eval.ayuda.label'); ?>">
+                                                    <i class="fa-solid fa-circle-info"></i>
+                                                </button>
                                             </p>
                                             <div class="eval-options" role="radiogroup" aria-label="Pregunta <?php echo $p['id']; ?>">
                                                 <?php foreach ($opciones_respuesta as $valor => $etiqueta): ?>
@@ -101,7 +104,7 @@ foreach ($controles as $c) {
                                                 <label class="eval-nivel-label"><?php echo t('eval.nivel.label'); ?></label>
                                                 <div class="eval-nivel-buttons" role="group" aria-label="<?php echo t('eval.nivel.label'); ?> <?php echo $p['id']; ?>">
                                                     <?php for ($n = 0; $n <= 5; $n++): ?>
-                                                        <button type="button" class="eval-nivel-btn" data-nivel-btn="<?php echo $p['id']; ?>" data-valor="<?php echo $n; ?>"><?php echo $n; ?></button>
+                                                        <button type="button" class="eval-nivel-btn" data-nivel-btn="<?php echo $p['id']; ?>" data-valor="<?php echo $n; ?>" data-bs-toggle="tooltip" data-bs-placement="top" title="<?php echo htmlspecialchars($p['niveles'][$n]); ?>"><?php echo $n; ?></button>
                                                     <?php endfor; ?>
                                                 </div>
                                                 <input type="hidden" id="nivel<?php echo $p['id']; ?>" name="nivel<?php echo $p['id']; ?>" value="">

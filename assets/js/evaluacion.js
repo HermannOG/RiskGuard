@@ -468,6 +468,9 @@
   document.getElementById("btn-export-pdf")?.addEventListener("click", exportarPDF);
   document.getElementById("btn-export-excel")?.addEventListener("click", exportarExcel);
 
+  document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach((el) => new bootstrap.Tooltip(el));
+  document.querySelectorAll('[data-bs-toggle="popover"]').forEach((el) => new bootstrap.Popover(el));
+
   inicializarNivelesManual();
 
   form.addEventListener("submit", function (e) {

@@ -91,6 +91,7 @@ return [
     'eval.meta.fecha'      => 'Fecha',
 
     // Evaluación - preguntas / envío
+    'eval.ayuda.label'         => 'Ver explicación de la pregunta',
     'eval.nivel.label'         => 'Nivel de madurez (0-5)',
     'eval.comentario.btn'      => 'Agregar comentario',
     'eval.comentario.placeholder' => 'Escribe aquí el motivo por el que no aplica o el nivel es 0...',
