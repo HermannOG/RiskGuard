@@ -57,7 +57,9 @@ NO está en git, ese archivo **nunca se sube automáticamente**. Debes
 subirlo una sola vez a mano por FTP (o crearlo en el Online File Manager)
 y no lo vuelvas a tocar desde el repo.
 
+
 Revisa también `server-dir` dentro de `deploy.yml`: si tu dominio nuevo
 no es el dominio principal de la cuenta de InfinityFree, la ruta cambia
 (consulta el Online File Manager para confirmar la ruta real de tu
 dominio antes del primer despliegue).
+
