@@ -42,7 +42,7 @@
                             <i class="fa-solid fa-user-shield me-2"></i>Panel admin
                         </a>
                     <?php else: ?>
-                        <a href="evaluacion-riesgos.php" class="btn btn-ghost">
+                        <a href="panel-empresa.php" class="btn btn-ghost">
                             <i class="fa-solid fa-building me-2"></i><?php echo htmlspecialchars($usuarioSesionNav['empresa_nombre'] ?? $usuarioSesionNav['nombre_usuario']); ?>
                         </a>
                     <?php endif; ?>

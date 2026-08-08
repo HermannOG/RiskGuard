@@ -33,7 +33,7 @@
                 <div class="footer-col">
                     <h6><?php echo t('footer.contacto'); ?></h6>
                     <ul>
-                        <li><a href="mailto:contacto@riskguard.cr">contacto@riskguard.cr</a></li>
+                        <li><a href="mailto:riskguard402@gmail.com">riskguard402@gmail.com</a></li>
                         <li><a href="tel:+50600000000">+506 0000-0000</a></li>
                         <li>Costa Rica</li>
                     </ul>

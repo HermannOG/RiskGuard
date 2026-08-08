@@ -68,4 +68,64 @@ class EvaluacionRepository
             throw $e;
         }
     }
+
+    /**
+     * Trae una evaluación por id, junto con el nombre de la empresa.
+     * Devuelve null si no existe.
+     */
+    public function obtenerPorId(int $evaluacionId): ?array
+    {
+        $stmt = $this->pdo->prepare(
+            'SELECT ev.*, e.nombre AS empresa
+             FROM evaluaciones ev
+             JOIN empresas e ON e.id = ev.empresa_id
+             WHERE ev.id = :id'
+        );
+        $stmt->execute(['id' => $evaluacionId]);
+        $fila = $stmt->fetch();
+        return $fila ?: null;
+    }
+
+    /** Resultados por control (pct de cumplimiento y nivel de madurez), guardados al calcular. */
+    public function resultadosControl(int $evaluacionId): array
+    {
+        $stmt = $this->pdo->prepare(
+            'SELECT control_id, pct_cumplimiento, nivel_madurez
+             FROM evaluacion_control_resultado
+             WHERE evaluacion_id = :id'
+        );
+        $stmt->execute(['id' => $evaluacionId]);
+        $filas = $stmt->fetchAll();
+
+        $porControl = [];
+        foreach ($filas as $f) {
+            $porControl[(int) $f['control_id']] = [
+                'pctControl' => (float) $f['pct_cumplimiento'],
+                'madurez'    => (int) $f['nivel_madurez'],
+            ];
+        }
+        return $porControl;
+    }
+
+    /** Respuestas guardadas (respuesta si/no/na, nivel de madurez manual, comentario) por pregunta. */
+    public function respuestas(int $evaluacionId): array
+    {
+        $stmt = $this->pdo->prepare(
+            'SELECT pregunta_id, respuesta, nivel_madurez, comentario
+             FROM evaluacion_respuestas
+             WHERE evaluacion_id = :id'
+        );
+        $stmt->execute(['id' => $evaluacionId]);
+        $filas = $stmt->fetchAll();
+
+        $porPregunta = [];
+        foreach ($filas as $f) {
+            $porPregunta[(int) $f['pregunta_id']] = [
+                'respuesta'    => $f['respuesta'],
+                'nivelMadurez' => $f['nivel_madurez'] !== null ? (int) $f['nivel_madurez'] : null,
+                'comentario'   => $f['comentario'],
+            ];
+        }
+        return $porPregunta;
+    }
 }
