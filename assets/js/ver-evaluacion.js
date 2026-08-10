@@ -201,4 +201,131 @@
     }
     try { renderRecomendaciones(); } catch (e) { console.error(e); }
     try { renderControlesDebiles(); } catch (e) { console.error(e); }
+
+    // ===== Exportación (PDF / Excel) reutilizando los datos guardados =====
+    const etiquetaRespuestaExport = { si: "Sí", no: "No", na: "N/A" };
+
+    function nombreArchivo(ext) {
+        const dataEl2 = document.getElementById("ver-eval-data");
+        const { organizacion, fecha } = JSON.parse(dataEl2.textContent);
+        const org = (organizacion || "evaluacion").replace(/[^a-z0-9]+/gi, "_");
+        return `RiskGuard_${org}_${fecha}.${ext}`;
+    }
+
+    function filasPreguntas() {
+        return preguntasDetalle.map((p) => [
+            p.id,
+            p.control,
+            p.texto,
+            etiquetaRespuestaExport[p.respuesta] || p.respuesta,
+            p.nivel,
+            p.comentario || "",
+        ]);
+    }
+
+    function exportarPDF() {
+        if (typeof window.jspdf === "undefined") {
+            alert("jsPDF no se cargó (revisa la conexión a internet).");
+            return;
+        }
+        const { organizacion, evaluador, fecha } = JSON.parse(document.getElementById("ver-eval-data").textContent);
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({ unit: "pt", format: "a4" });
+        const margin = 40;
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const pageHeight = doc.internal.pageSize.getHeight();
+        let y = margin;
+
+        doc.setFontSize(16);
+        doc.text(`RiskGuard — ${strings.exportTitulo || "Resultados de evaluación"}`, margin, y); y += 22;
+
+        doc.setFontSize(10);
+        doc.text(`${strings.exportOrganizacion || "Organización"}: ${organizacion}`, margin, y); y += 14;
+        doc.text(`${strings.exportEvaluador || "Evaluador"}: ${evaluador}`, margin, y); y += 14;
+        doc.text(`${strings.exportFecha || "Fecha"}: ${fecha}`, margin, y); y += 20;
+
+        doc.setFontSize(12);
+        doc.text(`${strings.exportGlobal || "Índice global"}: ${Math.round(global)}%`, margin, y); y += 16;
+
+        doc.autoTable({
+            startY: y,
+            head: [[strings.exportDimension || "Dimensión", strings.pctCumplimiento || "% cumplimiento"]],
+            body: DIMENSIONES.map((d) => [grupos[d], Math.round(pct[d]) + "%"]),
+            margin: { left: margin, right: margin },
+            styles: { fontSize: 9 },
+        });
+        y = doc.lastAutoTable.finalY + 20;
+
+        ["chart-barras", "chart-circular", "chart-madurez-preguntas"].forEach((id) => {
+            const canvas = document.getElementById(id);
+            if (!canvas || !canvas.width || !canvas.height) return;
+            const imgData = canvas.toDataURL("image/png", 1.0);
+            const imgWidth = pageWidth - margin * 2;
+            const imgHeight = (canvas.height / canvas.width) * imgWidth;
+            if (y + imgHeight > pageHeight - margin) {
+                doc.addPage();
+                y = margin;
+            }
+            doc.addImage(imgData, "PNG", margin, y, imgWidth, imgHeight);
+            y += imgHeight + 20;
+        });
+
+        doc.addPage();
+        doc.autoTable({
+            startY: margin,
+            head: [[
+                strings.exportId || "#", strings.exportControl || "Control", strings.exportPregunta || "Pregunta",
+                strings.exportRespuesta || "Respuesta", strings.exportNivel || "Nivel", strings.exportComentario || "Comentario",
+            ]],
+            body: filasPreguntas(),
+            margin: { left: margin, right: margin },
+            styles: { fontSize: 8, cellWidth: "wrap" },
+            columnStyles: { 2: { cellWidth: 150 }, 5: { cellWidth: 120 } },
+        });
+
+        doc.save(nombreArchivo("pdf"));
+    }
+
+    function exportarExcel() {
+        if (typeof XLSX === "undefined") {
+            alert("SheetJS no se cargó (revisa la conexión a internet).");
+            return;
+        }
+        const { organizacion, evaluador, fecha } = JSON.parse(document.getElementById("ver-eval-data").textContent);
+
+        const wb = XLSX.utils.book_new();
+
+        const resumen = [
+            [strings.exportOrganizacion || "Organización", organizacion],
+            [strings.exportEvaluador || "Evaluador", evaluador],
+            [strings.exportFecha || "Fecha", fecha],
+            [],
+            [strings.exportDimension || "Dimensión", strings.pctCumplimiento || "% cumplimiento"],
+            ...DIMENSIONES.map((d) => [grupos[d], Math.round(pct[d])]),
+            [],
+            [strings.exportGlobal || "Índice global", Math.round(global)],
+        ];
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(resumen), "Resumen");
+
+        const controlesRows = [[
+            strings.exportId || "#", strings.exportControl || "Control", strings.exportDimension || "Dimensión",
+            strings.pctCumplimiento || "% cumplimiento", strings.exportNivelAuto || "Nivel madurez",
+        ]];
+        resultadosControl.forEach((rc) => {
+            controlesRows.push([rc.id, `${rc.codigo} ${rc.nombre}`, grupos[rc.grupo], rc.pctControl, rc.madurez]);
+        });
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(controlesRows), "Controles");
+
+        const preguntasRows = [[
+            strings.exportId || "#", strings.exportControl || "Control", strings.exportPregunta || "Pregunta",
+            strings.exportRespuesta || "Respuesta", strings.exportNivel || "Nivel", strings.exportComentario || "Comentario",
+        ]];
+        filasPreguntas().forEach((fila) => preguntasRows.push(fila));
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(preguntasRows), "Preguntas");
+
+        XLSX.writeFile(wb, nombreArchivo("xlsx"));
+    }
+
+    document.getElementById("btn-export-pdf")?.addEventListener("click", exportarPDF);
+    document.getElementById("btn-export-excel")?.addEventListener("click", exportarExcel);
 })();

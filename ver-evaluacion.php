@@ -62,6 +62,9 @@ if ($evaluacion) {
     ];
 
     $datosJs = [
+        'organizacion' => $evaluacion['empresa'],
+        'evaluador' => $evaluacion['evaluador'],
+        'fecha' => $evaluacion['fecha_evaluacion'],
         'pct' => $pct,
         'global' => (float) $evaluacion['pct_global'],
         'resultadosControl' => $resultadosControl,
@@ -81,6 +84,22 @@ if ($evaluacion) {
             'verdeTexto' => t('js.semaforo.verde.texto'),
             'amarilloTexto' => t('js.semaforo.amarillo.texto'),
             'rojoTexto' => t('js.semaforo.rojo.texto'),
+            'pctCumplimiento' => t('js.chart.pctcumplimiento'),
+            'cumplimiento' => t('js.chart.cumplimiento'),
+            'brecha' => t('js.chart.brecha'),
+            'exportTitulo' => t('js.export.titulo'),
+            'exportOrganizacion' => t('js.export.organizacion'),
+            'exportEvaluador' => t('js.export.evaluador'),
+            'exportFecha' => t('js.export.fecha'),
+            'exportGlobal' => t('js.export.global'),
+            'exportDimension' => t('js.export.dimension'),
+            'exportId' => t('js.export.id'),
+            'exportControl' => t('js.export.control'),
+            'exportPregunta' => t('js.export.pregunta'),
+            'exportRespuesta' => t('js.export.respuesta'),
+            'exportNivel' => t('js.export.nivel'),
+            'exportNivelAuto' => t('js.export.nivelauto'),
+            'exportComentario' => t('js.export.comentario'),
         ],
     ];
 }
@@ -148,6 +167,15 @@ $etiquetaRespuesta = ['si' => 'Sí', 'no' => 'No', 'na' => 'N/A'];
                             </div>
                         </div>
 
+                        <div class="eval-export-row mt-5">
+                            <button type="button" id="btn-export-pdf" class="btn btn-ghost">
+                                <i class="fa-solid fa-file-pdf me-2"></i>Exportar PDF
+                            </button>
+                            <button type="button" id="btn-export-excel" class="btn btn-ghost">
+                                <i class="fa-solid fa-file-excel me-2"></i>Exportar Excel
+                            </button>
+                        </div>
+
                         <div class="eval-recos-card mt-5">
                             <h6><i class="fa-solid fa-lightbulb me-2"></i><?php echo t('eval.recos.title'); ?></h6>
                             <ul id="eval-recos-list" class="eval-recos-list"></ul>
@@ -191,6 +219,9 @@ $etiquetaRespuesta = ['si' => 'Sí', 'no' => 'No', 'na' => 'N/A'];
 
 <?php if ($datosJs): ?>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.4/dist/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script id="ver-eval-data" type="application/json"><?php echo json_encode($datosJs); ?></script>
     <script src="<?php echo asset_url('assets/js/ver-evaluacion.js'); ?>"></script>
 <?php endif; ?>
