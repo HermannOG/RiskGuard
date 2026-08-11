@@ -16,6 +16,15 @@ $controles_por_grupo = ['C' => [], 'I' => [], 'D' => []];
 foreach ($controles as $c) {
     $controles_por_grupo[$c['grupo']][] = $c;
 }
+
+// Progreso guardado de una evaluación a medio camino (solo aplica a
+// cuentas de empresa; el admin siempre parte de un formulario en blanco).
+$borrador = null;
+if ($usuarioSesion['rol'] === 'empresa' && $usuarioSesion['empresa_id']) {
+    require_once __DIR__ . '/includes/db.php';
+    require_once __DIR__ . '/includes/BorradorRepository.php';
+    $borrador = (new BorradorRepository(db()))->obtener((int) $usuarioSesion['empresa_id']);
+}
 ?>
 
     <link rel="stylesheet" href="<?php echo asset_url('assets/css/evaluacion.css'); ?>">
@@ -37,6 +46,19 @@ foreach ($controles as $c) {
                     <?php if ($usuarioSesion['rol'] === 'admin'): ?> · <a href="admin-evaluaciones.php">Panel admin</a>
                     <?php else: ?> · <a href="panel-empresa.php">Mi panel</a><?php endif; ?>
                 </p>
+
+                <?php if ($borrador): ?>
+                    <div class="alert alert-warning d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <span>
+                        <i class="fa-solid fa-clock-rotate-left me-2"></i>
+                        Retomando una evaluación en progreso (guardada automáticamente el
+                        <?php echo htmlspecialchars(date('d/m/Y H:i', strtotime($borrador['actualizado_en']))); ?>).
+                    </span>
+                        <button type="button" id="btn-descartar-borrador" class="btn btn-ghost btn-sm">
+                            Empezar de cero
+                        </button>
+                    </div>
+                <?php endif; ?>
             </div>
         </section>
 
@@ -214,6 +236,8 @@ foreach ($controles as $c) {
             'grupos' => $grupos,
             'nivelesMadurez' => $niveles_madurez,
             'opcionesRespuesta' => $opciones_respuesta,
+            'borrador' => $borrador ? ['respuestas' => $borrador['respuestas']] : null,
+            'esEmpresa' => $usuarioSesion['rol'] === 'empresa',
             'strings' => [
                 'alertaIncompleto' => t('js.alert.incompleto'),
                 'alertaComentario' => t('js.alert.comentario'),

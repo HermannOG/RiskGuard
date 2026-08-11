@@ -4,7 +4,7 @@
   const dataEl = document.getElementById("eval-data");
   if (!dataEl) return;
 
-  const { controles, recomendaciones, grupos, nivelesMadurez, opcionesRespuesta, strings } = JSON.parse(dataEl.textContent);
+  const { controles, recomendaciones, grupos, nivelesMadurez, opcionesRespuesta, borrador, esEmpresa, strings } = JSON.parse(dataEl.textContent);
   const form = document.getElementById("form-evaluacion");
   const dashboard = document.getElementById("eval-dashboard");
 
@@ -39,8 +39,8 @@
 
   function resolverColorCss(valor) {
     return valor.startsWith("var")
-      ? getComputedStyle(document.documentElement).getPropertyValue(valor.match(/--[\w-]+/)[0]).trim()
-      : valor;
+        ? getComputedStyle(document.documentElement).getPropertyValue(valor.match(/--[\w-]+/)[0]).trim()
+        : valor;
   }
 
   // ===== Nivel de madurez manual (botones 0-5) + comentario por pregunta =====
@@ -284,8 +284,8 @@
 
     // Dimensiones con brecha relevante (por debajo de 80%), de peor a mejor
     const debiles = DIMENSIONES
-      .filter((d) => pct[d] < 80)
-      .sort((a, b) => pct[a] - pct[b]);
+        .filter((d) => pct[d] < 80)
+        .sort((a, b) => pct[a] - pct[b]);
 
     if (debiles.length === 0) {
       lista.innerHTML = `<li>${strings.sinBrechas}</li>`;
@@ -304,9 +304,9 @@
     lista.innerHTML = "";
 
     const debiles = resultadosControl
-      .filter((r) => r.madurez < 4)
-      .sort((a, b) => a.madurez - b.madurez)
-      .slice(0, 8);
+        .filter((r) => r.madurez < 4)
+        .sort((a, b) => a.madurez - b.madurez)
+        .slice(0, 8);
 
     if (debiles.length === 0) {
       lista.innerHTML = `<li>${strings.madurezOk}</li>`;
@@ -468,7 +468,80 @@
   document.getElementById("btn-export-pdf")?.addEventListener("click", exportarPDF);
   document.getElementById("btn-export-excel")?.addEventListener("click", exportarExcel);
 
+  // ===== Continuar una evaluación en progreso (borrador) =====
+  function precargarBorrador() {
+    if (!borrador || !borrador.respuestas) return;
+
+    Object.keys(borrador.respuestas).forEach((pid) => {
+      const r = borrador.respuestas[pid];
+      if (!r || !r.respuesta) return;
+
+      const input = form.querySelector(`input[name="p${pid}"][value="${r.respuesta}"]`);
+      if (input) input.checked = true;
+
+      const nivelInput = document.getElementById(`nivel${pid}`);
+      if (nivelInput && r.nivel_madurez !== null && r.nivel_madurez !== undefined) {
+        nivelInput.value = r.nivel_madurez;
+      }
+
+      const caja = document.getElementById(`comentario${pid}`);
+      if (caja && r.comentario) caja.value = r.comentario;
+
+      actualizarEstadoComentario(pid);
+    });
+  }
+
+  let guardarBorradorTimeout = null;
+  function autoguardarBorrador() {
+    if (!esEmpresa) return; // solo tiene sentido para cuentas de empresa
+    clearTimeout(guardarBorradorTimeout);
+    guardarBorradorTimeout = setTimeout(() => {
+      const respuestas = {};
+      let hayAlguna = false;
+      controles.forEach((c) => {
+        c.preguntas.forEach((p) => {
+          const input = form.querySelector(`input[name="p${p.id}"]:checked`);
+          if (!input) return;
+          hayAlguna = true;
+          const nivelInput = document.getElementById(`nivel${p.id}`);
+          const caja = document.getElementById(`comentario${p.id}`);
+          respuestas[p.id] = {
+            respuesta: input.value,
+            nivel_madurez: nivelInput && nivelInput.value !== "" ? Number(nivelInput.value) : null,
+            comentario: caja ? caja.value.trim() : "",
+          };
+        });
+      });
+      if (!hayAlguna) return;
+
+      const organizacion = form.querySelector('[name="organizacion"]').value.trim();
+      const evaluador = form.querySelector('[name="evaluador"]').value.trim();
+      const fecha = form.querySelector('[name="fecha"]').value;
+
+      fetch("api/guardar-borrador.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ organizacion, evaluador, fecha, respuestas }),
+      }).catch((err) => console.error("No se pudo autoguardar el progreso:", err));
+    }, 1200); // debounce: espera a que la persona deje de interactuar
+  }
+
+  document.getElementById("btn-descartar-borrador")?.addEventListener("click", async () => {
+    if (!confirm("¿Seguro que quiere descartar el progreso guardado y empezar de cero?")) return;
+    try {
+      await fetch("api/descartar-borrador.php", { method: "POST" });
+    } catch (err) {
+      console.error("No se pudo descartar el borrador:", err);
+    }
+    window.location.reload();
+  });
+
   inicializarNivelesManual();
+  precargarBorrador();
+  form.addEventListener("change", autoguardarBorrador);
+  form.addEventListener("input", (e) => {
+    if (e.target.matches(".eval-comentario-box")) autoguardarBorrador();
+  });
 
   document.addEventListener('DOMContentLoaded', function () {
     document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach((el) => new bootstrap.Tooltip(el));
@@ -567,7 +640,7 @@
       console.error("Error en renderCharts:", err);
       const chartsRow = document.getElementById("chart-barras")?.closest(".row");
       if (chartsRow) chartsRow.insertAdjacentHTML("beforebegin",
-        '<p class="eval-submit-hint" style="color:var(--risk-crit)">No se pudieron cargar los gráficos (Chart.js). El resto de los resultados sí está disponible abajo.</p>');
+          '<p class="eval-submit-hint" style="color:var(--risk-crit)">No se pudieron cargar los gráficos (Chart.js). El resto de los resultados sí está disponible abajo.</p>');
     }
     try { renderRecomendaciones(pct); } catch (err) { console.error("Error en renderRecomendaciones:", err); }
     try { renderControlesDebiles(resultadosControl); } catch (err) { console.error("Error en renderControlesDebiles:", err); }

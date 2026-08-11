@@ -146,6 +146,13 @@ try {
         'resultadosControl' => $resultadosControl,
     ]);
 
+    // Evaluación completada: si había un progreso guardado para esta
+    // empresa, ya no hace falta (se reemplaza por la evaluación finalizada).
+    if ($usuarioSesion['rol'] === 'empresa') {
+        require_once __DIR__ . '/../includes/BorradorRepository.php';
+        (new BorradorRepository($pdo))->eliminar($empresaId);
+    }
+
     echo json_encode([
         'ok' => true,
         'evaluacion_id' => $evaluacionId,

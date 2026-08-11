@@ -95,6 +95,19 @@ CREATE TABLE IF NOT EXISTS evaluacion_control_resultado (
     KEY idx_resultado_evaluacion_id (evaluacion_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE IF NOT EXISTS evaluacion_borradores (
+                                                     id              INT AUTO_INCREMENT PRIMARY KEY,
+                                                     empresa_id      INT NOT NULL,
+                                                     usuario_id      INT NULL,
+                                                     organizacion    VARCHAR(150),
+    evaluador       VARCHAR(150),
+    fecha           DATE,
+    respuestas_json LONGTEXT NOT NULL,
+    actualizado_en  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uniq_empresa (empresa_id),
+    FOREIGN KEY (empresa_id) REFERENCES empresas(id) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 -- =====================================================================
 -- SEED DEL CATÁLOGO (debe coincidir con includes/cuestionario-data.php)
 -- =====================================================================

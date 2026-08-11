@@ -6,6 +6,7 @@ $usuarioSesion = usuarioActual();
 
 require_once __DIR__ . '/includes/db.php';
 require_once __DIR__ . '/includes/EmpresaRepository.php';
+require_once __DIR__ . '/includes/BorradorRepository.php';
 
 $pageTitleKey = null;
 require_once __DIR__ . '/includes/header.php';
@@ -15,6 +16,10 @@ $empresaRepo = new EmpresaRepository(db());
 $evaluaciones = $usuarioSesion['empresa_id']
     ? $empresaRepo->historial((int) $usuarioSesion['empresa_id'])
     : [];
+
+$borrador = $usuarioSesion['empresa_id']
+    ? (new BorradorRepository(db()))->obtener((int) $usuarioSesion['empresa_id'])
+    : null;
 ?>
     <link rel="stylesheet" href="assets/css/evaluacion.css">
 
@@ -52,7 +57,21 @@ $evaluaciones = $usuarioSesion['empresa_id']
                         </tr>
                         </thead>
                         <tbody>
-                        <?php if (empty($evaluaciones)): ?>
+                        <?php if ($borrador): ?>
+                            <tr class="eval-borrador-row">
+                                <td>—</td>
+                                <td><?php echo htmlspecialchars($borrador['evaluador'] ?: '—'); ?></td>
+                                <td>—</td>
+                                <td>
+                                    <span class="badge text-bg-warning">En progreso</span>
+                                    <br>
+                                    <small class="text-muted">Guardado: <?php echo htmlspecialchars(date('d/m/Y H:i', strtotime($borrador['actualizado_en']))); ?></small>
+                                </td>
+                                <td colspan="4" class="text-muted">Evaluación sin terminar</td>
+                                <td><a href="evaluacion-riesgos.php" class="btn btn-cta btn-sm">Continuar evaluación</a></td>
+                            </tr>
+                        <?php endif; ?>
+                        <?php if (empty($evaluaciones) && !$borrador): ?>
                             <tr><td colspan="9">Todavía no ha realizado ninguna evaluación. ¡Empiece con la primera!</td></tr>
                         <?php endif; ?>
                         <?php foreach ($evaluaciones as $ev): ?>

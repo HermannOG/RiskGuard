@@ -343,6 +343,7 @@
   box-shadow: none;
   outline: none;
 }
+
 .eval-info-btn{
   background: transparent;
   border: none;
@@ -381,4 +382,14 @@
   border-radius: 12px;
   overflow: hidden;
   border: 1px solid var(--border);
+}
+
+/* Fila de "evaluación en progreso" en panel-empresa.php: colores propios
+   (no la clase table-warning de Bootstrap) para que respeten el tema. */
+.eval-borrador-row > *{
+  background-color: rgba(242, 177, 52, 0.12) !important;
+  color: var(--text) !important;
+}
+.eval-borrador-row .text-muted{
+  color: var(--text-muted) !important;
 }
