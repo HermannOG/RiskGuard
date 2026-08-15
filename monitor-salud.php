@@ -64,39 +64,74 @@ if (!$resultado) {
 
 $colores = ['verde' => '#3FB950', 'amarillo' => '#F2B134', 'anaranjado' => '#F0724A', 'rojo' => '#E5484D'];
 $nombresComponente = ['procesos' => 'Procesos', 'memoria' => 'Memoria', 'archivos' => 'Archivos'];
+$siglaComponente = ['procesos' => 'IP', 'memoria' => 'IM', 'archivos' => 'IA'];
 
 $estadoIP = $resultado ? $repo->determinarEstado($instanciaId, (float) $resultado['indice_procesos']) : null;
 $estadoIM = $resultado ? $repo->determinarEstado($instanciaId, (float) $resultado['indice_memoria']) : null;
 $estadoIA = $resultado ? $repo->determinarEstado($instanciaId, (float) $resultado['indice_archivos']) : null;
 
-$conteoEstados = ['verde' => 0, 'amarillo' => 0, 'anaranjado' => 0, 'rojo' => 0];
+$detallePorComponente = ['procesos' => [], 'memoria' => [], 'archivos' => []];
 foreach ($detalle as $d) {
-    $conteoEstados[$d['estado']]++;
+    $detallePorComponente[$d['componente']][] = $d;
 }
 
-function renderBarraRango(string $etiqueta, string $codigo, float $valor, string $estado, array $colores): string
+function renderRosca(string $idHtml, float $valor, string $color, string $tamano = 'grande'): string
 {
     $pct = max(0, min(100, $valor));
-    $color = $colores[$estado];
+    $tam = $tamano === 'grande' ? '150px' : '100px';
+    $fuenteValor = $tamano === 'grande' ? '1.7rem' : '1rem';
+    return '
+        <div class="rosca-css" style="width:' . $tam . '; height:' . $tam . '; background: conic-gradient(' . $color . ' 0% ' . $pct . '%, var(--border) ' . $pct . '% 100%);">
+            <div class="rosca-centro">
+                <div class="rosca-valor" style="font-size:' . $fuenteValor . '; color:' . $color . ';">' . number_format($valor, 2) . '</div>
+            </div>
+        </div>
+    ';
+}
+
+function renderBarraRango(array $d, array $colores): string
+{
+    $pct = max(0, min(100, $d['valor_normalizado']));
+    $color = $colores[$d['estado']];
+    $popoverContenido = htmlspecialchars($d['descripcion'] . "\n\n" . strtoupper($d['estado']) . ': ' . ($d['banda_' . $d['estado']] ?? ''));
+
     return '
         <div class="rango-fila">
-            <div class="rango-nombre">' . htmlspecialchars($etiqueta) . ' <small>(' . htmlspecialchars($codigo) . ')</small></div>
-            <div class="rango-track">
-                <div class="rango-zona verde"></div>
-                <div class="rango-zona amarillo"></div>
-                <div class="rango-zona anaranjado"></div>
-                <div class="rango-zona rojo"></div>
-                <div class="rango-marcador" style="left:' . $pct . '%;"></div>
+            <div>
+                ' . htmlspecialchars($d['nombre']) . ' <small style="color:var(--text-muted); font-family:var(--font-mono);">(' . htmlspecialchars($d['variable_id']) . ')</small>
+                <button type="button" class="btn-ayuda-var" data-bs-toggle="popover" data-bs-trigger="focus click" data-bs-placement="top" data-bs-content="' . $popoverContenido . '">
+                    <i class="fa-solid fa-circle-info"></i>
+                </button>
             </div>
-            <div class="rango-valor" style="color:' . $color . ';">' . number_format($valor, 2) . '</div>
+            <div>
+                <div class="rango-track">
+                    <div class="rango-zona verde"></div>
+                    <div class="rango-zona amarillo"></div>
+                    <div class="rango-zona anaranjado"></div>
+                    <div class="rango-zona rojo"></div>
+                    <div class="rango-marcador" style="left:' . $pct . '%;"></div>
+                </div>
+                <div class="rango-ticks"><span>0</span><span>30</span><span>50</span><span>70</span><span>100</span></div>
+            </div>
+            <div class="rango-valor" style="color:' . $color . ';">' . number_format($d['valor_normalizado'], 2) . '</div>
         </div>
     ';
 }
 ?>
     <style>
-        .rango-fila{ display: grid; grid-template-columns: 220px 1fr 70px; align-items: center; gap: 1rem; padding: 0.7rem 0; border-bottom: 1px solid var(--border); }
-        .rango-nombre{ font-size: 0.88rem; }
-        .rango-nombre small{ color: var(--text-muted); font-family: var(--font-mono); }
+        .rosca-css{ border-radius: 50%; margin: 0 auto; display:flex; align-items:center; justify-content:center; position:relative; }
+        .rosca-css::before{ content:''; position:absolute; inset:12px; border-radius:50%; background:var(--surface); }
+        .rosca-centro{ position:relative; text-align:center; z-index:1; }
+        .rosca-valor{ font-family: var(--font-mono); font-weight: 700; }
+        .rosca-label{ color: var(--text-muted); font-size: 0.78rem; }
+
+        .componente-card{ cursor: pointer; transition: border-color 0.15s ease; }
+        .componente-card:hover{ border-color: var(--risk-mid); }
+        .componente-card .chevron{ transition: transform 0.2s ease; }
+        .componente-card[aria-expanded="true"] .chevron{ transform: rotate(180deg); }
+
+        .rango-fila{ display: grid; grid-template-columns: 240px 1fr 70px; align-items: center; gap: 1rem; padding: 0.6rem 0; border-bottom: 1px solid var(--border); }
+        .rango-fila:last-child{ border-bottom: none; }
         .rango-track{ position: relative; height: 10px; border-radius: 6px; display: flex; }
         .rango-zona{ height: 100%; }
         .rango-zona:first-child{ border-radius: 6px 0 0 6px; }
@@ -106,9 +141,13 @@ function renderBarraRango(string $etiqueta, string $codigo, float $valor, string
         .rango-zona.anaranjado{ background: #F0724A; width: 20%; }
         .rango-zona.rojo{ background: #E5484D; width: 30%; }
         .rango-marcador{ position: absolute; top: -5px; width: 3px; height: 20px; background: var(--text); border-radius: 2px; transform: translateX(-50%); box-shadow: 0 0 0 2px var(--surface); }
+        .rango-ticks{ display:flex; font-family: var(--font-mono); font-size: 0.65rem; color: var(--text-muted); margin-top: 2px; }
+        .rango-ticks span{ width: 30%; }
+        .rango-ticks span:nth-child(2), .rango-ticks span:nth-child(3){ width: 20%; }
         .rango-valor{ text-align: right; font-family: var(--font-mono); font-weight: 600; font-size: 0.95rem; }
-        .heatmap-resumen{ display: flex; gap: 1.5rem; align-items: center; }
-        .heatmap-dot{ display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:6px; }
+
+        .btn-ayuda-var{ background: transparent; border: none; color: var(--text-muted); padding: 0 0.2rem; cursor: pointer; }
+        .btn-ayuda-var:hover{ color: var(--risk-mid); }
     </style>
     <main class="flex-grow-1">
         <section class="section">
@@ -130,43 +169,53 @@ function renderBarraRango(string $etiqueta, string $codigo, float $valor, string
                 <?php if ($resultado): ?>
                     <?php $colorGeneral = $colores[$resultado['estado']] ?? '#999'; ?>
 
-                    <div class="eval-control mb-4">
-                        <div class="row align-items-center">
-                            <div class="col-md-3 text-center">
-                                <div style="font-size:2.5rem; font-weight:700; color:<?php echo $colorGeneral; ?>;">
-                                    <?php echo number_format((float) $resultado['indice_salud'], 2); ?>
-                                </div>
-                                <div>ISBD — <?php echo strtoupper($resultado['estado']); ?></div>
-                            </div>
-                            <div class="col-md-9">
-                                <div class="heatmap-resumen">
-                                    <span><span class="heatmap-dot" style="background:<?php echo $colores['verde']; ?>;"></span><?php echo $conteoEstados['verde']; ?> verde</span>
-                                    <span><span class="heatmap-dot" style="background:<?php echo $colores['amarillo']; ?>;"></span><?php echo $conteoEstados['amarillo']; ?> amarillo</span>
-                                    <span><span class="heatmap-dot" style="background:<?php echo $colores['anaranjado']; ?>;"></span><?php echo $conteoEstados['anaranjado']; ?> anaranjado</span>
-                                    <span><span class="heatmap-dot" style="background:<?php echo $colores['rojo']; ?>;"></span><?php echo $conteoEstados['rojo']; ?> rojo</span>
-                                </div>
-                                <p class="text-muted mt-2 mb-0" style="font-size:0.85rem;">de las 10 variables monitoreadas en esta captura</p>
-                            </div>
-                        </div>
+                    <div class="text-center mb-4">
+                        <?php echo renderRosca('isbd', (float) $resultado['indice_salud'], $colorGeneral, 'grande'); ?>
+                        <div class="rosca-label mt-2">ISBD — <?php echo strtoupper($resultado['estado']); ?></div>
                     </div>
 
-                    <div class="eval-control mb-4">
-                        <h5 class="mb-3">Índices por componente</h5>
-                        <?php echo renderBarraRango('Procesos', 'IP', (float) $resultado['indice_procesos'], $estadoIP, $colores); ?>
-                        <?php echo renderBarraRango('Memoria', 'IM', (float) $resultado['indice_memoria'], $estadoIM, $colores); ?>
-                        <?php echo renderBarraRango('Archivos', 'IA', (float) $resultado['indice_archivos'], $estadoIA, $colores); ?>
-                    </div>
-
-                    <div class="eval-control">
-                        <h5 class="mb-3">Detalle por variable</h5>
-                        <?php foreach ($detalle as $d): ?>
-                            <?php echo renderBarraRango($d['nombre'], $d['variable_id'], $d['valor_normalizado'], $d['estado'], $colores); ?>
+                    <div class="row g-3 mb-2">
+                        <?php foreach (['procesos' => $estadoIP, 'memoria' => $estadoIM, 'archivos' => $estadoIA] as $comp => $estadoComp): ?>
+                            <?php $colorComp = $colores[$estadoComp]; $valorComp = (float) $resultado['indice_' . $comp]; ?>
+                            <div class="col-4">
+                                <div class="eval-control componente-card text-center" role="button" data-bs-toggle="collapse" data-bs-target="#detalle-<?php echo $comp; ?>" aria-expanded="false">
+                                    <?php echo renderRosca($comp, $valorComp, $colorComp, 'chica'); ?>
+                                    <div style="font-size:0.85rem; margin-top:0.6rem;">
+                                        <?php echo $nombresComponente[$comp]; ?> (<?php echo $siglaComponente[$comp]; ?>)
+                                        <i class="fa-solid fa-chevron-down chevron ms-1" style="font-size:0.7rem; color:var(--text-muted);"></i>
+                                    </div>
+                                </div>
+                            </div>
                         <?php endforeach; ?>
                     </div>
+
+                    <?php foreach (['procesos', 'memoria', 'archivos'] as $comp): ?>
+                        <div class="collapse mb-3" id="detalle-<?php echo $comp; ?>">
+                            <div class="eval-control">
+                                <h6 class="mb-3">Por qué <?php echo $nombresComponente[$comp]; ?> (<?php echo $siglaComponente[$comp]; ?>) está así</h6>
+                                <?php foreach ($detallePorComponente[$comp] as $d): ?>
+                                    <?php echo renderBarraRango($d, $colores); ?>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+
                 <?php else: ?>
                     <p>Todavía no hay capturas para esta instancia. Dale clic a "Capturar ahora".</p>
                 <?php endif; ?>
             </div>
         </section>
     </main>
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('[data-bs-toggle="popover"]').forEach((el) => new bootstrap.Popover(el));
+
+        document.querySelectorAll('.componente-card').forEach((card) => {
+            const target = document.querySelector(card.dataset.bsTarget);
+            if (!target) return;
+            target.addEventListener('show.bs.collapse', () => card.setAttribute('aria-expanded', 'true'));
+            target.addEventListener('hide.bs.collapse', () => card.setAttribute('aria-expanded', 'false'));
+        });
+    });
+    </script>
 <?php require_once __DIR__ . '/includes/footer.php'; ?>
