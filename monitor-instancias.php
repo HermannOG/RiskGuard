@@ -102,7 +102,7 @@ $instancias = $pdo->query("SELECT id, nombre, tipo_motor, host, puerto, nombre_b
                                         <td><?php echo htmlspecialchars($inst['nombre']); ?></td>
                                         <td><?php echo htmlspecialchars($inst['tipo_motor']); ?></td>
                                         <td><?php echo htmlspecialchars($inst['host']); ?>:<?php echo (int) $inst['puerto']; ?></td>
-                                        <td><a href="monitor-salud.php?instancia_id=<?php echo (int) $inst['id']; ?>" class="btn btn-sm btn-ghost">Ver salud</a></td>
+                                        <td><a href="monitor-salud.php?instancia_id=<?php echo (int) $inst['id']; ?>" class="btn btn-sm btn-cta">Ver salud</a></td>
                                     </tr>
                                 <?php endforeach; ?>
                             </tbody>
