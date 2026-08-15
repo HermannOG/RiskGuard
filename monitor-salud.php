@@ -62,13 +62,54 @@ if (!$resultado) {
     }
 }
 
-$colores = ['verde' => '#2ecc71', 'amarillo' => '#f1c40f', 'anaranjado' => '#e67e22', 'rojo' => '#e74c3c'];
+$colores = ['verde' => '#3FB950', 'amarillo' => '#F2B134', 'anaranjado' => '#F0724A', 'rojo' => '#E5484D'];
 $nombresComponente = ['procesos' => 'Procesos', 'memoria' => 'Memoria', 'archivos' => 'Archivos'];
 
 $estadoIP = $resultado ? $repo->determinarEstado($instanciaId, (float) $resultado['indice_procesos']) : null;
 $estadoIM = $resultado ? $repo->determinarEstado($instanciaId, (float) $resultado['indice_memoria']) : null;
 $estadoIA = $resultado ? $repo->determinarEstado($instanciaId, (float) $resultado['indice_archivos']) : null;
+
+$conteoEstados = ['verde' => 0, 'amarillo' => 0, 'anaranjado' => 0, 'rojo' => 0];
+foreach ($detalle as $d) {
+    $conteoEstados[$d['estado']]++;
+}
+
+function renderBarraRango(string $etiqueta, string $codigo, float $valor, string $estado, array $colores): string
+{
+    $pct = max(0, min(100, $valor));
+    $color = $colores[$estado];
+    return '
+        <div class="rango-fila">
+            <div class="rango-nombre">' . htmlspecialchars($etiqueta) . ' <small>(' . htmlspecialchars($codigo) . ')</small></div>
+            <div class="rango-track">
+                <div class="rango-zona verde"></div>
+                <div class="rango-zona amarillo"></div>
+                <div class="rango-zona anaranjado"></div>
+                <div class="rango-zona rojo"></div>
+                <div class="rango-marcador" style="left:' . $pct . '%;"></div>
+            </div>
+            <div class="rango-valor" style="color:' . $color . ';">' . number_format($valor, 2) . '</div>
+        </div>
+    ';
+}
 ?>
+    <style>
+        .rango-fila{ display: grid; grid-template-columns: 220px 1fr 70px; align-items: center; gap: 1rem; padding: 0.7rem 0; border-bottom: 1px solid var(--border); }
+        .rango-nombre{ font-size: 0.88rem; }
+        .rango-nombre small{ color: var(--text-muted); font-family: var(--font-mono); }
+        .rango-track{ position: relative; height: 10px; border-radius: 6px; display: flex; }
+        .rango-zona{ height: 100%; }
+        .rango-zona:first-child{ border-radius: 6px 0 0 6px; }
+        .rango-zona:last-child{ border-radius: 0 6px 6px 0; }
+        .rango-zona.verde{ background: #3FB950; width: 30%; }
+        .rango-zona.amarillo{ background: #F2B134; width: 20%; }
+        .rango-zona.anaranjado{ background: #F0724A; width: 20%; }
+        .rango-zona.rojo{ background: #E5484D; width: 30%; }
+        .rango-marcador{ position: absolute; top: -5px; width: 3px; height: 20px; background: var(--text); border-radius: 2px; transform: translateX(-50%); box-shadow: 0 0 0 2px var(--surface); }
+        .rango-valor{ text-align: right; font-family: var(--font-mono); font-weight: 600; font-size: 0.95rem; }
+        .heatmap-resumen{ display: flex; gap: 1.5rem; align-items: center; }
+        .heatmap-dot{ display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:6px; }
+    </style>
     <main class="flex-grow-1">
         <section class="section">
             <div class="container">
@@ -89,91 +130,39 @@ $estadoIA = $resultado ? $repo->determinarEstado($instanciaId, (float) $resultad
                 <?php if ($resultado): ?>
                     <?php $colorGeneral = $colores[$resultado['estado']] ?? '#999'; ?>
 
-                    <div class="eval-control mb-4" style="border-left: 6px solid <?php echo $colorGeneral; ?>;">
-                        <div style="text-align:center;">
-                            <div style="font-size:2.5rem; font-weight:700; color:<?php echo $colorGeneral; ?>;">
-                                <?php echo number_format((float) $resultado['indice_salud'], 2); ?>
-                            </div>
-                            <div>Índice de Salud de la Base de Datos (ISBD) — <?php echo strtoupper($resultado['estado']); ?></div>
-                        </div>
-                    </div>
-
-                    <div class="row g-3 mb-4">
-                        <div class="col-md-4">
-                            <div class="eval-control text-center" style="border-left: 6px solid <?php echo $colores[$estadoIP]; ?>;">
-                                <div style="font-size:1.6rem; font-weight:700; color:<?php echo $colores[$estadoIP]; ?>;">
-                                    <?php echo number_format((float) $resultado['indice_procesos'], 2); ?>
+                    <div class="eval-control mb-4">
+                        <div class="row align-items-center">
+                            <div class="col-md-3 text-center">
+                                <div style="font-size:2.5rem; font-weight:700; color:<?php echo $colorGeneral; ?>;">
+                                    <?php echo number_format((float) $resultado['indice_salud'], 2); ?>
                                 </div>
-                                <div>Procesos (IP) — <?php echo strtoupper($estadoIP); ?></div>
+                                <div>ISBD — <?php echo strtoupper($resultado['estado']); ?></div>
                             </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="eval-control text-center" style="border-left: 6px solid <?php echo $colores[$estadoIM]; ?>;">
-                                <div style="font-size:1.6rem; font-weight:700; color:<?php echo $colores[$estadoIM]; ?>;">
-                                    <?php echo number_format((float) $resultado['indice_memoria'], 2); ?>
+                            <div class="col-md-9">
+                                <div class="heatmap-resumen">
+                                    <span><span class="heatmap-dot" style="background:<?php echo $colores['verde']; ?>;"></span><?php echo $conteoEstados['verde']; ?> verde</span>
+                                    <span><span class="heatmap-dot" style="background:<?php echo $colores['amarillo']; ?>;"></span><?php echo $conteoEstados['amarillo']; ?> amarillo</span>
+                                    <span><span class="heatmap-dot" style="background:<?php echo $colores['anaranjado']; ?>;"></span><?php echo $conteoEstados['anaranjado']; ?> anaranjado</span>
+                                    <span><span class="heatmap-dot" style="background:<?php echo $colores['rojo']; ?>;"></span><?php echo $conteoEstados['rojo']; ?> rojo</span>
                                 </div>
-                                <div>Memoria (IM) — <?php echo strtoupper($estadoIM); ?></div>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="eval-control text-center" style="border-left: 6px solid <?php echo $colores[$estadoIA]; ?>;">
-                                <div style="font-size:1.6rem; font-weight:700; color:<?php echo $colores[$estadoIA]; ?>;">
-                                    <?php echo number_format((float) $resultado['indice_archivos'], 2); ?>
-                                </div>
-                                <div>Archivos (IA) — <?php echo strtoupper($estadoIA); ?></div>
+                                <p class="text-muted mt-2 mb-0" style="font-size:0.85rem;">de las 10 variables monitoreadas en esta captura</p>
                             </div>
                         </div>
                     </div>
 
                     <div class="eval-control mb-4">
-                        <h5 class="mb-3">Detalle por variable</h5>
-                        <canvas id="chartVariables" height="90"></canvas>
+                        <h5 class="mb-3">Índices por componente</h5>
+                        <?php echo renderBarraRango('Procesos', 'IP', (float) $resultado['indice_procesos'], $estadoIP, $colores); ?>
+                        <?php echo renderBarraRango('Memoria', 'IM', (float) $resultado['indice_memoria'], $estadoIM, $colores); ?>
+                        <?php echo renderBarraRango('Archivos', 'IA', (float) $resultado['indice_archivos'], $estadoIA, $colores); ?>
                     </div>
 
                     <div class="eval-control">
-                        <table class="table mb-0">
-                            <thead><tr><th>Variable</th><th>Componente</th><th>Valor crudo</th><th>Normalizado</th><th>Estado</th></tr></thead>
-                            <tbody>
-                                <?php foreach ($detalle as $d): ?>
-                                    <tr>
-                                        <td><?php echo htmlspecialchars($d['nombre']); ?> <small class="text-muted">(<?php echo htmlspecialchars($d['variable_id']); ?>)</small></td>
-                                        <td><?php echo $nombresComponente[$d['componente']] ?? $d['componente']; ?></td>
-                                        <td><?php echo number_format($d['valor_crudo'], 2); ?></td>
-                                        <td><?php echo number_format($d['valor_normalizado'], 2); ?></td>
-                                        <td>
-                                            <span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:<?php echo $colores[$d['estado']]; ?>; margin-right:6px;"></span>
-                                            <?php echo strtoupper($d['estado']); ?>
-                                        </td>
-                                    </tr>
-                                <?php endforeach; ?>
-                            </tbody>
-                        </table>
+                        <h5 class="mb-3">Detalle por variable</h5>
+                        <?php foreach ($detalle as $d): ?>
+                            <?php echo renderBarraRango($d['nombre'], $d['variable_id'], $d['valor_normalizado'], $d['estado'], $colores); ?>
+                        <?php endforeach; ?>
                     </div>
-
-                    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-                    <script>
-                    (function () {
-                        const datos = <?php echo json_encode($detalle); ?>;
-                        const coloresEstado = <?php echo json_encode($colores); ?>;
-
-                        new Chart(document.getElementById('chartVariables'), {
-                            type: 'bar',
-                            data: {
-                                labels: datos.map(d => d.variable_id + ' - ' + d.nombre),
-                                datasets: [{
-                                    label: 'Valor normalizado (0-100, mas alto = peor)',
-                                    data: datos.map(d => d.valor_normalizado),
-                                    backgroundColor: datos.map(d => coloresEstado[d.estado])
-                                }]
-                            },
-                            options: {
-                                indexAxis: 'y',
-                                scales: { x: { min: 0, max: 100 } },
-                                plugins: { legend: { display: false } }
-                            }
-                        });
-                    })();
-                    </script>
                 <?php else: ?>
                     <p>Todavía no hay capturas para esta instancia. Dale clic a "Capturar ahora".</p>
                 <?php endif; ?>
