@@ -459,7 +459,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
   border-color: var(--risk-mid);
   color: var(--text);
 }
-.theme-icon-light{ display: none; }
-.theme-icon-dark{ display: inline; }
-[data-theme="light"] .theme-icon-light{ display: inline; }
-[data-theme="light"] .theme-icon-dark{ display: none; }
+.theme-toggle .theme-icon-light{ display: none; }
+.theme-toggle .theme-icon-dark{ display: inline; }
+[data-theme="light"] .theme-toggle .theme-icon-light{ display: inline; }
+[data-theme="light"] .theme-toggle .theme-icon-dark{ display: none; }
