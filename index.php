@@ -79,7 +79,16 @@
                         <p><?php echo t('home.servicios.s3.desc'); ?></p>
                     </div>
                 </div>
-
+                <?php if ($usuarioSesionNav && $usuarioSesionNav['rol'] === 'admin'): ?>
+                <div class="col-md-4">
+                    <div class="service-card">
+                        <i class="fa-solid fa-heart-pulse"></i>
+                        <h5>Monitor de Salud</h5>
+                        <p>Vigila procesos, memoria y archivos de tus bases de datos en tiempo real, con semáforo de alerta.</p>
+                        <a href="monitor-instancias.php" class="btn btn-sm btn-ghost mt-2">Ver monitor</a>
+                    </div>
+                </div>
+                <?php endif; ?>
             </div>
         </div>
     </section>

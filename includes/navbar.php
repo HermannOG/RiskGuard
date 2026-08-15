@@ -25,7 +25,9 @@
                     <li class="nav-item"><a class="nav-link" href="index.php#equipo"><?php echo t('nav.equipo'); ?></a></li>
                     <li class="nav-item"><a class="nav-link" href="index.php#contacto"><?php echo t('nav.contacto'); ?></a></li>
                     <li class="nav-item"><a class="nav-link" href="evaluacion-riesgos.php"><?php echo t('nav.evaluacion'); ?></a></li>
-                    <li class="nav-item"><a class="nav-link" href="monitor-instancias.php">Monitor de Salud</a></li>
+                    <?php if ($usuarioSesionNav && $usuarioSesionNav['rol'] === 'admin'): ?>
+                        <li class="nav-item"><a class="nav-link" href="monitor-instancias.php">Monitor de Salud</a></li>
+                    <?php endif; ?>
                 </ul>
                 <button id="theme-toggle" type="button" class="theme-toggle" aria-label="Cambiar modo día/noche">
                     <i class="fa-solid fa-sun theme-icon-light"></i>
