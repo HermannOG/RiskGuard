@@ -14,6 +14,7 @@ require_once __DIR__ . '/includes/MonitorRepository.php';
 $pdo = dbMonitor();
 $instanciaId = (int) ($_GET['instancia_id'] ?? 0);
 $resultado = null;
+$detalle = [];
 $error = null;
 
 $stmt = $pdo->prepare("SELECT * FROM monitor_instancias WHERE id = :id");
@@ -24,6 +25,8 @@ if (!$instancia) {
     header('Location: monitor-instancias.php');
     exit;
 }
+
+$repo = new MonitorRepository($pdo);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['capturar'])) {
     try {
@@ -38,13 +41,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['capturar'])) {
         }
 
         $lecturas = $adapter->obtenerLecturas();
-        $repo = new MonitorRepository($pdo);
         $capturadoEn = (new DateTime())->format('Y-m-d H:i:s.u');
 
         foreach ($lecturas as $variableId => $valor) {
             $repo->registrarLectura($instanciaId, $capturadoEn, $variableId, $valor);
         }
         $resultado = $repo->calcularIndices($instanciaId, $capturadoEn);
+        $detalle = $repo->obtenerDetalleLecturas($instanciaId, $capturadoEn);
     } catch (Throwable $e) {
         $error = $e->getMessage();
     }
@@ -54,9 +57,17 @@ if (!$resultado) {
     $stmt = $pdo->prepare("SELECT * FROM monitor_indices WHERE instancia_id = :id ORDER BY capturado_en DESC LIMIT 1");
     $stmt->execute(['id' => $instanciaId]);
     $resultado = $stmt->fetch() ?: null;
+    if ($resultado) {
+        $detalle = $repo->obtenerDetalleLecturas($instanciaId, $resultado['capturado_en']);
+    }
 }
 
 $colores = ['verde' => '#2ecc71', 'amarillo' => '#f1c40f', 'anaranjado' => '#e67e22', 'rojo' => '#e74c3c'];
+$nombresComponente = ['procesos' => 'Procesos', 'memoria' => 'Memoria', 'archivos' => 'Archivos'];
+
+$estadoIP = $resultado ? $repo->determinarEstado($instanciaId, (float) $resultado['indice_procesos']) : null;
+$estadoIM = $resultado ? $repo->determinarEstado($instanciaId, (float) $resultado['indice_memoria']) : null;
+$estadoIA = $resultado ? $repo->determinarEstado($instanciaId, (float) $resultado['indice_archivos']) : null;
 ?>
     <main class="flex-grow-1">
         <section class="section">
@@ -76,29 +87,93 @@ $colores = ['verde' => '#2ecc71', 'amarillo' => '#f1c40f', 'anaranjado' => '#e67
                 <?php endif; ?>
 
                 <?php if ($resultado): ?>
-                    <?php $color = $colores[$resultado['estado']] ?? '#999'; ?>
-                    <div class="eval-control" style="border-left: 6px solid <?php echo $color; ?>;">
-                        <div class="row text-center">
-                            <div class="col-md-3">
-                                <div style="font-size:2rem; font-weight:700; color:<?php echo $color; ?>;">
-                                    <?php echo number_format((float) $resultado['indice_salud'], 2); ?>
+                    <?php $colorGeneral = $colores[$resultado['estado']] ?? '#999'; ?>
+
+                    <div class="eval-control mb-4" style="border-left: 6px solid <?php echo $colorGeneral; ?>;">
+                        <div style="text-align:center;">
+                            <div style="font-size:2.5rem; font-weight:700; color:<?php echo $colorGeneral; ?>;">
+                                <?php echo number_format((float) $resultado['indice_salud'], 2); ?>
+                            </div>
+                            <div>Índice de Salud de la Base de Datos (ISBD) — <?php echo strtoupper($resultado['estado']); ?></div>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-4">
+                            <div class="eval-control text-center" style="border-left: 6px solid <?php echo $colores[$estadoIP]; ?>;">
+                                <div style="font-size:1.6rem; font-weight:700; color:<?php echo $colores[$estadoIP]; ?>;">
+                                    <?php echo number_format((float) $resultado['indice_procesos'], 2); ?>
                                 </div>
-                                <div>ISBD (<?php echo strtoupper($resultado['estado']); ?>)</div>
+                                <div>Procesos (IP) — <?php echo strtoupper($estadoIP); ?></div>
                             </div>
-                            <div class="col-md-3">
-                                <div style="font-size:1.4rem;"><?php echo number_format((float) $resultado['indice_procesos'], 2); ?></div>
-                                <div>Procesos (IP)</div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="eval-control text-center" style="border-left: 6px solid <?php echo $colores[$estadoIM]; ?>;">
+                                <div style="font-size:1.6rem; font-weight:700; color:<?php echo $colores[$estadoIM]; ?>;">
+                                    <?php echo number_format((float) $resultado['indice_memoria'], 2); ?>
+                                </div>
+                                <div>Memoria (IM) — <?php echo strtoupper($estadoIM); ?></div>
                             </div>
-                            <div class="col-md-3">
-                                <div style="font-size:1.4rem;"><?php echo number_format((float) $resultado['indice_memoria'], 2); ?></div>
-                                <div>Memoria (IM)</div>
-                            </div>
-                            <div class="col-md-3">
-                                <div style="font-size:1.4rem;"><?php echo number_format((float) $resultado['indice_archivos'], 2); ?></div>
-                                <div>Archivos (IA)</div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="eval-control text-center" style="border-left: 6px solid <?php echo $colores[$estadoIA]; ?>;">
+                                <div style="font-size:1.6rem; font-weight:700; color:<?php echo $colores[$estadoIA]; ?>;">
+                                    <?php echo number_format((float) $resultado['indice_archivos'], 2); ?>
+                                </div>
+                                <div>Archivos (IA) — <?php echo strtoupper($estadoIA); ?></div>
                             </div>
                         </div>
                     </div>
+
+                    <div class="eval-control mb-4">
+                        <h5 class="mb-3">Detalle por variable</h5>
+                        <canvas id="chartVariables" height="90"></canvas>
+                    </div>
+
+                    <div class="eval-control">
+                        <table class="table mb-0">
+                            <thead><tr><th>Variable</th><th>Componente</th><th>Valor crudo</th><th>Normalizado</th><th>Estado</th></tr></thead>
+                            <tbody>
+                                <?php foreach ($detalle as $d): ?>
+                                    <tr>
+                                        <td><?php echo htmlspecialchars($d['nombre']); ?> <small class="text-muted">(<?php echo htmlspecialchars($d['variable_id']); ?>)</small></td>
+                                        <td><?php echo $nombresComponente[$d['componente']] ?? $d['componente']; ?></td>
+                                        <td><?php echo number_format($d['valor_crudo'], 2); ?></td>
+                                        <td><?php echo number_format($d['valor_normalizado'], 2); ?></td>
+                                        <td>
+                                            <span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:<?php echo $colores[$d['estado']]; ?>; margin-right:6px;"></span>
+                                            <?php echo strtoupper($d['estado']); ?>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+                    <script>
+                    (function () {
+                        const datos = <?php echo json_encode($detalle); ?>;
+                        const coloresEstado = <?php echo json_encode($colores); ?>;
+
+                        new Chart(document.getElementById('chartVariables'), {
+                            type: 'bar',
+                            data: {
+                                labels: datos.map(d => d.variable_id + ' - ' + d.nombre),
+                                datasets: [{
+                                    label: 'Valor normalizado (0-100, mas alto = peor)',
+                                    data: datos.map(d => d.valor_normalizado),
+                                    backgroundColor: datos.map(d => coloresEstado[d.estado])
+                                }]
+                            },
+                            options: {
+                                indexAxis: 'y',
+                                scales: { x: { min: 0, max: 100 } },
+                                plugins: { legend: { display: false } }
+                            }
+                        });
+                    })();
+                    </script>
                 <?php else: ?>
                     <p>Todavía no hay capturas para esta instancia. Dale clic a "Capturar ahora".</p>
                 <?php endif; ?>

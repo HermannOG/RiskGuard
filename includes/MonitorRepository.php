@@ -79,7 +79,7 @@ class MonitorRepository
         ];
     }
 
-    private function determinarEstado(int $instanciaId, float $isbd): string
+    public function determinarEstado(int $instanciaId, float $isbd): string
     {
         $stmt = $this->pdo->prepare("
             SELECT estado
@@ -107,5 +107,42 @@ class MonitorRepository
             'variable_id'  => $variableId,
             'valor'        => $valor,
         ]);
+    }
+
+/**
+     * Devuelve el detalle de cada variable de una captura: valor crudo,
+     * valor normalizado, y su propio semaforo (mismo umbral 0-30/30-50/
+     * 50-70/70-100 que se usa para el ISBD general).
+     */
+    public function obtenerDetalleLecturas(int $instanciaId, string $capturadoEn): array
+    {
+        $sql = "
+            SELECT
+                l.variable_id,
+                v.componente,
+                v.nombre,
+                l.valor AS valor_crudo,
+                CASE v.tipo_normalizacion
+                    WHEN 'directo' THEN LEAST(l.valor, 100)
+                    WHEN 'inverso' THEN LEAST(GREATEST(100 - l.valor, 0), 100)
+                    WHEN 'limite'  THEN LEAST(l.valor / NULLIF(v.limite_default, 0) * 100, 100)
+                END AS valor_normalizado
+            FROM monitor_lecturas l
+            JOIN monitor_variables v ON v.id = l.variable_id
+            WHERE l.instancia_id = :instancia_id
+              AND l.capturado_en = :capturado_en
+            ORDER BY v.componente, l.variable_id
+        ";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute(['instancia_id' => $instanciaId, 'capturado_en' => $capturadoEn]);
+
+        $detalle = [];
+        foreach ($stmt->fetchAll() as $fila) {
+            $fila['valor_crudo'] = (float) $fila['valor_crudo'];
+            $fila['valor_normalizado'] = (float) $fila['valor_normalizado'];
+            $fila['estado'] = $this->determinarEstado($instanciaId, $fila['valor_normalizado']);
+            $detalle[] = $fila;
+        }
+        return $detalle;
     }
 }
