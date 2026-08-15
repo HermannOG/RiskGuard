@@ -19,7 +19,17 @@
 
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
-                    <li class="nav-item"><a class="nav-link" href="index.php#servicios"><?php echo t('nav.servicios'); ?></a></li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <?php echo t('nav.servicios'); ?>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="evaluacion-riesgos.php"><i class="fa-solid fa-magnifying-glass-chart me-2"></i>Evaluación de riesgos</a></li>
+                            <?php if ($usuarioSesionNav && $usuarioSesionNav['rol'] === 'admin'): ?>
+                                <li><a class="dropdown-item" href="monitor-instancias.php"><i class="fa-solid fa-heart-pulse me-2"></i>Monitor de Salud</a></li>
+                            <?php endif; ?>
+                        </ul>
+                    </li>
                     <li class="nav-item"><a class="nav-link" href="index.php#metodologia"><?php echo t('nav.metodologia'); ?></a></li>
                     <li class="nav-item"><a class="nav-link" href="index.php#normas"><?php echo t('nav.normas'); ?></a></li>
                     <li class="nav-item"><a class="nav-link" href="index.php#equipo"><?php echo t('nav.equipo'); ?></a></li>
