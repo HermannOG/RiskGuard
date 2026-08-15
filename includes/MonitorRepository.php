@@ -108,18 +108,25 @@ class MonitorRepository
             'valor'        => $valor,
         ]);
     }
-    public function obtenerDetalleLecturas(int $instanciaId, string $capturadoEn): array
+    public function obtenerDetalleLecturas(int $instanciaId, string $capturadoEn, string $lang = 'es'): array
         {
+            $colNombre = $lang === 'en' ? 'nombre_en' : 'nombre';
+            $colDescripcion = $lang === 'en' ? 'descripcion_en' : 'descripcion';
+            $colVerde = $lang === 'en' ? 'banda_verde_en' : 'banda_verde';
+            $colAmarillo = $lang === 'en' ? 'banda_amarillo_en' : 'banda_amarillo';
+            $colAnaranjado = $lang === 'en' ? 'banda_anaranjado_en' : 'banda_anaranjado';
+            $colRojo = $lang === 'en' ? 'banda_rojo_en' : 'banda_rojo';
+
             $sql = "
                 SELECT
                     l.variable_id,
                     v.componente,
-                    v.nombre,
-                    v.descripcion,
-                    v.banda_verde,
-                    v.banda_amarillo,
-                    v.banda_anaranjado,
-                    v.banda_rojo,
+                    v.{$colNombre} AS nombre,
+                    v.{$colDescripcion} AS descripcion,
+                    v.{$colVerde} AS banda_verde,
+                    v.{$colAmarillo} AS banda_amarillo,
+                    v.{$colAnaranjado} AS banda_anaranjado,
+                    v.{$colRojo} AS banda_rojo,
                     l.valor AS valor_crudo,
                     CASE v.tipo_normalizacion
                         WHEN 'directo' THEN LEAST(l.valor, 100)

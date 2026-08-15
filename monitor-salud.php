@@ -16,6 +16,7 @@ $instanciaId = (int) ($_GET['instancia_id'] ?? 0);
 $resultado = null;
 $detalle = [];
 $error = null;
+$lang = $LANG ?? 'es';
 
 $stmt = $pdo->prepare("SELECT * FROM monitor_instancias WHERE id = :id");
 $stmt->execute(['id' => $instanciaId]);
@@ -47,7 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['capturar'])) {
             $repo->registrarLectura($instanciaId, $capturadoEn, $variableId, $valor);
         }
         $resultado = $repo->calcularIndices($instanciaId, $capturadoEn);
-        $detalle = $repo->obtenerDetalleLecturas($instanciaId, $capturadoEn);
+        $detalle = $repo->obtenerDetalleLecturas($instanciaId, $capturadoEn, $lang);
     } catch (Throwable $e) {
         $error = $e->getMessage();
     }
@@ -58,12 +59,16 @@ if (!$resultado) {
     $stmt->execute(['id' => $instanciaId]);
     $resultado = $stmt->fetch() ?: null;
     if ($resultado) {
-        $detalle = $repo->obtenerDetalleLecturas($instanciaId, $resultado['capturado_en']);
+        $detalle = $repo->obtenerDetalleLecturas($instanciaId, $resultado['capturado_en'], $lang);
     }
 }
 
 $colores = ['verde' => '#3FB950', 'amarillo' => '#F2B134', 'anaranjado' => '#F0724A', 'rojo' => '#E5484D'];
-$nombresComponente = ['procesos' => 'Procesos', 'memoria' => 'Memoria', 'archivos' => 'Archivos'];
+$nombresComponente = [
+    'procesos' => t('monitor.componente.procesos'),
+    'memoria'  => t('monitor.componente.memoria'),
+    'archivos' => t('monitor.componente.archivos'),
+];
 $siglaComponente = ['procesos' => 'IP', 'memoria' => 'IM', 'archivos' => 'IA'];
 
 $estadoIP = $resultado ? $repo->determinarEstado($instanciaId, (float) $resultado['indice_procesos']) : null;
@@ -77,32 +82,32 @@ foreach ($detalle as $d) {
 
 $ayudaComponente = [
     'isbd' => [
-        'titulo' => 'ISBD por color',
-        'verde' => 'Base de datos saludable en general, sin problemas relevantes.',
-        'amarillo' => 'Advertencia leve, hay al menos un area que conviene vigilar.',
-        'anaranjado' => 'Salud degradada, uno o mas componentes necesitan atencion pronto.',
-        'rojo' => 'Estado critico, se recomienda revisar de inmediato.',
+        'titulo' => t('monitor.ayuda.isbd.titulo'),
+        'verde' => t('monitor.ayuda.isbd.verde'),
+        'amarillo' => t('monitor.ayuda.isbd.amarillo'),
+        'anaranjado' => t('monitor.ayuda.isbd.anaranjado'),
+        'rojo' => t('monitor.ayuda.isbd.rojo'),
     ],
     'procesos' => [
-        'titulo' => 'Procesos (IP) por color',
-        'verde' => 'Carga de procesos normal, sin senales de saturacion.',
-        'amarillo' => 'Actividad por encima de lo usual, vigilar tendencia.',
-        'anaranjado' => 'Riesgo de saturacion de procesos o sesiones bloqueadas.',
-        'rojo' => 'Saturacion real: conexiones rechazadas o bloqueos serios.',
+        'titulo' => t('monitor.ayuda.procesos.titulo'),
+        'verde' => t('monitor.ayuda.procesos.verde'),
+        'amarillo' => t('monitor.ayuda.procesos.amarillo'),
+        'anaranjado' => t('monitor.ayuda.procesos.anaranjado'),
+        'rojo' => t('monitor.ayuda.procesos.rojo'),
     ],
     'memoria' => [
-        'titulo' => 'Memoria (IM) por color',
-        'verde' => 'Uso de memoria y cache saludable, con margen disponible.',
-        'amarillo' => 'Uso de memoria por encima de lo ideal.',
-        'anaranjado' => 'Presion de memoria notable, rendimiento puede empezar a bajar.',
-        'rojo' => 'Memoria al limite, alto riesgo de lentitud o fallos.',
+        'titulo' => t('monitor.ayuda.memoria.titulo'),
+        'verde' => t('monitor.ayuda.memoria.verde'),
+        'amarillo' => t('monitor.ayuda.memoria.amarillo'),
+        'anaranjado' => t('monitor.ayuda.memoria.anaranjado'),
+        'rojo' => t('monitor.ayuda.memoria.rojo'),
     ],
     'archivos' => [
-        'titulo' => 'Archivos (IA) por color',
-        'verde' => 'Espacio y archivos en buen estado, sin riesgo inmediato.',
-        'amarillo' => 'Espacio libre o archivos que conviene empezar a vigilar.',
-        'anaranjado' => 'Espacio bajo o archivos con problemas, planificar accion.',
-        'rojo' => 'Riesgo alto de quedarse sin espacio o de archivos inaccesibles.',
+        'titulo' => t('monitor.ayuda.archivos.titulo'),
+        'verde' => t('monitor.ayuda.archivos.verde'),
+        'amarillo' => t('monitor.ayuda.archivos.amarillo'),
+        'anaranjado' => t('monitor.ayuda.archivos.anaranjado'),
+        'rojo' => t('monitor.ayuda.archivos.rojo'),
     ],
 ];
 
@@ -152,8 +157,10 @@ function renderBarraRango(array $d, array $colores): string
     $color = $colores[$d['estado']];
     $idPop = 'var-' . $d['variable_id'];
 
-    $popContenido = '<strong>' . htmlspecialchars($d['nombre']) . '</strong><br>' . htmlspecialchars($d['descripcion']) . '<br><br>'
-        . '<span style="color:' . $color . ';">' . strtoupper($d['estado']) . ':</span> ' . htmlspecialchars($d['banda_' . $d['estado']] ?? '');
+    $popContenido = '<strong>' . htmlspecialchars($d['nombre']) . '</strong><br>' . htmlspecialchars($d['descripcion']) . '<br><br>';
+    foreach (['verde', 'amarillo', 'anaranjado', 'rojo'] as $estadoBanda) {
+        $popContenido .= '<span style="color:' . $colores[$estadoBanda] . ';">' . ucfirst($estadoBanda) . ':</span> ' . htmlspecialchars($d['banda_' . $estadoBanda] ?? '') . '<br>';
+    }
 
     return '
         <div class="rango-fila">
@@ -223,13 +230,13 @@ function renderBarraRango(array $d, array $colores): string
     <main class="flex-grow-1">
         <section class="section">
             <div class="container">
-                <span class="section-eyebrow"><i class="fa-solid fa-heart-pulse me-2"></i>Monitor de Salud</span>
+                <span class="section-eyebrow"><i class="fa-solid fa-heart-pulse me-2"></i><?php echo t('monitor.nav.item'); ?></span>
                 <h1 class="section-title"><?php echo htmlspecialchars($instancia['nombre']); ?></h1>
                 <p class="section-lead"><?php echo htmlspecialchars($instancia['tipo_motor']); ?> · <?php echo htmlspecialchars($instancia['host']); ?></p>
 
                 <form method="post" class="mb-4">
                     <button type="submit" name="capturar" value="1" class="btn btn-cta">
-                        <i class="fa-solid fa-rotate me-2"></i>Capturar ahora
+                        <i class="fa-solid fa-rotate me-2"></i><?php echo t('monitor.salud.capturar'); ?>
                     </button>
                 </form>
 
@@ -270,7 +277,7 @@ function renderBarraRango(array $d, array $colores): string
                     <?php foreach (['procesos', 'memoria', 'archivos'] as $comp): ?>
                         <div class="collapse mb-3" id="detalle-<?php echo $comp; ?>">
                             <div class="eval-control">
-                                <h6 class="mb-3">Por qué <?php echo $nombresComponente[$comp]; ?> (<?php echo $siglaComponente[$comp]; ?>) está así</h6>
+                                <h6 class="mb-3"><?php echo t('monitor.salud.porque'); ?> <?php echo $nombresComponente[$comp]; ?> (<?php echo $siglaComponente[$comp]; ?>) <?php echo t('monitor.salud.esta_asi'); ?></h6>
                                 <?php foreach ($detallePorComponente[$comp] as $d): ?>
                                     <?php echo renderBarraRango($d, $colores); ?>
                                 <?php endforeach; ?>
@@ -279,7 +286,7 @@ function renderBarraRango(array $d, array $colores): string
                     <?php endforeach; ?>
 
                 <?php else: ?>
-                    <p>Todavía no hay capturas para esta instancia. Dale clic a "Capturar ahora".</p>
+                    <p><?php echo t('monitor.salud.sincapturas'); ?></p>
                 <?php endif; ?>
             </div>
         </section>
