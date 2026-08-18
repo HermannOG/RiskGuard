@@ -10,23 +10,29 @@ $pageTitle = isset($pageTitleKey) ? t($pageTitleKey) : null;
 <head>
     <meta charset="UTF-8">
     <script>
-      (function() {
-        var saved = localStorage.getItem('riskguard-theme');
-        if (saved === 'light') {
-          document.documentElement.setAttribute('data-theme', 'light');
-        }
-      })();
+        (function() {
+            var saved = localStorage.getItem('riskguard-theme');
+            if (saved === 'light') {
+                document.documentElement.setAttribute('data-theme', 'light');
+            }
+        })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><?php echo isset($pageTitle) ? $pageTitle . ' | RiskGuard Consulting' : 'RiskGuard Consulting — Gestión de Riesgos e ISO 27001'; ?></title>
     <meta name="description" content="<?php echo t('meta.description'); ?>">
+
+    <link rel="icon" type="image/svg+xml" href="<?php echo asset_url('assets/img/favicon.svg'); ?>">
+    <link rel="icon" type="image/png" sizes="32x32" href="<?php echo asset_url('assets/img/favicon-32x32.png'); ?>">
+    <link rel="icon" type="image/png" sizes="16x16" href="<?php echo asset_url('assets/img/favicon-16x16.png'); ?>">
+    <link rel="shortcut icon" href="<?php echo asset_url('assets/img/favicon.ico'); ?>">
+    <link rel="apple-touch-icon" sizes="180x180" href="<?php echo asset_url('assets/img/apple-touch-icon.png'); ?>">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="<?php echo asset_url('assets/css/bootstrap.min.css'); ?>">
-        <link rel="stylesheet" href="<?php echo asset_url('assets/css/estilos.css'); ?>">
+    <link rel="stylesheet" href="<?php echo asset_url('assets/css/estilos.css'); ?>">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 </head>
 <body class="d-flex flex-column min-vh-100">
