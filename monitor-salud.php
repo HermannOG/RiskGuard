@@ -184,7 +184,7 @@ function renderBarraRango(array $d, array $colores): string
                     <div class="rango-zona rojo"></div>
                     <div class="rango-marcador" style="left:' . $pct . '%;"></div>
                 </div>
-                <div class="rango-ticks"><span>0</span><span>30</span><span>50</span><span>70</span><span>100</span></div>
+                <div class="rango-ticks"><span style="left:0%;">0</span><span style="left:30%;">30</span><span style="left:50%;">50</span><span style="left:70%;">70</span><span style="left:100%;">100</span></div>
             </div>
             <div class="rango-valor" style="color:' . $color . ';">' . number_format($d['valor_normalizado'], 2) . '</div>
         </div>
@@ -254,9 +254,10 @@ function formatearFecha(string $capturadoEn, string $lang): string
         .rango-zona.anaranjado{ background: #F0724A; width: 20%; }
         .rango-zona.rojo{ background: #E5484D; width: 30%; }
         .rango-marcador{ position: absolute; top: -5px; width: 3px; height: 20px; background: var(--text); border-radius: 2px; transform: translateX(-50%); box-shadow: 0 0 0 2px var(--surface); }
-        .rango-ticks{ display:flex; font-family: var(--font-mono); font-size: 0.65rem; color: var(--text-muted); margin-top: 2px; }
-        .rango-ticks span{ width: 30%; }
-        .rango-ticks span:nth-child(2), .rango-ticks span:nth-child(3){ width: 20%; }
+        .rango-ticks{ position:relative; height:14px; font-family: var(--font-mono); font-size: 0.65rem; color: var(--text-muted); margin-top: 2px; }
+        .rango-ticks span{ position:absolute; top:0; transform:translateX(-50%); }
+        .rango-ticks span:first-child{ transform:translateX(0); }
+        .rango-ticks span:last-child{ transform:translateX(-100%); }
         .rango-valor{ text-align: right; font-family: var(--font-mono); font-weight: 600; font-size: 0.95rem; }
 
         .hist-titulo{ margin-bottom:1rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em; font-size:0.78rem; font-family:var(--font-mono); }
@@ -317,7 +318,7 @@ function formatearFecha(string $capturadoEn, string $lang): string
                                         <div class="mini-gauge-h-valor" style="color:<?php echo $colorComp; ?>;"><?php echo number_format($valorComp, 2); ?></div>
                                         <div class="mini-gauge-h-label">
                                             <?php echo $nombresComponente[$comp]; ?> (<?php echo $siglaComponente[$comp]; ?>)
-                                            <button type="button" class="btn-ayuda" data-popover-target="<?php echo $comp; ?>" onclick="event.stopPropagation();">?</button>
+                                            <button type="button" class="btn-ayuda" data-popover-target="<?php echo $comp; ?>">?</button>
                                             <?php echo renderPopover($comp, $ayudaComponente[$comp], $colores); ?>
                                             <i class="fa-solid fa-chevron-down chevron" style="font-size:0.65rem; color:var(--text-muted);"></i>
                                         </div>
@@ -343,8 +344,7 @@ function formatearFecha(string $capturadoEn, string $lang): string
 
                 <?php if (!empty($historial)): ?>
                     <div class="eval-control mt-4">
-                        <div class="hist-titulo"><?php echo $lang === 'en' ? 'Capture history' : 'Historial de capturas'; ?></div>
-                        <button type="button" class="btn btn-ghost mb-3" data-bs-toggle="collapse" data-bs-target="#historial-panel" aria-expanded="false">
+                            <button type="button" class="btn btn-ghost mb-3" data-bs-toggle="collapse" data-bs-target="#historial-panel" aria-expanded="false">
                             <?php echo $lang === 'en' ? 'View history' : 'Ver historial'; ?> <i class="fa-solid fa-chevron-down ms-1"></i>
                         </button>
                         <div class="collapse" id="historial-panel">
@@ -392,7 +392,9 @@ function formatearFecha(string $capturadoEn, string $lang): string
 
         document.querySelectorAll('[data-popover-target]').forEach((btn) => {
             btn.addEventListener('click', function (e) {
+                e.preventDefault();
                 e.stopPropagation();
+                e.stopImmediatePropagation();
                 const id = 'pop-' + this.dataset.popoverTarget;
                 const pop = document.getElementById(id);
                 const yaAbierto = pop.classList.contains('show');
