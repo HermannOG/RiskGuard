@@ -224,12 +224,20 @@ function formatearFecha(string $capturadoEn, string $lang): string
 
         .btn-ayuda{ background: transparent; border: 1px solid var(--border); color: var(--text-muted); width:24px; height:24px; border-radius:50%; cursor:pointer; font-size:0.78rem; line-height:1; }
         .btn-ayuda:hover{ border-color: var(--risk-mid); color: var(--text); }
-        .ayuda-isbd{ position:absolute; top:0; right:15px; width:30px; height:30px; font-size:0.9rem; }
+        .ayuda-isbd-wrap{ position:absolute; top:0; right:15px; }
 
-        .popover-simple{ position:absolute; z-index:30; background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:0.9rem 1rem; width:260px; font-size:0.83rem; line-height:1.5; box-shadow:0 8px 24px rgba(0,0,0,0.4); display:none; text-align:left; top:110%; left:50%; transform:translateX(-50%); }
+        .popover-simple{ position:absolute; z-index:30; background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:0.9rem 1rem; width:260px; font-size:0.83rem; line-height:1.5; box-shadow:0 8px 24px rgba(0,0,0,0.4); display:none; text-align:left; top:calc(100% + 10px); right:0; }
         .popover-simple.show{ display:block; }
-        .popover-var{ top:100%; left:0; transform:none; margin-top:6px; }
+        .popover-simple::before{ content:''; position:absolute; top:-6px; right:10px; width:12px; height:12px; background:var(--surface); border-left:1px solid var(--border); border-top:1px solid var(--border); transform:rotate(45deg); }
+        .popover-var{ top:100%; left:0; right:auto; margin-top:6px; }
+        .popover-var::before{ display:none; }
 
+        .dash-mini-row{ display:flex; gap:1rem; margin-top:1.5rem; flex-wrap:wrap; }
+        .mini-gauge-h{ flex:1; min-width:180px; background:var(--bg); border-radius:12px; padding:1.2rem; text-align:center; cursor:pointer; transition:border-color 0.15s ease; border:1px solid transparent; }
+        .mini-gauge-h:hover{ border-color:var(--risk-mid); }
+        .mini-gauge-h svg{ width:130px; }
+        .mini-gauge-h-valor{ font-family:var(--font-mono); font-weight:700; font-size:1.8rem; margin-top:0.3rem; }
+        .mini-gauge-h-label{ font-size:0.95rem; color:var(--text-muted); margin-top:0.3rem; display:flex; align-items:center; justify-content:center; gap:0.4rem; position:relative; }
         .componente-card{ cursor: pointer; transition: border-color 0.15s ease; }
         .componente-card:hover{ border-color: var(--risk-mid); }
         .componente-card .chevron{ transition: transform 0.2s ease; }
@@ -287,8 +295,10 @@ function formatearFecha(string $capturadoEn, string $lang): string
                         <p class="section-lead" style="max-width:60ch;"><?php echo t('monitor.isbd.intro'); ?></p>
 
                         <div class="dash-isbd mx-auto" style="position:relative;">
-                            <button type="button" class="btn-ayuda ayuda-isbd" data-popover-target="isbd">?</button>
-                            <?php echo renderPopover('isbd', $ayudaComponente['isbd'], $colores); ?>
+                            <div class="ayuda-isbd-wrap">
+                                <button type="button" class="btn-ayuda" data-popover-target="isbd">?</button>
+                                <?php echo renderPopover('isbd', $ayudaComponente['isbd'], $colores); ?>
+                            </div>
                             <?php echo renderRoscaGrande((float) $resultado['indice_salud'], $colorGeneral); ?>
                         </div>
 
@@ -299,25 +309,22 @@ function formatearFecha(string $capturadoEn, string $lang): string
                         </div>
 
                         <div class="collapse mt-4" id="isbd-panel">
-                            <div class="dash-mini-col">
+                            <div class="dash-mini-row">
                                 <?php foreach (['procesos' => $estadoIP, 'memoria' => $estadoIM, 'archivos' => $estadoIA] as $comp => $estadoComp): ?>
                                     <?php $colorComp = $colores[$estadoComp]; $valorComp = (float) $resultado['indice_' . $comp]; ?>
-                                    <div class="mini-gauge componente-card" role="button" data-bs-toggle="collapse" data-bs-target="#detalle-<?php echo $comp; ?>" aria-expanded="false">
+                                    <div class="mini-gauge-h componente-card" role="button" data-bs-toggle="collapse" data-bs-target="#detalle-<?php echo $comp; ?>" aria-expanded="false">
                                         <?php echo renderGaugeChico($valorComp); ?>
-                                        <div>
-                                            <div class="mini-gauge-valor" style="color:<?php echo $colorComp; ?>;"><?php echo number_format($valorComp, 2); ?></div>
-                                            <div class="mini-gauge-label">
-                                                <?php echo $nombresComponente[$comp]; ?> (<?php echo $siglaComponente[$comp]; ?>)
-                                                <button type="button" class="btn-ayuda" data-popover-target="<?php echo $comp; ?>" onclick="event.stopPropagation();">?</button>
-                                                <?php echo renderPopover($comp, $ayudaComponente[$comp], $colores); ?>
-                                                <i class="fa-solid fa-chevron-down chevron" style="font-size:0.65rem; color:var(--text-muted);"></i>
-                                            </div>
+                                        <div class="mini-gauge-h-valor" style="color:<?php echo $colorComp; ?>;"><?php echo number_format($valorComp, 2); ?></div>
+                                        <div class="mini-gauge-h-label">
+                                            <?php echo $nombresComponente[$comp]; ?> (<?php echo $siglaComponente[$comp]; ?>)
+                                            <button type="button" class="btn-ayuda" data-popover-target="<?php echo $comp; ?>" onclick="event.stopPropagation();">?</button>
+                                            <?php echo renderPopover($comp, $ayudaComponente[$comp], $colores); ?>
+                                            <i class="fa-solid fa-chevron-down chevron" style="font-size:0.65rem; color:var(--text-muted);"></i>
                                         </div>
                                     </div>
                                 <?php endforeach; ?>
                             </div>
                         </div>
-                    </div>
 
                     <?php foreach (['procesos', 'memoria', 'archivos'] as $comp): ?>
                         <div class="collapse mb-3" id="detalle-<?php echo $comp; ?>">
