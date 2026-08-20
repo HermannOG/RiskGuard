@@ -282,29 +282,37 @@ function formatearFecha(string $capturadoEn, string $lang): string
                 <?php if ($resultado): ?>
                     <?php $colorGeneral = $colores[$resultado['estado']] ?? '#999'; ?>
 
-                    <div class="eval-control mb-4">
-                        <div class="dash-row">
-                            <div class="dash-isbd">
-                                <button type="button" class="btn-ayuda ayuda-isbd" data-popover-target="isbd">?</button>
-                                <?php echo renderPopover('isbd', $ayudaComponente['isbd'], $colores); ?>
-                                <?php echo renderRoscaGrande((float) $resultado['indice_salud'], $colorGeneral); ?>
-                            </div>
-                            <div class="dash-mini-col">
-                                <?php foreach (['procesos' => $estadoIP, 'memoria' => $estadoIM, 'archivos' => $estadoIA] as $comp => $estadoComp): ?>
-                                    <?php $colorComp = $colores[$estadoComp]; $valorComp = (float) $resultado['indice_' . $comp]; ?>
-                                    <div class="mini-gauge componente-card" role="button" data-bs-toggle="collapse" data-bs-target="#detalle-<?php echo $comp; ?>" aria-expanded="false">
-                                        <?php echo renderGaugeChico($valorComp); ?>
-                                        <div>
-                                            <div class="mini-gauge-valor" style="color:<?php echo $colorComp; ?>;"><?php echo number_format($valorComp, 2); ?></div>
-                                            <div class="mini-gauge-label">
-                                                <?php echo $nombresComponente[$comp]; ?> (<?php echo $siglaComponente[$comp]; ?>)
-                                                <button type="button" class="btn-ayuda" data-popover-target="<?php echo $comp; ?>" onclick="event.stopPropagation();">?</button>
-                                                <?php echo renderPopover($comp, $ayudaComponente[$comp], $colores); ?>
-                                                <i class="fa-solid fa-chevron-down chevron" style="font-size:0.65rem; color:var(--text-muted);"></i>
+                                        <div class="eval-control mb-4">
+                        <h2 class="section-title" style="font-size:1.3rem; margin-top:0;"><?php echo t('monitor.isbd.titulo'); ?></h2>
+                        <p class="section-lead" style="max-width:60ch;"><?php echo t('monitor.isbd.intro'); ?></p>
+                        <button type="button" class="btn btn-ghost" data-bs-toggle="collapse" data-bs-target="#isbd-panel" aria-expanded="false">
+                            <?php echo t('monitor.isbd.ver'); ?> <i class="fa-solid fa-chevron-down ms-1"></i>
+                        </button>
+
+                        <div class="collapse mt-4" id="isbd-panel">
+                            <div class="dash-row">
+                                <div class="dash-isbd">
+                                    <button type="button" class="btn-ayuda ayuda-isbd" data-popover-target="isbd">?</button>
+                                    <?php echo renderPopover('isbd', $ayudaComponente['isbd'], $colores); ?>
+                                    <?php echo renderRoscaGrande((float) $resultado['indice_salud'], $colorGeneral); ?>
+                                </div>
+                                <div class="dash-mini-col">
+                                    <?php foreach (['procesos' => $estadoIP, 'memoria' => $estadoIM, 'archivos' => $estadoIA] as $comp => $estadoComp): ?>
+                                        <?php $colorComp = $colores[$estadoComp]; $valorComp = (float) $resultado['indice_' . $comp]; ?>
+                                        <div class="mini-gauge componente-card" role="button" data-bs-toggle="collapse" data-bs-target="#detalle-<?php echo $comp; ?>" aria-expanded="false">
+                                            <?php echo renderGaugeChico($valorComp); ?>
+                                            <div>
+                                                <div class="mini-gauge-valor" style="color:<?php echo $colorComp; ?>;"><?php echo number_format($valorComp, 2); ?></div>
+                                                <div class="mini-gauge-label">
+                                                    <?php echo $nombresComponente[$comp]; ?> (<?php echo $siglaComponente[$comp]; ?>)
+                                                    <button type="button" class="btn-ayuda" data-popover-target="<?php echo $comp; ?>" onclick="event.stopPropagation();">?</button>
+                                                    <?php echo renderPopover($comp, $ayudaComponente[$comp], $colores); ?>
+                                                    <i class="fa-solid fa-chevron-down chevron" style="font-size:0.65rem; color:var(--text-muted);"></i>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                <?php endforeach; ?>
+                                    <?php endforeach; ?>
+                                </div>
                             </div>
                         </div>
                     </div>

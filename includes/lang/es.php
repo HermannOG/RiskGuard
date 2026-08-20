@@ -194,4 +194,7 @@ return [
         'monitor.ayuda.archivos.rojo' => 'Riesgo alto de quedarse sin espacio o de archivos inaccesibles.',
         'monitor.home.desc' => 'Vigila procesos, memoria y archivos de tus bases de datos en tiempo real, con semáforo de alerta.',
         'monitor.home.btn'  => 'Ver monitor',
+        'monitor.isbd.titulo' => 'ISBD — Índice de Salud de la Base de Datos',
+        'monitor.isbd.intro'  => 'Es el número que resume, en una sola escala de 0 a 100, qué tan saludable está tu base de datos ahora mismo — combina procesos, memoria y archivos con los pesos definidos para este proyecto (25% / 60% / 15%).',
+        'monitor.isbd.ver'    => 'Ver el índice y su detalle',
 ];

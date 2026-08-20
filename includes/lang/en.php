@@ -194,4 +194,7 @@ return [
         'monitor.ayuda.archivos.rojo' => 'High risk of running out of space or inaccessible files.',
         'monitor.home.desc' => 'Watch your databases\' processes, memory, and files in real time, with an alert semaphore.',
         'monitor.home.btn'  => 'View monitor',
+        'monitor.isbd.titulo' => 'ISBD — Database Health Index',
+        'monitor.isbd.intro'  => 'This is the number that summarizes, on a single 0-100 scale, how healthy your database is right now — it combines processes, memory, and files using the weights defined for this project (25% / 60% / 15%).',
+        'monitor.isbd.ver'    => 'View the index and its detail',
 ];
