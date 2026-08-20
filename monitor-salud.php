@@ -233,11 +233,13 @@ function formatearFecha(string $capturadoEn, string $lang): string
         .popover-var::before{ display:none; }
 
         .dash-mini-row{ display:flex; gap:1rem; margin-top:1.5rem; flex-wrap:wrap; }
-        .mini-gauge-h{ flex:1; min-width:180px; background:var(--bg); border-radius:12px; padding:1.2rem; text-align:center; cursor:pointer; transition:border-color 0.15s ease; border:1px solid transparent; }
+        .mini-gauge-h{background:var(--bg); border-radius:12px; padding:1.2rem; text-align:center; cursor:pointer; transition:border-color 0.15s ease; border:1px solid transparent; }
         .mini-gauge-h:hover{ border-color:var(--risk-mid); }
         .mini-gauge-h svg{ width:130px; }
         .mini-gauge-h-valor{ font-family:var(--font-mono); font-weight:700; font-size:1.8rem; margin-top:0.3rem; }
         .mini-gauge-h-label{ font-size:0.95rem; color:var(--text-muted); margin-top:0.3rem; display:flex; align-items:center; justify-content:center; gap:0.4rem; position:relative; }
+        .mini-gauge-h-wrap{ position:relative; flex:1; min-width:180px; }
+        .mini-ayuda-btn{ position:absolute; top:10px; right:10px; z-index:5; }
         .componente-card{ cursor: pointer; transition: border-color 0.15s ease; }
         .componente-card:hover{ border-color: var(--risk-mid); }
         .componente-card .chevron{ transition: transform 0.2s ease; }
@@ -270,6 +272,12 @@ function formatearFecha(string $capturadoEn, string $lang): string
         .hist-fila[aria-expanded="true"] .hist-chevron{ transform:rotate(180deg); }
         .hist-detalle{ padding: 1rem; margin-bottom: 0.6rem; }
         .hist-mini-row{ display:flex; gap:1rem; align-items:center; flex-wrap:wrap; }
+
+        .comp-block{ background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.25rem; border-left: 4px solid var(--border); }
+        .comp-block-header{ display:flex; align-items:center; gap:0.7rem; margin-bottom:1rem; }
+        .comp-block-icon{ width:34px; height:34px; border-radius:9px; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,0.06); font-size:1rem; flex-shrink:0; }
+        .comp-block-title{ font-size:1.05rem; font-weight:600; }
+        .comp-block-sub{ font-size:0.8rem; color:var(--text-muted); }
     </style>
     <main class="flex-grow-1">
         <section class="section">
@@ -313,30 +321,43 @@ function formatearFecha(string $capturadoEn, string $lang): string
                             <div class="dash-mini-row">
                                 <?php foreach (['procesos' => $estadoIP, 'memoria' => $estadoIM, 'archivos' => $estadoIA] as $comp => $estadoComp): ?>
                                     <?php $colorComp = $colores[$estadoComp]; $valorComp = (float) $resultado['indice_' . $comp]; ?>
-                                    <div class="mini-gauge-h componente-card" role="button" data-bs-toggle="collapse" data-bs-target="#detalle-<?php echo $comp; ?>" aria-expanded="false">
-                                        <?php echo renderGaugeChico($valorComp); ?>
-                                        <div class="mini-gauge-h-valor" style="color:<?php echo $colorComp; ?>;"><?php echo number_format($valorComp, 2); ?></div>
-                                        <div class="mini-gauge-h-label">
-                                            <?php echo $nombresComponente[$comp]; ?> (<?php echo $siglaComponente[$comp]; ?>)
-                                            <button type="button" class="btn-ayuda" data-popover-target="<?php echo $comp; ?>">?</button>
-                                            <?php echo renderPopover($comp, $ayudaComponente[$comp], $colores); ?>
-                                            <i class="fa-solid fa-chevron-down chevron" style="font-size:0.65rem; color:var(--text-muted);"></i>
+                                    <div class="mini-gauge-h-wrap">
+                                        <button type="button" class="btn-ayuda mini-ayuda-btn" data-popover-target="<?php echo $comp; ?>">?</button>
+                                        <?php echo renderPopover($comp, $ayudaComponente[$comp], $colores); ?>
+                                        <div class="mini-gauge-h componente-card" role="button" data-bs-toggle="collapse" data-bs-target="#detalle-<?php echo $comp; ?>" aria-expanded="false">
+                                            <?php echo renderGaugeChico($valorComp); ?>
+                                            <div class="mini-gauge-h-valor" style="color:<?php echo $colorComp; ?>;"><?php echo number_format($valorComp, 2); ?></div>
+                                            <div class="mini-gauge-h-label">
+                                                <?php echo $nombresComponente[$comp]; ?> (<?php echo $siglaComponente[$comp]; ?>)
+                                                <i class="fa-solid fa-chevron-down chevron" style="font-size:0.65rem; color:var(--text-muted);"></i>
+                                            </div>
                                         </div>
                                     </div>
                                 <?php endforeach; ?>
                             </div>
-                        </div>
 
-                    <?php foreach (['procesos', 'memoria', 'archivos'] as $comp): ?>
-                        <div class="collapse mb-3" id="detalle-<?php echo $comp; ?>">
-                            <div class="eval-control">
-                                <h6 class="mb-3"><?php echo t('monitor.salud.porque'); ?> <?php echo $nombresComponente[$comp]; ?> (<?php echo $siglaComponente[$comp]; ?>) <?php echo t('monitor.salud.esta_asi'); ?></h6>
-                                <?php foreach ($detallePorComponente[$comp] as $d): ?>
-                                    <?php echo renderBarraRango($d, $colores); ?>
-                                <?php endforeach; ?>
-                            </div>
+                            <?php
+                            $iconoComponente = ['procesos' => 'fa-microchip', 'memoria' => 'fa-memory', 'archivos' => 'fa-folder-open'];
+                            $subtituloDetalle = $lang === 'en' ? 'Variables that make up this index' : 'Variables que forman este índice';
+                            ?>
+                            <?php foreach (['procesos' => $estadoIP, 'memoria' => $estadoIM, 'archivos' => $estadoIA] as $comp => $estadoComp): ?>
+                                <?php $colorComp = $colores[$estadoComp]; ?>
+                                <div class="collapse mt-3" id="detalle-<?php echo $comp; ?>">
+                                    <div class="comp-block" style="border-left-color:<?php echo $colorComp; ?>;">
+                                        <div class="comp-block-header">
+                                            <div class="comp-block-icon" style="color:<?php echo $colorComp; ?>;"><i class="fa-solid <?php echo $iconoComponente[$comp]; ?>"></i></div>
+                                            <div>
+                                                <div class="comp-block-title"><?php echo $nombresComponente[$comp]; ?> <span style="color:var(--text-muted); font-weight:400;">(<?php echo $siglaComponente[$comp]; ?>)</span></div>
+                                                <div class="comp-block-sub"><?php echo $subtituloDetalle; ?></div>
+                                            </div>
+                                        </div>
+                                        <?php foreach ($detallePorComponente[$comp] as $d): ?>
+                                            <?php echo renderBarraRango($d, $colores); ?>
+                                        <?php endforeach; ?>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
                         </div>
-                    <?php endforeach; ?>
 
                 <?php else: ?>
                     <p><?php echo t('monitor.salud.sincapturas'); ?></p>
@@ -392,14 +413,8 @@ function formatearFecha(string $capturadoEn, string $lang): string
 
         document.querySelectorAll('[data-popover-target]').forEach((btn) => {
             btn.addEventListener('click', function (e) {
-                e.preventDefault();
                 e.stopPropagation();
-                e.stopImmediatePropagation();
                 const id = 'pop-' + this.dataset.popoverTarget;
-                const pop = document.getElementById(id);
-                const yaAbierto = pop.classList.contains('show');
-                document.querySelectorAll('.popover-simple.show').forEach((p) => p.classList.remove('show'));
-                if (!yaAbierto) pop.classList.add('show');
             });
         });
 
