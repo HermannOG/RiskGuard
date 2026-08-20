@@ -85,7 +85,15 @@ $detallePorComponente = ['procesos' => [], 'memoria' => [], 'archivos' => []];
 foreach ($detalle as $d) {
     $detallePorComponente[$d['componente']][] = $d;
 }
-
+$stmt = $pdo->prepare("
+    SELECT COUNT(*) AS total_capturas,
+           MIN(capturado_en) AS primera,
+           MAX(capturado_en) AS ultima
+    FROM monitor_indices
+    WHERE instancia_id = :id
+");
+$stmt->execute(['id' => $instanciaId]);
+$ctx = $stmt->fetch() ?: ['total_capturas' => 0, 'primera' => null, 'ultima' => null];
 
 
 $ayudaComponente = [
@@ -325,6 +333,15 @@ function formatearFecha(string $capturadoEn, string $lang): string
         .comp-block-icon{ width:34px; height:34px; border-radius:9px; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,0.06); font-size:1rem; flex-shrink:0; }
         .comp-block-title{ font-size:1.05rem; font-weight:600; }
         .comp-block-sub{ font-size:0.8rem; color:var(--text-muted); }
+
+        .isbd-row{ display:flex; gap:2rem; align-items:center; justify-content:center; flex-wrap:wrap; margin-top:1rem; }
+        .tabla-contexto-wrap{ flex:1 1 340px; max-width:460px; background:var(--bg); border:1px solid var(--border); border-radius:12px; padding:1rem 1.2rem; }                .tabla-contexto-titulo{ font-size:0.75rem; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-muted); margin-bottom:0.7rem; font-family:var(--font-mono); }
+        .tabla-contexto{ width:100%; border-collapse:collapse; font-size:0.85rem; }
+        .tabla-contexto th{ text-align:left; font-weight:500; color:var(--text-muted); padding:0.3rem 0.6rem 0.3rem 0; white-space:nowrap; }
+        .tabla-contexto td{ text-align:right; font-family:var(--font-mono); padding:0.3rem 0; word-break:break-all; }
+        .tabla-contexto tr + tr th, .tabla-contexto tr + tr td{ border-top:1px solid var(--border); }
+        .ctx-punto{ display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:0.4rem; vertical-align:middle; }
+
     </style>
     <main class="flex-grow-1">
         <section class="section">
@@ -350,16 +367,16 @@ function formatearFecha(string $capturadoEn, string $lang): string
                         <h2 class="section-title" style="font-size:1.3rem; margin-top:0;"><?php echo t('monitor.isbd.titulo'); ?></h2>
                         <p class="section-lead" style="max-width:60ch;"><?php echo t('monitor.isbd.intro'); ?></p>
 
-                        <div class="dash-isbd mx-auto" style="position:relative;">
-                            <div class="ayuda-isbd-wrap">
-                                <button type="button" class="btn-ayuda" data-popover-target="isbd">?</button>
-                                <?php echo renderPopover('isbd', $ayudaComponente['isbd'], $colores); ?>
+                        <div class="isbd-row">
+                            <div class="dash-isbd" style="position:relative;">
+                                <div class="ayuda-isbd-wrap">
+                                    <button type="button" class="btn-ayuda" data-popover-target="isbd">?</button>
+                                    <?php echo renderPopover('isbd', $ayudaComponente['isbd'], $colores); ?>
+                                </div>
+                                <?php echo renderRoscaGrande((float) $resultado['indice_salud'], $colorGeneral); ?>
                             </div>
-                            <?php echo renderRoscaGrande((float) $resultado['indice_salud'], $colorGeneral); ?>
+                            <?php echo renderTablaContexto($instancia, $resultado, $detalle, $ctx, $colores); ?>
                         </div>
-
-                        <?php echo renderTablaContexto($instancia, $resultado, $detalle, $ctx, $colores); ?>
-
                         <div class="text-center mt-3">
                             <button type="button" class="btn btn-ghost" data-bs-toggle="collapse" data-bs-target="#isbd-panel" aria-expanded="false">
                                 <?php echo t('monitor.isbd.ver'); ?> <i class="fa-solid fa-chevron-down ms-1"></i>
