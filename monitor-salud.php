@@ -411,10 +411,14 @@ function formatearFecha(string $capturadoEn, string $lang): string
             target.addEventListener('hide.bs.collapse', () => card.setAttribute('aria-expanded', 'false'));
         });
 
-        document.querySelectorAll('[data-popover-target]').forEach((btn) => {
+            document.querySelectorAll('[data-popover-target]').forEach((btn) => {
             btn.addEventListener('click', function (e) {
                 e.stopPropagation();
                 const id = 'pop-' + this.dataset.popoverTarget;
+                const pop = document.getElementById(id);
+                const yaAbierto = pop.classList.contains('show');
+                document.querySelectorAll('.popover-simple.show').forEach((p) => p.classList.remove('show'));
+                if (!yaAbierto) pop.classList.add('show');
             });
         });
 
