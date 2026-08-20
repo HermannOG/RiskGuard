@@ -26,7 +26,7 @@
                         <ul class="dropdown-menu">
                             <li><a class="dropdown-item" href="evaluacion-riesgos.php"><i class="fa-solid fa-magnifying-glass-chart me-2"></i>Evaluación de riesgos</a></li>
                             <?php if ($usuarioSesionNav && $usuarioSesionNav['rol'] === 'admin'): ?>
-                                <li><a class="dropdown-item" href="monitor-instancias.php"><i class="fa-solid fa-heart-pulse me-2"></i>Monitor de Salud</a></li>
+                                <li><a class="dropdown-item" href="monitor-instancias.php"><i class="fa-solid fa-heart-pulse me-2"></i><?php echo t('monitor.nav.item'); ?></a></li>
                             <?php endif; ?>
                         </ul>
                     </li>

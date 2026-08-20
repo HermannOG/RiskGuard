@@ -34,9 +34,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'usuario'      => $usuario,
             'password_enc' => monitorEncrypt($password),
         ]);
-        $mensaje = 'Instancia agregada correctamente.';
+        $mensaje = t('monitor.instancias.ok');
     } else {
-        $mensaje = 'Faltan campos obligatorios.';
+        $mensaje = t('monitor.instancias.faltan');
     }
 }
 
@@ -45,9 +45,9 @@ $instancias = $pdo->query("SELECT id, nombre, tipo_motor, host, puerto, nombre_b
     <main class="flex-grow-1">
         <section class="section">
             <div class="container">
-                <span class="section-eyebrow"><i class="fa-solid fa-server me-2"></i>Monitor de Salud</span>
-                <h1 class="section-title">Instancias monitoreadas</h1>
-                <p class="section-lead">Registra las bases de datos que quieres vigilar.</p>
+                <span class="section-eyebrow"><i class="fa-solid fa-server me-2"></i><?php echo t('monitor.nav.item'); ?></span>
+                <h1 class="section-title"><?php echo t('monitor.instancias.titulo'); ?></h1>
+                <p class="section-lead"><?php echo t('monitor.instancias.lead'); ?></p>
 
                 <?php if ($mensaje): ?>
                     <div class="alert alert-info"><?php echo htmlspecialchars($mensaje); ?></div>
@@ -57,11 +57,11 @@ $instancias = $pdo->query("SELECT id, nombre, tipo_motor, host, puerto, nombre_b
                     <div class="col-lg-6">
                         <form method="post" class="eval-control">
                             <div class="mb-3">
-                                <label class="form-label">Nombre</label>
+                                <label class="form-label"><?php echo t('monitor.instancias.nombre'); ?></label>
                                 <input type="text" name="nombre" class="form-control" required>
                             </div>
                             <div class="mb-3">
-                                <label class="form-label">Motor</label>
+                                <label class="form-label"><?php echo t('monitor.instancias.motor'); ?></label>
                                 <select name="tipo_motor" class="form-select" required>
                                     <option value="mariadb">MariaDB / MySQL</option>
                                     <option value="oracle">Oracle</option>
@@ -70,39 +70,39 @@ $instancias = $pdo->query("SELECT id, nombre, tipo_motor, host, puerto, nombre_b
                                 </select>
                             </div>
                             <div class="mb-3">
-                                <label class="form-label">Host</label>
+                                <label class="form-label"><?php echo t('monitor.instancias.host'); ?></label>
                                 <input type="text" name="host" class="form-control" placeholder="127.0.0.1" required>
                             </div>
                             <div class="mb-3">
-                                <label class="form-label">Puerto</label>
+                                <label class="form-label"><?php echo t('monitor.instancias.puerto'); ?></label>
                                 <input type="number" name="puerto" class="form-control" value="3306" required>
                             </div>
                             <div class="mb-3">
-                                <label class="form-label">Base de datos</label>
+                                <label class="form-label"><?php echo t('monitor.instancias.bd'); ?></label>
                                 <input type="text" name="nombre_bd" class="form-control" required>
                             </div>
                             <div class="mb-3">
-                                <label class="form-label">Usuario</label>
+                                <label class="form-label"><?php echo t('monitor.instancias.usuario'); ?></label>
                                 <input type="text" name="usuario" class="form-control" required>
                             </div>
                             <div class="mb-3">
-                                <label class="form-label">Contraseña</label>
+                                <label class="form-label"><?php echo t('monitor.instancias.password'); ?></label>
                                 <input type="password" name="password" class="form-control">
                             </div>
-                            <button type="submit" class="btn btn-cta">Agregar instancia</button>
+                            <button type="submit" class="btn btn-cta"><?php echo t('monitor.instancias.agregar'); ?></button>
                         </form>
                     </div>
 
                     <div class="col-lg-6">
                         <table class="table">
-                            <thead><tr><th>Nombre</th><th>Motor</th><th>Host</th><th></th></tr></thead>
+                            <thead><tr><th><?php echo t('monitor.instancias.nombre'); ?></th><th><?php echo t('monitor.instancias.motor'); ?></th><th><?php echo t('monitor.instancias.host'); ?></th><th></th></tr></thead>
                             <tbody>
                                 <?php foreach ($instancias as $inst): ?>
                                     <tr>
                                         <td><?php echo htmlspecialchars($inst['nombre']); ?></td>
                                         <td><?php echo htmlspecialchars($inst['tipo_motor']); ?></td>
                                         <td><?php echo htmlspecialchars($inst['host']); ?>:<?php echo (int) $inst['puerto']; ?></td>
-                                        <td><a href="monitor-salud.php?instancia_id=<?php echo (int) $inst['id']; ?>" class="btn btn-sm btn-cta">Ver salud</a></td>
+                                        <td><a href="monitor-salud.php?instancia_id=<?php echo (int) $inst['id']; ?>" class="btn btn-sm btn-cta"><?php echo t('monitor.instancias.ver'); ?></a></td>
                                     </tr>
                                 <?php endforeach; ?>
                             </tbody>

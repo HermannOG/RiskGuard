@@ -69,9 +69,9 @@
                             <div class="col-md-6">
                                 <div class="service-card">
                                     <i class="fa-solid fa-heart-pulse"></i>
-                                    <h5>Monitor de Salud</h5>
-                                    <p>Vigila procesos, memoria y archivos de tus bases de datos en tiempo real, con semáforo de alerta.</p>
-                                    <a href="monitor-instancias.php" class="btn btn-sm btn-ghost mt-2">Ver monitor</a>
+                                    <h5><?php echo t('monitor.nav.item'); ?></h5>
+                                    <p><?php echo t('monitor.home.desc'); ?></p>
+                                    <a href="monitor-instancias.php" class="btn btn-sm btn-ghost mt-2"><?php echo t('monitor.home.btn'); ?></a>
                                 </div>
                             </div>
                             <?php endif; ?>

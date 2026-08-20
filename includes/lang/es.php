@@ -192,4 +192,6 @@ return [
         'monitor.ayuda.archivos.amarillo' => 'Espacio libre o archivos que conviene empezar a vigilar.',
         'monitor.ayuda.archivos.anaranjado' => 'Espacio bajo o archivos con problemas, planificar acción.',
         'monitor.ayuda.archivos.rojo' => 'Riesgo alto de quedarse sin espacio o de archivos inaccesibles.',
+        'monitor.home.desc' => 'Vigila procesos, memoria y archivos de tus bases de datos en tiempo real, con semáforo de alerta.',
+        'monitor.home.btn'  => 'Ver monitor',
 ];

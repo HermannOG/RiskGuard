@@ -192,4 +192,6 @@ return [
         'monitor.ayuda.archivos.amarillo' => 'Free space or files worth starting to watch.',
         'monitor.ayuda.archivos.anaranjado' => 'Low space or files with problems, plan action.',
         'monitor.ayuda.archivos.rojo' => 'High risk of running out of space or inaccessible files.',
+        'monitor.home.desc' => 'Watch your databases\' processes, memory, and files in real time, with an alert semaphore.',
+        'monitor.home.btn'  => 'View monitor',
 ];
