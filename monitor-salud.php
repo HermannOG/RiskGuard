@@ -86,6 +86,8 @@ foreach ($detalle as $d) {
     $detallePorComponente[$d['componente']][] = $d;
 }
 
+
+
 $ayudaComponente = [
     'isbd' => [
         'titulo' => t('monitor.ayuda.isbd.titulo'),
@@ -189,6 +191,51 @@ function renderBarraRango(array $d, array $colores): string
             <div class="rango-valor" style="color:' . $color . ';">' . number_format($d['valor_normalizado'], 2) . '</div>
         </div>
     ';
+}
+
+function renderTablaContexto(array $instancia, ?array $resultado, array $detalle, array $ctx, array $colores): string
+{
+    $fecha = static function (?string $ts): string {
+        if (empty($ts)) { return '—'; }
+        try {
+            return (new DateTime($ts))->format('d/m/Y H:i:s');
+        } catch (Throwable $e) {
+            return htmlspecialchars($ts);
+        }
+    };
+
+    $estado = $resultado['estado'] ?? null;
+    $color  = $estado ? ($colores[$estado] ?? 'var(--text-muted)') : 'var(--text-muted)';
+
+    $filas = [
+        ['Instancia',        htmlspecialchars($instancia['nombre'])],
+        ['Motor',            strtoupper(htmlspecialchars($instancia['tipo_motor']))],
+        ['Servidor',         htmlspecialchars($instancia['host'] . ':' . $instancia['puerto'])],
+        ['Base de datos',    htmlspecialchars($instancia['nombre_bd'])],
+        ['Usuario',          htmlspecialchars($instancia['usuario'])],
+        ['Variables leídas', count($detalle) . ' variables'],
+        ['Última captura',   $fecha($ctx['ultima'] ?? null)],
+        ['Primera captura',  $fecha($ctx['primera'] ?? null)],
+        ['Capturas acumuladas', (string) ((int) ($ctx['total_capturas'] ?? 0))],
+        ['Ponderación ISBD', 'IP 25% · IM 60% · IA 15%'],
+    ];
+
+    $html = '<div class="tabla-contexto-wrap">'
+          . '<div class="tabla-contexto-titulo">Contexto de la base de datos monitoreada</div>'
+          . '<table class="tabla-contexto"><tbody>';
+
+    foreach ($filas as [$etiqueta, $valor]) {
+        $html .= '<tr><th>' . $etiqueta . '</th><td>' . $valor . '</td></tr>';
+    }
+
+    $html .= '<tr><th>Estado actual</th><td>'
+           . '<span class="ctx-punto" style="background:' . $color . ';"></span>'
+           . ($estado ? strtoupper(htmlspecialchars($estado)) : 'SIN DATOS')
+           . '</td></tr>';
+
+    $html .= '</tbody></table></div>';
+
+    return $html;
 }
 
 function formatearFecha(string $capturadoEn, string $lang): string
@@ -310,6 +357,8 @@ function formatearFecha(string $capturadoEn, string $lang): string
                             </div>
                             <?php echo renderRoscaGrande((float) $resultado['indice_salud'], $colorGeneral); ?>
                         </div>
+
+                        <?php echo renderTablaContexto($instancia, $resultado, $detalle, $ctx, $colores); ?>
 
                         <div class="text-center mt-3">
                             <button type="button" class="btn btn-ghost" data-bs-toggle="collapse" data-bs-target="#isbd-panel" aria-expanded="false">
