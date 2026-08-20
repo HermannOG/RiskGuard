@@ -63,6 +63,12 @@ if (!$resultado) {
     }
 }
 
+$historial = $repo->obtenerHistorialIndices($instanciaId, 10);
+// Quitamos de la lista la que ya se muestra arriba como "actual"
+if ($resultado) {
+    $historial = array_values(array_filter($historial, fn($h) => $h['capturado_en'] !== $resultado['capturado_en']));
+}
+
 $colores = ['verde' => '#3FB950', 'amarillo' => '#F2B134', 'anaranjado' => '#F0724A', 'rojo' => '#E5484D'];
 $nombresComponente = [
     'procesos' => t('monitor.componente.procesos'),
@@ -111,12 +117,13 @@ $ayudaComponente = [
     ],
 ];
 
-function renderRoscaGrande(float $valor, string $color): string
+function renderRoscaGrande(float $valor, string $color, int $tam = 230): string
 {
     $pct = max(0, min(100, $valor));
+    $fuente = round($tam / 230 * 3, 2);
     return '
-        <div class="rosca-css" style="background: conic-gradient(' . $color . ' 0% ' . $pct . '%, var(--border) ' . $pct . '% 100%);">
-            <div class="rosca-centro"><div class="rosca-valor" style="color:' . $color . ';">' . number_format($valor, 2) . '</div></div>
+        <div class="rosca-css" style="width:' . $tam . 'px; height:' . $tam . 'px; background: conic-gradient(' . $color . ' 0% ' . $pct . '%, var(--border) ' . $pct . '% 100%);">
+            <div class="rosca-centro"><div class="rosca-valor" style="color:' . $color . '; font-size:' . $fuente . 'rem;">' . number_format($valor, 2) . '</div></div>
         </div>
     ';
 }
@@ -183,97 +190,105 @@ function renderBarraRango(array $d, array $colores): string
         </div>
     ';
 }
-?>
-<style>
-    .rosca-css{ width:230px; height:230px; border-radius: 50%; margin: 0 auto; display:flex; align-items:center; justify-content:center; position:relative; }
-    .rosca-css::before{ content:''; position:absolute; inset:16px; border-radius:50%; background:var(--surface); }
-    .rosca-centro{ position:relative; z-index:1; }
-    .rosca-valor{ font-family: var(--font-mono); font-weight: 700; font-size: 3rem; }
 
-    .dash-row{ display:flex; gap:1.5rem; align-items:flex-start; flex-wrap:wrap; }
-    .dash-isbd{ flex: 0 0 260px; text-align:center; position:relative; cursor:pointer; }
-    .dash-isbd:hover .rosca-css{ filter: brightness(1.08); }
+function formatearFecha(string $capturadoEn, string $lang): string
+{
+    $meses_es = [1=>'ene',2=>'feb',3=>'mar',4=>'abr',5=>'may',6=>'jun',7=>'jul',8=>'ago',9=>'sep',10=>'oct',11=>'nov',12=>'dic'];
+    $meses_en = [1=>'Jan',2=>'Feb',3=>'Mar',4=>'Apr',5=>'May',6=>'Jun',7=>'Jul',8=>'Aug',9=>'Sep',10=>'Oct',11=>'Nov',12=>'Dec'];
+    $meses = $lang === 'en' ? $meses_en : $meses_es;
 
-    .dash-mini-col{ width:320px; display:flex; flex-direction:column; gap:0.75rem; padding-top:0.25rem; }
+    $dt = new DateTime($capturadoEn);
+    $hora24 = (int) $dt->format('H');
+    $ampm = $hora24 >= 12 ? 'PM' : 'AM';
+    $hora12 = $hora24 % 12; if ($hora12 === 0) $hora12 = 12;
 
-    .mini-detalle-wrap{ max-width:0; overflow:hidden; transition:max-width 0.35s ease; }
-    .mini-detalle-wrap.is-open{ max-width:340px; }
-
-    @media (max-width: 640px){
-        .dash-row{ flex-direction:column; }
-        .dash-mini-col{ width:100%; }
-        .mini-detalle-wrap.is-open{ max-width:100%; }
+    if ($lang === 'en') {
+        return $meses[(int) $dt->format('n')] . ' ' . $dt->format('j') . ', ' . $dt->format('Y') . ', ' . $hora12 . ':' . $dt->format('i') . ' ' . $ampm;
     }
-    .mini-gauge{ display:flex; align-items:center; gap:0.75rem; background:var(--bg); border-radius:10px; padding:0.6rem 0.9rem; }
-    .mini-gauge-svg{ width:80px; flex-shrink:0; }
-    .mini-gauge-valor{ font-family:var(--font-mono); font-weight:700; font-size:1.3rem; }
-    .mini-gauge-label{ font-size:0.85rem; color:var(--text-muted); display:flex; align-items:center; gap:0.4rem; position:relative; }
+    return $dt->format('j') . ' ' . $meses[(int) $dt->format('n')] . ' ' . $dt->format('Y') . ', ' . $hora12 . ':' . $dt->format('i') . ' ' . $ampm;
+}
+?>
+    <style>
+        .rosca-css{ border-radius: 50%; margin: 0 auto; display:flex; align-items:center; justify-content:center; position:relative; }
+        .rosca-css::before{ content:''; position:absolute; inset:16px; border-radius:50%; background:var(--surface); }
+        .rosca-centro{ position:relative; z-index:1; }
+        .rosca-valor{ font-family: var(--font-mono); font-weight: 700; }
 
-    .btn-ayuda{ background: transparent; border: 1px solid var(--border); color: var(--text-muted); width:24px; height:24px; border-radius:50%; cursor:pointer; font-size:0.78rem; line-height:1; }
-    .btn-ayuda:hover{ border-color: var(--risk-mid); color: var(--text); }
-    .ayuda-isbd{ position:absolute; top:0; right:15px; width:30px; height:30px; font-size:0.9rem; }
+        .dash-row{ display:flex; gap:1.5rem; align-items:center; flex-wrap:wrap; }
+        .dash-isbd{ flex: 0 0 260px; text-align:center; position:relative; }
+        .dash-mini-col{ flex:1; min-width:280px; display:flex; flex-direction:column; gap:0.75rem; }
+        .mini-gauge{ display:flex; align-items:center; gap:0.75rem; background:var(--bg); border-radius:10px; padding:0.6rem 0.9rem; }
+        .mini-gauge-svg{ width:80px; flex-shrink:0; }
+        .mini-gauge-valor{ font-family:var(--font-mono); font-weight:700; font-size:1.3rem; }
+        .mini-gauge-label{ font-size:0.85rem; color:var(--text-muted); display:flex; align-items:center; gap:0.4rem; position:relative; }
 
-    .popover-simple{ position:absolute; z-index:30; background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:0.9rem 1rem; width:260px; font-size:0.83rem; line-height:1.5; box-shadow:0 8px 24px rgba(0,0,0,0.4); display:none; text-align:left; top:110%; left:50%; transform:translateX(-50%); }
-    .popover-simple.show{ display:block; }
-    .popover-var{ top:100%; left:0; transform:none; margin-top:6px; }
+        .btn-ayuda{ background: transparent; border: 1px solid var(--border); color: var(--text-muted); width:24px; height:24px; border-radius:50%; cursor:pointer; font-size:0.78rem; line-height:1; }
+        .btn-ayuda:hover{ border-color: var(--risk-mid); color: var(--text); }
+        .ayuda-isbd{ position:absolute; top:0; right:15px; width:30px; height:30px; font-size:0.9rem; }
 
-    .componente-card{ cursor: pointer; transition: border-color 0.15s ease; }
-    .componente-card:hover{ border-color: var(--risk-mid); }
-    .componente-card .chevron{ transition: transform 0.2s ease; }
-    .componente-card[aria-expanded="true"] .chevron{ transform: rotate(180deg); }
+        .popover-simple{ position:absolute; z-index:30; background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:0.9rem 1rem; width:260px; font-size:0.83rem; line-height:1.5; box-shadow:0 8px 24px rgba(0,0,0,0.4); display:none; text-align:left; top:110%; left:50%; transform:translateX(-50%); }
+        .popover-simple.show{ display:block; }
+        .popover-var{ top:100%; left:0; transform:none; margin-top:6px; }
 
-    .rango-fila{ display: grid; grid-template-columns: 240px 1fr 70px; align-items: center; gap: 1rem; padding: 0.6rem 0; border-bottom: 1px solid var(--border); }
-    .rango-fila:last-child{ border-bottom: none; }
-    .rango-track{ position: relative; height: 10px; border-radius: 6px; display: flex; }
-    .rango-zona{ height: 100%; }
-    .rango-zona:first-child{ border-radius: 6px 0 0 6px; }
-    .rango-zona:last-child{ border-radius: 0 6px 6px 0; }
-    .rango-zona.verde{ background: #3FB950; width: 30%; }
-    .rango-zona.amarillo{ background: #F2B134; width: 20%; }
-    .rango-zona.anaranjado{ background: #F0724A; width: 20%; }
-    .rango-zona.rojo{ background: #E5484D; width: 30%; }
-    .rango-marcador{ position: absolute; top: -5px; width: 3px; height: 20px; background: var(--text); border-radius: 2px; transform: translateX(-50%); box-shadow: 0 0 0 2px var(--surface); }
-    .rango-ticks{ display:flex; font-family: var(--font-mono); font-size: 0.65rem; color: var(--text-muted); margin-top: 2px; }
-    .rango-ticks span{ width: 30%; }
-    .rango-ticks span:nth-child(2), .rango-ticks span:nth-child(3){ width: 20%; }
-    .rango-valor{ text-align: right; font-family: var(--font-mono); font-weight: 600; font-size: 0.95rem; }
+        .componente-card{ cursor: pointer; transition: border-color 0.15s ease; }
+        .componente-card:hover{ border-color: var(--risk-mid); }
+        .componente-card .chevron{ transition: transform 0.2s ease; }
+        .componente-card[aria-expanded="true"] .chevron{ transform: rotate(180deg); }
 
-    .dash-toggle-hint{ font-size:0.8rem; color:var(--text-muted); margin-top:0.5rem; }
-    .dash-toggle-hint .chevron{ transition: transform 0.2s ease; font-size:0.65rem; display:inline-block; }
-    .dash-isbd[aria-expanded="true"] .dash-toggle-hint .chevron{ transform: rotate(90deg); }
-</style>
-<main class="flex-grow-1">
-    <section class="section">
-        <div class="container">
-            <span class="section-eyebrow"><i class="fa-solid fa-heart-pulse me-2"></i><?php echo t('monitor.nav.item'); ?></span>
-            <h1 class="section-title"><?php echo htmlspecialchars($instancia['nombre']); ?></h1>
-            <p class="section-lead"><?php echo htmlspecialchars($instancia['tipo_motor']); ?> · <?php echo htmlspecialchars($instancia['host']); ?></p>
+        .rango-fila{ display: grid; grid-template-columns: 240px 1fr 70px; align-items: center; gap: 1rem; padding: 0.6rem 0; border-bottom: 1px solid var(--border); }
+        .rango-fila:last-child{ border-bottom: none; }
+        .rango-track{ position: relative; height: 10px; border-radius: 6px; display: flex; }
+        .rango-zona{ height: 100%; }
+        .rango-zona:first-child{ border-radius: 6px 0 0 6px; }
+        .rango-zona:last-child{ border-radius: 0 6px 6px 0; }
+        .rango-zona.verde{ background: #3FB950; width: 30%; }
+        .rango-zona.amarillo{ background: #F2B134; width: 20%; }
+        .rango-zona.anaranjado{ background: #F0724A; width: 20%; }
+        .rango-zona.rojo{ background: #E5484D; width: 30%; }
+        .rango-marcador{ position: absolute; top: -5px; width: 3px; height: 20px; background: var(--text); border-radius: 2px; transform: translateX(-50%); box-shadow: 0 0 0 2px var(--surface); }
+        .rango-ticks{ display:flex; font-family: var(--font-mono); font-size: 0.65rem; color: var(--text-muted); margin-top: 2px; }
+        .rango-ticks span{ width: 30%; }
+        .rango-ticks span:nth-child(2), .rango-ticks span:nth-child(3){ width: 20%; }
+        .rango-valor{ text-align: right; font-family: var(--font-mono); font-weight: 600; font-size: 0.95rem; }
 
-            <form method="post" class="mb-4">
-                <button type="submit" name="capturar" value="1" class="btn btn-cta">
-                    <i class="fa-solid fa-rotate me-2"></i><?php echo t('monitor.salud.capturar'); ?>
-                </button>
-            </form>
+        .hist-titulo{ margin-bottom:1rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em; font-size:0.78rem; font-family:var(--font-mono); }
+        .hist-fila{ display:flex; align-items:center; gap:1rem; padding:0.8rem 1rem; border-radius:8px; cursor:pointer; transition:background 0.15s ease; background:var(--bg); margin-bottom:0.6rem; border:none; width:100%; text-align:left; }
+        .hist-fila:hover{ background:var(--surface-alt); }
+        .hist-dot{ width:12px; height:12px; border-radius:50%; flex-shrink:0; }
+        .hist-fecha{ flex:1; font-size:0.88rem; color:var(--text-muted); }
+        .hist-valor{ font-family:var(--font-mono); font-weight:700; font-size:1.1rem; }
+        .hist-chevron{ color:var(--text-muted); font-size:0.75rem; transition:transform 0.2s ease; }
+        .hist-fila[aria-expanded="true"] .hist-chevron{ transform:rotate(180deg); }
+        .hist-detalle{ padding: 1rem; margin-bottom: 0.6rem; }
+        .hist-mini-row{ display:flex; gap:1rem; align-items:center; flex-wrap:wrap; }
+    </style>
+    <main class="flex-grow-1">
+        <section class="section">
+            <div class="container">
+                <span class="section-eyebrow"><i class="fa-solid fa-heart-pulse me-2"></i><?php echo t('monitor.nav.item'); ?></span>
+                <h1 class="section-title"><?php echo htmlspecialchars($instancia['nombre']); ?></h1>
+                <p class="section-lead"><?php echo htmlspecialchars($instancia['tipo_motor']); ?> · <?php echo htmlspecialchars($instancia['host']); ?></p>
 
-            <?php if ($error): ?>
-                <div class="alert alert-danger">Error: <?php echo htmlspecialchars($error); ?></div>
-            <?php endif; ?>
+                <form method="post" class="mb-4">
+                    <button type="submit" name="capturar" value="1" class="btn btn-cta">
+                        <i class="fa-solid fa-rotate me-2"></i><?php echo t('monitor.salud.capturar'); ?>
+                    </button>
+                </form>
 
-            <?php if ($resultado): ?>
-                <?php $colorGeneral = $colores[$resultado['estado']] ?? '#999'; ?>
+                <?php if ($error): ?>
+                    <div class="alert alert-danger">Error: <?php echo htmlspecialchars($error); ?></div>
+                <?php endif; ?>
 
-                <div class="eval-control mb-4">
-                    <div class="dash-row">
-                        <div class="dash-isbd" id="dash-isbd-btn" role="button" aria-expanded="false">
-                            <button type="button" class="btn-ayuda ayuda-isbd" data-popover-target="isbd" onclick="event.stopPropagation();">?</button>
-                            <?php echo renderPopover('isbd', $ayudaComponente['isbd'], $colores); ?>
-                            <?php echo renderRoscaGrande((float) $resultado['indice_salud'], $colorGeneral); ?>
-                            <div class="dash-toggle-hint">
-                                <i class="fa-solid fa-chevron-right chevron"></i> Ver detalle por componente
+                <?php if ($resultado): ?>
+                    <?php $colorGeneral = $colores[$resultado['estado']] ?? '#999'; ?>
+
+                    <div class="eval-control mb-4">
+                        <div class="dash-row">
+                            <div class="dash-isbd">
+                                <button type="button" class="btn-ayuda ayuda-isbd" data-popover-target="isbd">?</button>
+                                <?php echo renderPopover('isbd', $ayudaComponente['isbd'], $colores); ?>
+                                <?php echo renderRoscaGrande((float) $resultado['indice_salud'], $colorGeneral); ?>
                             </div>
-                        </div>
-
-                        <div class="mini-detalle-wrap" id="dash-mini-detalle">
                             <div class="dash-mini-col">
                                 <?php foreach (['procesos' => $estadoIP, 'memoria' => $estadoIM, 'archivos' => $estadoIA] as $comp => $estadoComp): ?>
                                     <?php $colorComp = $colores[$estadoComp]; $valorComp = (float) $resultado['indice_' . $comp]; ?>
@@ -293,47 +308,65 @@ function renderBarraRango(array $d, array $colores): string
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <?php foreach (['procesos', 'memoria', 'archivos'] as $comp): ?>
-                    <div class="collapse mb-3" id="detalle-<?php echo $comp; ?>">
-                        <div class="eval-control">
-                            <h6 class="mb-3"><?php echo t('monitor.salud.porque'); ?> <?php echo $nombresComponente[$comp]; ?> (<?php echo $siglaComponente[$comp]; ?>) <?php echo t('monitor.salud.esta_asi'); ?></h6>
-                            <?php foreach ($detallePorComponente[$comp] as $d): ?>
-                                <?php echo renderBarraRango($d, $colores); ?>
-                            <?php endforeach; ?>
+                    <?php foreach (['procesos', 'memoria', 'archivos'] as $comp): ?>
+                        <div class="collapse mb-3" id="detalle-<?php echo $comp; ?>">
+                            <div class="eval-control">
+                                <h6 class="mb-3"><?php echo t('monitor.salud.porque'); ?> <?php echo $nombresComponente[$comp]; ?> (<?php echo $siglaComponente[$comp]; ?>) <?php echo t('monitor.salud.esta_asi'); ?></h6>
+                                <?php foreach ($detallePorComponente[$comp] as $d): ?>
+                                    <?php echo renderBarraRango($d, $colores); ?>
+                                <?php endforeach; ?>
+                            </div>
                         </div>
-                    </div>
-                <?php endforeach; ?>
+                    <?php endforeach; ?>
 
-            <?php else: ?>
-                <p><?php echo t('monitor.salud.sincapturas'); ?></p>
-            <?php endif; ?>
-        </div>
-    </section>
-</main>
-<script>
+                <?php else: ?>
+                    <p><?php echo t('monitor.salud.sincapturas'); ?></p>
+                <?php endif; ?>
+
+                <?php if (!empty($historial)): ?>
+                    <div class="eval-control mt-4">
+                        <div class="hist-titulo"><?php echo $lang === 'en' ? 'Capture history' : 'Historial de capturas'; ?></div>
+                        <?php foreach ($historial as $i => $h): ?>
+                            <?php $idHist = 'hist-' . $i; $colorH = $colores[$h['estado']]; ?>
+                            <button type="button" class="hist-fila" data-bs-toggle="collapse" data-bs-target="#<?php echo $idHist; ?>" aria-expanded="false">
+                                <span class="hist-dot" style="background:<?php echo $colorH; ?>;"></span>
+                                <span class="hist-fecha"><?php echo formatearFecha($h['capturado_en'], $lang); ?></span>
+                                <span class="hist-valor" style="color:<?php echo $colorH; ?>;"><?php echo number_format((float) $h['indice_salud'], 2); ?></span>
+                                <i class="fa-solid fa-chevron-down hist-chevron"></i>
+                            </button>
+                            <div class="collapse" id="<?php echo $idHist; ?>">
+                                <div class="hist-detalle">
+                                    <div class="hist-mini-row">
+                                        <?php echo renderRoscaGrande((float) $h['indice_salud'], $colorH, 110); ?>
+                                        <?php foreach (['procesos', 'memoria', 'archivos'] as $comp): ?>
+                                            <?php $estadoH = $repo->determinarEstado($instanciaId, (float) $h['indice_' . $comp]); $colorCompH = $colores[$estadoH]; ?>
+                                            <div class="mini-gauge" style="flex:1; min-width:150px;">
+                                                <?php echo renderGaugeChico((float) $h['indice_' . $comp]); ?>
+                                                <div>
+                                                    <div class="mini-gauge-valor" style="color:<?php echo $colorCompH; ?>;"><?php echo number_format((float) $h['indice_' . $comp], 2); ?></div>
+                                                    <div class="mini-gauge-label"><?php echo $nombresComponente[$comp]; ?> (<?php echo $siglaComponente[$comp]; ?>)</div>
+                                                </div>
+                                            </div>
+                                        <?php endforeach; ?>
+                                    </div>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
+
+            </div>
+        </section>
+    </main>
+    <script>
     document.addEventListener('DOMContentLoaded', function () {
-        document.querySelectorAll('.componente-card').forEach((card) => {
+        document.querySelectorAll('[role="button"][data-bs-toggle="collapse"], .hist-fila').forEach((card) => {
             const target = document.querySelector(card.dataset.bsTarget);
             if (!target) return;
             target.addEventListener('show.bs.collapse', () => card.setAttribute('aria-expanded', 'true'));
             target.addEventListener('hide.bs.collapse', () => card.setAttribute('aria-expanded', 'false'));
         });
-
-        // Toggle manual del ISBD -> detalle por componente.
-        // No usa el plugin Collapse de Bootstrap en absoluto (ni data-bs-toggle
-        // ni bootstrap.Collapse): es una clase CSS simple controlada aquí mismo,
-        // para evitar cualquier conflicto con otros scripts de la página.
-        const isbdBtn = document.getElementById('dash-isbd-btn');
-        const miniDetalle = document.getElementById('dash-mini-detalle');
-        if (isbdBtn && miniDetalle) {
-            isbdBtn.addEventListener('click', function (e) {
-                if (e.target.closest('.btn-ayuda')) return;
-                const abierto = miniDetalle.classList.toggle('is-open');
-                isbdBtn.setAttribute('aria-expanded', abierto ? 'true' : 'false');
-            });
-        }
 
         document.querySelectorAll('[data-popover-target]').forEach((btn) => {
             btn.addEventListener('click', function (e) {
@@ -350,5 +383,5 @@ function renderBarraRango(array $d, array $colores): string
             document.querySelectorAll('.popover-simple.show').forEach((p) => p.classList.remove('show'));
         });
     });
-</script>
+    </script>
 <?php require_once __DIR__ . '/includes/footer.php'; ?>

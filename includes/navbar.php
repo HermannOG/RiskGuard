@@ -24,7 +24,7 @@
                             <?php echo t('nav.servicios'); ?>
                         </a>
                         <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="evaluacion-riesgos.php"><i class="fa-solid fa-magnifying-glass-chart me-2"></i>Evaluación de riesgos</a></li>
+                            <li><a class="dropdown-item" href="evaluacion-riesgos.php"><i class="fa-solid fa-magnifying-glass-chart me-2"></i><?php echo t('nav.evaluacion'); ?></a></li>
                             <?php if ($usuarioSesionNav && $usuarioSesionNav['rol'] === 'admin'): ?>
                                 <li><a class="dropdown-item" href="monitor-instancias.php"><i class="fa-solid fa-heart-pulse me-2"></i><?php echo t('monitor.nav.item'); ?></a></li>
                             <?php endif; ?>

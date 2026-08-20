@@ -151,4 +151,23 @@ class MonitorRepository
             }
             return $detalle;
         }
+        /**
+         * Devuelve las capturas anteriores de una instancia (mas recientes
+         * primero), para poder ver el historial y, mas adelante, detectar
+         * patrones de comportamiento a lo largo del tiempo.
+         */
+        public function obtenerHistorialIndices(int $instanciaId, int $limite = 10): array
+        {
+            $stmt = $this->pdo->prepare("
+                SELECT capturado_en, indice_procesos, indice_memoria, indice_archivos, indice_salud, estado
+                FROM monitor_indices
+                WHERE instancia_id = :instancia_id
+                ORDER BY capturado_en DESC
+                LIMIT :limite
+            ");
+            $stmt->bindValue(':instancia_id', $instanciaId, PDO::PARAM_INT);
+            $stmt->bindValue(':limite', $limite, PDO::PARAM_INT);
+            $stmt->execute();
+            return $stmt->fetchAll();
+        }
 }
