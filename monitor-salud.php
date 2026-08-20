@@ -127,6 +127,40 @@ $ayudaComponente = [
     ],
 ];
 
+$justificacionComponente = [
+    'procesos' => [
+        'titulo' => 'Procesos (IP) — por qué estas variables',
+        'intro'  => 'El IP mide la carga viva del motor: cuántas operaciones compiten en este instante por CPU y por bloqueos. Es el componente que se degrada primero y el que el usuario percibe como "lentitud".',
+        'vars'   => [
+            'Procesos actuales (p1)'      => 'Es el primer síntoma de saturación: si el número de hilos en ejecución crece, se acerca el agotamiento de max_connections y el rechazo de nuevas conexiones.',
+            'Sesiones activas (p2)'       => 'Separa las conexiones que realmente ejecutan trabajo de las que están abiertas pero ociosas, lo que permite distinguir carga real de conexiones abandonadas por la aplicación.',
+            'Sesiones bloqueadas (p3)'    => 'Las esperas por bloqueo son la causa más común de que la base "se sienta caída" sin estarlo, y anticipan interbloqueos antes de que se conviertan en incidente.',
+            'Operaciones prolongadas (p4)'=> 'Delatan consultas sin índice o transacciones abiertas que retienen recursos, que es donde nace la mayoría de los problemas de rendimiento evitables.',
+        ],
+        'norma'  => 'Respaldo normativo: ISO/IEC 27002 controles 8.6 (gestión de capacidad) y 8.16 (actividades de seguimiento); COBIT DSS01 (gestionar operaciones) y BAI04 (gestionar disponibilidad y capacidad).',
+    ],
+    'memoria' => [
+        'titulo' => 'Memoria (IM) — por qué estas variables',
+        'intro'  => 'Es el componente con mayor peso (60%) porque en MariaDB la memoria determina el rendimiento más que cualquier otro recurso: si la caché no retiene los datos de uso frecuente, toda la operación se traduce en lecturas a disco.',
+        'vars'   => [
+            'Uso de buffer/caché (m1)' => 'Muestra si la memoria asignada al motor alcanza para el conjunto de datos que se trabaja a diario, o si está sobredimensionada y se desperdicia.',
+            'Presión de memoria (m2)'  => 'Detecta cuándo el motor se ve obligado a expulsar páginas para hacer espacio; una presión sostenida anticipa la degradación antes de que el usuario la note.',
+            'Cache hit ratio (m3)'     => 'Es el indicador clásico de eficiencia de la caché y el más comparable entre motores, lo que permite que el índice siga siendo válido si mañana se monitorea Oracle o PostgreSQL.',
+        ],
+        'norma'  => 'Respaldo normativo: ISO/IEC 27002 control 8.6 (gestión de capacidad); COBIT BAI04. El peso de 60% responde al criterio definido para este proyecto.',
+    ],
+    'archivos' => [
+        'titulo' => 'Archivos (IA) — por qué estas variables',
+        'intro'  => 'El IA vigila el soporte físico de la información. Sus fallas son las únicas de este tablero capaces de producir pérdida de datos irreversible, por lo que se midieron disponibilidad e integridad del almacenamiento.',
+        'vars'   => [
+            'Archivos fuera de línea (a1)' => 'Un archivo o tablespace inaccesible golpea directamente la disponibilidad, uno de los tres pilares que protege el SGSI.',
+            'Espacio libre (a2)'           => 'Quedarse sin espacio es la causa de caída más frecuente y a la vez la más evitable, porque avisa con antelación si se vigila de forma continua.',
+            'Archivos con problemas (a3)'  => 'Las tablas marcadas como corruptas o que requieren reparación afectan la integridad de la información, y detectarlas a tiempo evita restaurar respaldos completos.',
+        ],
+        'norma'  => 'Respaldo normativo: ISO/IEC 27002 controles 8.6, 8.13 (copia de seguridad) y 8.14 (redundancia de instalaciones de tratamiento de información); COBIT DSS04 (gestionar la continuidad).',
+    ],
+];
+
 function renderRoscaGrande(float $valor, string $color, int $tam = 230): string
 {
     $pct = max(0, min(100, $valor));
@@ -165,6 +199,22 @@ function renderPopover(string $id, array $ayuda, array $colores): string
         $html .= '<span style="color:' . $colores[$estado] . ';">' . ucfirst($estado) . ':</span> ' . htmlspecialchars($ayuda[$estado]) . '<br>';
     }
     $html .= '</div>';
+    return $html;
+}
+
+function renderPopoverJustificacion(string $comp, array $j): string
+{
+    $html = '<div class="popover-simple popover-justif" id="pop-just-' . $comp . '">'
+          . '<strong>' . htmlspecialchars($j['titulo']) . '</strong>'
+          . '<p class="just-intro">' . htmlspecialchars($j['intro']) . '</p>'
+          . '<ul class="just-lista">';
+
+    foreach ($j['vars'] as $nombre => $razon) {
+        $html .= '<li><span class="just-var">' . htmlspecialchars($nombre) . '</span> ' . htmlspecialchars($razon) . '</li>';
+    }
+
+    $html .= '</ul><div class="just-norma">' . htmlspecialchars($j['norma']) . '</div></div>';
+
     return $html;
 }
 
@@ -342,6 +392,16 @@ function formatearFecha(string $capturadoEn, string $lang): string
         .tabla-contexto tr + tr th, .tabla-contexto tr + tr td{ border-top:1px solid var(--border); }
         .ctx-punto{ display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:0.4rem; vertical-align:middle; }
 
+
+                .just-wrap{ margin-left:auto; position:relative; }
+        .btn-justif{ width:28px; height:28px; font-size:0.8rem; }
+        .btn-justif:hover{ border-color:#F2B134; color:#F2B134; }
+        .popover-justif{ width:380px; max-width:calc(100vw - 3rem); }
+        .just-intro{ margin:0.5rem 0 0.7rem; color:var(--text-muted); }
+        .just-lista{ margin:0; padding-left:1.05rem; }
+        .just-lista li{ margin-bottom:0.55rem; }
+        .just-var{ color:var(--text); font-weight:600; }
+        .just-norma{ margin-top:0.8rem; padding-top:0.7rem; border-top:1px solid var(--border); font-size:0.76rem; color:var(--text-muted); }
     </style>
     <main class="flex-grow-1">
         <section class="section">
@@ -415,6 +475,12 @@ function formatearFecha(string $capturadoEn, string $lang): string
                                             <div>
                                                 <div class="comp-block-title"><?php echo $nombresComponente[$comp]; ?> <span style="color:var(--text-muted); font-weight:400;">(<?php echo $siglaComponente[$comp]; ?>)</span></div>
                                                 <div class="comp-block-sub"><?php echo $subtituloDetalle; ?></div>
+                                            </div>
+                                            <div class="just-wrap">
+                                                <button type="button" class="btn-ayuda btn-justif" data-popover-target="just-<?php echo $comp; ?>" title="¿Por qué estas variables?">
+                                                    <i class="fa-solid fa-lightbulb"></i>
+                                                </button>
+                                                <?php echo renderPopoverJustificacion($comp, $justificacionComponente[$comp]); ?>
                                             </div>
                                         </div>
                                         <?php foreach ($detallePorComponente[$comp] as $d): ?>
