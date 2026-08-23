@@ -124,6 +124,16 @@ function renderTablaContexto(array $instancia, ?array $resultado, array $detalle
         ['Ponderación ISBD', 'IP 25% · IM 60% · IA 15%'],
     ];
 
+    if (!empty($instancia['tns_alias'])) {
+        $valorAlias = htmlspecialchars($instancia['tns_alias']);
+        if (!empty($instancia['tns_resuelto'])) {
+            $valorAlias .= ' <br><small style="color:var(--risk-low);">● leído en vivo de tnsnames.ora</small>';
+        } else {
+            $valorAlias .= ' <br><small style="color:var(--risk-high);">● tnsnames.ora no disponible, mostrando último valor guardado</small>';
+        }
+        $filas[] = ['Alias TNS', $valorAlias];
+    }
+
     $html = '<div class="tabla-contexto-wrap">'
         . '<div class="tabla-contexto-titulo">Contexto de la base de datos monitoreada</div>'
         . '<table class="tabla-contexto"><tbody>';

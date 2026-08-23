@@ -11,6 +11,7 @@ require_once __DIR__ . '/includes/MariaDBAdapter.php';
 require_once __DIR__ . '/includes/OracleAdapter.php';
 require_once __DIR__ . '/includes/MonitorRepository.php';
 require_once __DIR__ . '/includes/monitor-render.php';
+require_once __DIR__ . '/includes/tnsnames-parser.php';
 
 $pdo = dbMonitor();
 $instanciaId = (int) ($_GET['instancia_id'] ?? 0);
@@ -25,6 +26,8 @@ if (!$instancia) {
     header('Location: monitor-instancias.php');
     exit;
 }
+
+$instancia = refrescarInstanciaDesdeTns($instancia);
 
 $repo = new MonitorRepository($pdo);
 $resultado = $capturadoEn !== '' ? $repo->obtenerIndicePorFecha($instanciaId, $capturadoEn) : null;

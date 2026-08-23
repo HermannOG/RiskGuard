@@ -12,6 +12,7 @@ require_once __DIR__ . '/includes/MariaDBAdapter.php';
 require_once __DIR__ . '/includes/OracleAdapter.php';
 require_once __DIR__ . '/includes/MonitorRepository.php';
 require_once __DIR__ . '/includes/monitor-render.php';
+require_once __DIR__ . '/includes/tnsnames-parser.php';
 
 $pdo = dbMonitor();
 $instanciaId = (int) ($_GET['instancia_id'] ?? 0);
@@ -29,6 +30,11 @@ if (!$instancia) {
     exit;
 }
 
+// Si es Oracle y tiene un alias TNS guardado, refrescamos host/puerto/
+// nombre_bd leyendo tnsnames.ora en este mismo momento -- en vez de
+// confiar en lo que haya quedado guardado en monitor_instancias.
+$instancia = refrescarInstanciaDesdeTns($instancia);
+
 $repo = new MonitorRepository($pdo);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['capturar'])) {
@@ -45,10 +51,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['capturar'])) {
                 throw new RuntimeException('La extension oci8 de PHP no esta habilitada en este servidor.');
             }
 
-            // 'nombre_bd' se usa como SERVICE_NAME de Oracle (ej. XEPDB1, ORCLPDB1).
-            // Formato estandar de connection string via listener:
-            //   host:puerto/service_name
-            $connString = sprintf('%s:%s/%s', $instancia['host'], $instancia['puerto'], $instancia['nombre_bd']);
+            if (!empty($instancia['tns_alias'])) {
+                // Conectamos usando el alias TNS directamente: el propio
+                // cliente Oracle (OCI8) resuelve host/puerto/service_name
+                // leyendo tnsnames.ora, usando TNS_ADMIN.
+                $carpetaTns = obtenerCarpetaTnsAdmin();
+                if ($carpetaTns) {
+                    putenv('TNS_ADMIN=' . $carpetaTns);
+                }
+                $connString = $instancia['tns_alias'];
+            } else {
+                // Instancia sin alias TNS (registrada antes de este
+                // cambio, o sin tnsnames.ora disponible): seguimos
+                // armando el connection string a mano, como antes.
+                // 'nombre_bd' se usa como SERVICE_NAME de Oracle (ej. XEPDB1, ORCLPDB1).
+                $connString = sprintf('%s:%s/%s', $instancia['host'], $instancia['puerto'], $instancia['nombre_bd']);
+            }
 
             $ociConn = @oci_connect(
                     $instancia['usuario'],

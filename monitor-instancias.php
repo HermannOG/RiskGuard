@@ -7,23 +7,51 @@ require_once __DIR__ . '/includes/header.php';
 require_once __DIR__ . '/includes/navbar.php';
 require_once __DIR__ . '/includes/db-monitor.php';
 require_once __DIR__ . '/includes/monitor-crypto.php';
+require_once __DIR__ . '/includes/tnsnames-parser.php';
 
 $pdo = dbMonitor();
 $mensaje = null;
+$lang = $LANG ?? 'es';
+
+$rutaTns = obtenerRutaTnsnames();
+$tnsAliases = leerTnsnamesAliases($rutaTns);
+$diagTns = obtenerDiagnosticoTns();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $nombre     = trim($_POST['nombre'] ?? '');
-    $tipoMotor  = $_POST['tipo_motor'] ?? '';
-    $host       = trim($_POST['host'] ?? '');
-    $puerto     = (int) ($_POST['puerto'] ?? 0);
-    $nombreBd   = trim($_POST['nombre_bd'] ?? '');
-    $usuario    = trim($_POST['usuario'] ?? '');
-    $password   = $_POST['password'] ?? '';
+    $nombre       = trim($_POST['nombre'] ?? '');
+    $tipoMotor    = $_POST['tipo_motor'] ?? '';
+    $usuario      = trim($_POST['usuario'] ?? '');
+    $password     = $_POST['password'] ?? '';
+    $tnsAliasPost = trim($_POST['tns_alias'] ?? '');
 
-    if ($nombre && $tipoMotor && $host && $puerto && $nombreBd && $usuario) {
+    $host = $puerto = $nombreBd = null;
+    $tnsAlias = null;
+
+    if ($tipoMotor === 'oracle' && $tnsAliasPost !== '') {
+        // Nunca confiamos en host/puerto que pudiera venir en el POST
+        // para Oracle: se resuelven SIEMPRE desde tnsnames.ora, para
+        // que lo que se guarda coincida con lo que el archivo dice hoy.
+        $descriptor = resolverAliasTns($tnsAliasPost, $rutaTns);
+        if ($descriptor === null) {
+            $mensaje = $lang === 'en'
+                    ? 'That TNS alias is no longer in tnsnames.ora. Reload the page and pick another one.'
+                    : 'Ese alias TNS ya no está en tnsnames.ora. Recargá la página y elegí otro.';
+        } else {
+            $host     = $descriptor['host'];
+            $puerto   = $descriptor['port'];
+            $nombreBd = $descriptor['service_name'] ?? $descriptor['sid'];
+            $tnsAlias = strtoupper($tnsAliasPost);
+        }
+    } else {
+        $host     = trim($_POST['host'] ?? '');
+        $puerto   = (int) ($_POST['puerto'] ?? 0);
+        $nombreBd = trim($_POST['nombre_bd'] ?? '');
+    }
+
+    if (!$mensaje && $nombre && $tipoMotor && $host && $puerto && $nombreBd && $usuario) {
         $stmt = $pdo->prepare("
-            INSERT INTO monitor_instancias (nombre, tipo_motor, host, puerto, nombre_bd, usuario, password_enc, activo)
-            VALUES (:nombre, :tipo_motor, :host, :puerto, :nombre_bd, :usuario, :password_enc, 1)
+            INSERT INTO monitor_instancias (nombre, tipo_motor, host, puerto, nombre_bd, tns_alias, usuario, password_enc, activo)
+            VALUES (:nombre, :tipo_motor, :host, :puerto, :nombre_bd, :tns_alias, :usuario, :password_enc, 1)
         ");
         $stmt->execute([
                 'nombre'       => $nombre,
@@ -31,16 +59,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'host'         => $host,
                 'puerto'       => $puerto,
                 'nombre_bd'    => $nombreBd,
+                'tns_alias'    => $tnsAlias,
                 'usuario'      => $usuario,
                 'password_enc' => monitorEncrypt($password),
         ]);
         $mensaje = t('monitor.instancias.ok');
-    } else {
+    } elseif (!$mensaje) {
         $mensaje = t('monitor.instancias.faltan');
     }
 }
 
-$instancias = $pdo->query("SELECT id, nombre, tipo_motor, host, puerto, nombre_bd, activo FROM monitor_instancias ORDER BY nombre")->fetchAll();
+$instancias = $pdo->query("SELECT id, nombre, tipo_motor, host, puerto, nombre_bd, tns_alias, activo FROM monitor_instancias ORDER BY nombre")->fetchAll();
 ?>
     <link rel="stylesheet" href="assets/css/evaluacion.css">
     <main class="flex-grow-1">
@@ -70,17 +99,49 @@ $instancias = $pdo->query("SELECT id, nombre, tipo_motor, host, puerto, nombre_b
                                     <option value="sqlserver">SQL Server</option>
                                 </select>
                             </div>
-                            <div class="mb-3">
-                                <label class="form-label"><?php echo t('monitor.instancias.host'); ?></label>
-                                <input type="text" name="host" class="form-control" placeholder="127.0.0.1" required>
+
+                            <div class="mb-3" id="campo-tns" style="display:none;">
+                                <label class="form-label"><?php echo $lang === 'en' ? 'TNS alias (tnsnames.ora)' : 'Alias TNS (tnsnames.ora)'; ?></label>
+                                <select name="tns_alias" class="form-select">
+                                    <option value=""><?php echo $lang === 'en' ? '— Select an alias —' : '— Elegí un alias —'; ?></option>
+                                    <?php foreach ($tnsAliases as $alias => $d): ?>
+                                        <option value="<?php echo htmlspecialchars($alias); ?>">
+                                            <?php echo htmlspecialchars($alias); ?> (<?php echo htmlspecialchars($d['host']); ?>:<?php echo (int) $d['port']; ?>/<?php echo htmlspecialchars($d['service_name'] ?? $d['sid']); ?>)
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                                <div class="form-text">
+                                    <?php echo $lang === 'en'
+                                            ? 'Host, port and database are read directly from tnsnames.ora for this alias.'
+                                            : 'Host, puerto y base de datos se leen directamente de tnsnames.ora para este alias.'; ?>
+                                </div>
                             </div>
-                            <div class="mb-3">
-                                <label class="form-label"><?php echo t('monitor.instancias.puerto'); ?></label>
-                                <input type="number" name="puerto" class="form-control" value="3306" required>
+
+                            <div class="alert alert-warning" id="aviso-tns" style="display:none;">
+                                <?php echo $lang === 'en'
+                                        ? 'No tnsnames.ora with aliases was found. Fill in the connection manually below, or check where the system looked:'
+                                        : 'No se encontró tnsnames.ora con alias. Completá la conexión manualmente abajo, o revisá dónde buscó el sistema:'; ?>
+                                <ul class="mb-0 mt-2" style="font-family:var(--font-mono); font-size:0.8rem;">
+                                    <li>config.php → oracle_tns_admin: <?php echo $diagTns['config_oracle_tns_admin'] ? htmlspecialchars($diagTns['config_oracle_tns_admin']) : '—'; ?></li>
+                                    <li>env TNS_ADMIN: <?php echo $diagTns['env_tns_admin'] ? htmlspecialchars($diagTns['env_tns_admin']) : '—'; ?></li>
+                                    <li>env ORACLE_HOME: <?php echo $diagTns['env_oracle_home'] ? htmlspecialchars($diagTns['env_oracle_home']) : '—'; ?></li>
+                                    <li><?php echo $lang === 'en' ? 'Common install paths' : 'Rutas típicas de instalación'; ?>: <?php echo $lang === 'en' ? 'checked, none found' : 'revisadas, ninguna encontrada'; ?></li>
+                                </ul>
                             </div>
-                            <div class="mb-3">
-                                <label class="form-label"><?php echo t('monitor.instancias.bd'); ?></label>
-                                <input type="text" name="nombre_bd" class="form-control" required>
+
+                            <div id="campos-manual">
+                                <div class="mb-3">
+                                    <label class="form-label"><?php echo t('monitor.instancias.host'); ?></label>
+                                    <input type="text" name="host" class="form-control" placeholder="127.0.0.1" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label"><?php echo t('monitor.instancias.puerto'); ?></label>
+                                    <input type="number" name="puerto" class="form-control" value="3306" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label"><?php echo t('monitor.instancias.bd'); ?></label>
+                                    <input type="text" name="nombre_bd" class="form-control" required>
+                                </div>
                             </div>
                             <div class="mb-3">
                                 <label class="form-label"><?php echo t('monitor.instancias.usuario'); ?></label>
@@ -103,7 +164,12 @@ $instancias = $pdo->query("SELECT id, nombre, tipo_motor, host, puerto, nombre_b
                                     <tr>
                                         <td><?php echo htmlspecialchars($inst['nombre']); ?></td>
                                         <td><?php echo htmlspecialchars($inst['tipo_motor']); ?></td>
-                                        <td><?php echo htmlspecialchars($inst['host']); ?>:<?php echo (int) $inst['puerto']; ?></td>
+                                        <td>
+                                            <?php echo htmlspecialchars($inst['host']); ?>:<?php echo (int) $inst['puerto']; ?>
+                                            <?php if (!empty($inst['tns_alias'])): ?>
+                                                <br><small style="color:var(--text-muted);">TNS: <?php echo htmlspecialchars($inst['tns_alias']); ?></small>
+                                            <?php endif; ?>
+                                        </td>
                                         <td><a href="monitor-salud.php?instancia_id=<?php echo (int) $inst['id']; ?>" class="btn btn-sm btn-cta"><?php echo t('monitor.instancias.ver'); ?></a></td>
                                     </tr>
                                 <?php endforeach; ?>
@@ -115,4 +181,31 @@ $instancias = $pdo->query("SELECT id, nombre, tipo_motor, host, puerto, nombre_b
             </div>
         </section>
     </main>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var motorSelect = document.querySelector('select[name="tipo_motor"]');
+            var camposManual = document.getElementById('campos-manual');
+            var campoTns = document.getElementById('campo-tns');
+            var avisoTns = document.getElementById('aviso-tns');
+            var selectTns = campoTns.querySelector('select[name="tns_alias"]');
+            var hayAliases = <?php echo !empty($tnsAliases) ? 'true' : 'false'; ?>;
+
+            function actualizarVisibilidad() {
+                var esOracle = motorSelect.value === 'oracle';
+                var usarTns = esOracle && hayAliases;
+
+                campoTns.style.display = usarTns ? '' : 'none';
+                avisoTns.style.display = (esOracle && !hayAliases) ? '' : 'none';
+                camposManual.style.display = usarTns ? 'none' : '';
+
+                camposManual.querySelectorAll('input').forEach(function (input) {
+                    input.disabled = usarTns;
+                });
+                selectTns.disabled = !usarTns;
+            }
+
+            motorSelect.addEventListener('change', actualizarVisibilidad);
+            actualizarVisibilidad();
+        });
+    </script>
 <?php require_once __DIR__ . '/includes/footer.php'; ?>
