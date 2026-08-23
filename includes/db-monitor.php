@@ -36,9 +36,17 @@ function dbMonitor(): PDO
         $cfgMonitor['dbname']
     );
 
+    // PDO::ATTR_TIMEOUT limita cuanto espera PHP a que MySQL responda al
+    // CONECTAR (no limita consultas ya en curso). Sin esto, si el host
+    // configurado no responde, PHP puede quedarse colgado por mucho mas
+    // tiempo del esperado -- y como el servidor embebido de PHP atiende
+    // una peticion a la vez, cualquier clic repetido mientras tanto se
+    // encola detras, y varias peticiones terminan compitiendo por las
+    // mismas filas al mismo tiempo cuando por fin se destraban.
     $pdo = new PDO($dsn, $cfgMonitor['user'], $cfgMonitor['password'], [
         PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+        PDO::ATTR_TIMEOUT            => 5,
     ]);
 
     $pdo->exec("SET time_zone = '-06:00'");
