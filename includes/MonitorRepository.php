@@ -109,15 +109,15 @@ class MonitorRepository
         ]);
     }
     public function obtenerDetalleLecturas(int $instanciaId, string $capturadoEn, string $lang = 'es'): array
-        {
-            $colNombre = $lang === 'en' ? 'nombre_en' : 'nombre';
-            $colDescripcion = $lang === 'en' ? 'descripcion_en' : 'descripcion';
-            $colVerde = $lang === 'en' ? 'banda_verde_en' : 'banda_verde';
-            $colAmarillo = $lang === 'en' ? 'banda_amarillo_en' : 'banda_amarillo';
-            $colAnaranjado = $lang === 'en' ? 'banda_anaranjado_en' : 'banda_anaranjado';
-            $colRojo = $lang === 'en' ? 'banda_rojo_en' : 'banda_rojo';
+    {
+        $colNombre = $lang === 'en' ? 'nombre_en' : 'nombre';
+        $colDescripcion = $lang === 'en' ? 'descripcion_en' : 'descripcion';
+        $colVerde = $lang === 'en' ? 'banda_verde_en' : 'banda_verde';
+        $colAmarillo = $lang === 'en' ? 'banda_amarillo_en' : 'banda_amarillo';
+        $colAnaranjado = $lang === 'en' ? 'banda_anaranjado_en' : 'banda_anaranjado';
+        $colRojo = $lang === 'en' ? 'banda_rojo_en' : 'banda_rojo';
 
-            $sql = "
+        $sql = "
                 SELECT
                     l.variable_id,
                     v.componente,
@@ -139,35 +139,85 @@ class MonitorRepository
                   AND l.capturado_en = :capturado_en
                 ORDER BY v.componente, l.variable_id
             ";
-            $stmt = $this->pdo->prepare($sql);
-            $stmt->execute(['instancia_id' => $instanciaId, 'capturado_en' => $capturadoEn]);
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute(['instancia_id' => $instanciaId, 'capturado_en' => $capturadoEn]);
 
-            $detalle = [];
-            foreach ($stmt->fetchAll() as $fila) {
-                $fila['valor_crudo'] = (float) $fila['valor_crudo'];
-                $fila['valor_normalizado'] = (float) $fila['valor_normalizado'];
-                $fila['estado'] = $this->determinarEstado($instanciaId, $fila['valor_normalizado']);
-                $detalle[] = $fila;
-            }
-            return $detalle;
+        $detalle = [];
+        foreach ($stmt->fetchAll() as $fila) {
+            $fila['valor_crudo'] = (float) $fila['valor_crudo'];
+            $fila['valor_normalizado'] = (float) $fila['valor_normalizado'];
+            $fila['estado'] = $this->determinarEstado($instanciaId, $fila['valor_normalizado']);
+            $detalle[] = $fila;
         }
-        /**
-         * Devuelve las capturas anteriores de una instancia (mas recientes
-         * primero), para poder ver el historial y, mas adelante, detectar
-         * patrones de comportamiento a lo largo del tiempo.
-         */
-        public function obtenerHistorialIndices(int $instanciaId, int $limite = 10): array
-        {
-            $stmt = $this->pdo->prepare("
+        return $detalle;
+    }
+    /**
+     * Devuelve las capturas de una instancia (mas recientes primero),
+     * con soporte de paginacion via $offset, para la linea de tiempo.
+     */
+    public function obtenerHistorialIndices(int $instanciaId, int $limite = 10, int $offset = 0): array
+    {
+        $stmt = $this->pdo->prepare("
                 SELECT capturado_en, indice_procesos, indice_memoria, indice_archivos, indice_salud, estado
                 FROM monitor_indices
                 WHERE instancia_id = :instancia_id
                 ORDER BY capturado_en DESC
-                LIMIT :limite
+                LIMIT :limite OFFSET :offset
             ");
-            $stmt->bindValue(':instancia_id', $instanciaId, PDO::PARAM_INT);
-            $stmt->bindValue(':limite', $limite, PDO::PARAM_INT);
-            $stmt->execute();
-            return $stmt->fetchAll();
-        }
+        $stmt->bindValue(':instancia_id', $instanciaId, PDO::PARAM_INT);
+        $stmt->bindValue(':limite', $limite, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll();
+    }
+
+    /**
+     * Cuenta el total de capturas acumuladas de una instancia, para
+     * poder armar la paginacion de la linea de tiempo.
+     */
+    public function contarCapturas(int $instanciaId): int
+    {
+        $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM monitor_indices WHERE instancia_id = :instancia_id");
+        $stmt->execute(['instancia_id' => $instanciaId]);
+        return (int) $stmt->fetchColumn();
+    }
+
+    /**
+     * Trae los indices agregados (IP/IM/IA/ISBD/estado) de UNA captura
+     * puntual, identificada por su timestamp exacto. Se usa para abrir
+     * el detalle de una fila de la linea de tiempo o del historial.
+     */
+    public function obtenerIndicePorFecha(int $instanciaId, string $capturadoEn): ?array
+    {
+        $stmt = $this->pdo->prepare("
+                SELECT capturado_en, indice_procesos, indice_memoria, indice_archivos, indice_salud, estado
+                FROM monitor_indices
+                WHERE instancia_id = :instancia_id AND capturado_en = :capturado_en
+            ");
+        $stmt->execute(['instancia_id' => $instanciaId, 'capturado_en' => $capturadoEn]);
+        $fila = $stmt->fetch();
+        return $fila ?: null;
+    }
+
+    /**
+     * Devuelve el capturado_en de la captura inmediatamente anterior o
+     * siguiente a una dada, para poder "hojear" el historial desde la
+     * pantalla de detalle de una captura (como paginas de un libro).
+     */
+    public function obtenerCapturaAdyacente(int $instanciaId, string $capturadoEn, string $direccion): ?string
+    {
+        $operador = $direccion === 'siguiente' ? '>' : '<';
+        $orden    = $direccion === 'siguiente' ? 'ASC' : 'DESC';
+
+        $stmt = $this->pdo->prepare("
+                SELECT capturado_en
+                FROM monitor_indices
+                WHERE instancia_id = :instancia_id AND capturado_en {$operador} :capturado_en
+                ORDER BY capturado_en {$orden}
+                LIMIT 1
+            ");
+        $stmt->execute(['instancia_id' => $instanciaId, 'capturado_en' => $capturadoEn]);
+        $valor = $stmt->fetchColumn();
+        return $valor !== false ? $valor : null;
+    }
 }

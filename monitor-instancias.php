@@ -26,13 +26,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             VALUES (:nombre, :tipo_motor, :host, :puerto, :nombre_bd, :usuario, :password_enc, 1)
         ");
         $stmt->execute([
-            'nombre'       => $nombre,
-            'tipo_motor'   => $tipoMotor,
-            'host'         => $host,
-            'puerto'       => $puerto,
-            'nombre_bd'    => $nombreBd,
-            'usuario'      => $usuario,
-            'password_enc' => monitorEncrypt($password),
+                'nombre'       => $nombre,
+                'tipo_motor'   => $tipoMotor,
+                'host'         => $host,
+                'puerto'       => $puerto,
+                'nombre_bd'    => $nombreBd,
+                'usuario'      => $usuario,
+                'password_enc' => monitorEncrypt($password),
         ]);
         $mensaje = t('monitor.instancias.ok');
     } else {
@@ -42,6 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $instancias = $pdo->query("SELECT id, nombre, tipo_motor, host, puerto, nombre_bd, activo FROM monitor_instancias ORDER BY nombre")->fetchAll();
 ?>
+    <link rel="stylesheet" href="assets/css/evaluacion.css">
     <main class="flex-grow-1">
         <section class="section">
             <div class="container">
@@ -94,9 +95,10 @@ $instancias = $pdo->query("SELECT id, nombre, tipo_motor, host, puerto, nombre_b
                     </div>
 
                     <div class="col-lg-6">
-                        <table class="table">
-                            <thead><tr><th><?php echo t('monitor.instancias.nombre'); ?></th><th><?php echo t('monitor.instancias.motor'); ?></th><th><?php echo t('monitor.instancias.host'); ?></th><th></th></tr></thead>
-                            <tbody>
+                        <div class="table-responsive">
+                            <table class="table table-striped align-middle">
+                                <thead><tr><th><?php echo t('monitor.instancias.nombre'); ?></th><th><?php echo t('monitor.instancias.motor'); ?></th><th><?php echo t('monitor.instancias.host'); ?></th><th></th></tr></thead>
+                                <tbody>
                                 <?php foreach ($instancias as $inst): ?>
                                     <tr>
                                         <td><?php echo htmlspecialchars($inst['nombre']); ?></td>
@@ -105,8 +107,9 @@ $instancias = $pdo->query("SELECT id, nombre, tipo_motor, host, puerto, nombre_b
                                         <td><a href="monitor-salud.php?instancia_id=<?php echo (int) $inst['id']; ?>" class="btn btn-sm btn-cta"><?php echo t('monitor.instancias.ver'); ?></a></td>
                                     </tr>
                                 <?php endforeach; ?>
-                            </tbody>
-                        </table>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
