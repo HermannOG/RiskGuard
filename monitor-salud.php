@@ -101,6 +101,8 @@ $nombresComponente = [
         'archivos' => t('monitor.componente.archivos'),
 ];
 $siglaComponente = ['procesos' => 'IP', 'memoria' => 'IM', 'archivos' => 'IA'];
+$iconoComponente = ['procesos' => 'fa-microchip', 'memoria' => 'fa-memory', 'archivos' => 'fa-folder-open'];
+$subtituloDetalle = $lang === 'en' ? 'Variables that make up this index' : 'Variables que forman este índice';
 
 $estadoIP = $resultado ? $repo->determinarEstado($instanciaId, (float) $resultado['indice_procesos']) : null;
 $estadoIM = $resultado ? $repo->determinarEstado($instanciaId, (float) $resultado['indice_memoria']) : null;
@@ -243,11 +245,11 @@ function renderPopoverJustificacion(string $comp, array $j): string
     return $html;
 }
 
-function renderBarraRango(array $d, array $colores): string
+function renderBarraRango(array $d, array $colores, string $idPrefix = ''): string
 {
     $pct = max(0, min(100, $d['valor_normalizado']));
     $color = $colores[$d['estado']];
-    $idPop = 'var-' . $d['variable_id'];
+    $idPop = 'var-' . $d['variable_id'] . ($idPrefix !== '' ? '-' . $idPrefix : '');
 
     $popContenido = '<strong>' . htmlspecialchars($d['nombre']) . '</strong><br>' . htmlspecialchars($d['descripcion']) . '<br><br>';
     foreach (['verde', 'amarillo', 'anaranjado', 'rojo'] as $estadoBanda) {
@@ -487,10 +489,6 @@ function formatearFecha(string $capturadoEn, string $lang): string
                             <?php endforeach; ?>
                         </div>
 
-                        <?php
-                        $iconoComponente = ['procesos' => 'fa-microchip', 'memoria' => 'fa-memory', 'archivos' => 'fa-folder-open'];
-                        $subtituloDetalle = $lang === 'en' ? 'Variables that make up this index' : 'Variables que forman este índice';
-                        ?>
                         <?php foreach (['procesos' => $estadoIP, 'memoria' => $estadoIM, 'archivos' => $estadoIA] as $comp => $estadoComp): ?>
                             <?php $colorComp = $colores[$estadoComp]; ?>
                             <div class="collapse mt-3" id="detalle-<?php echo $comp; ?>">
@@ -527,7 +525,24 @@ function formatearFecha(string $capturadoEn, string $lang): string
                             </button>
                             <div class="collapse" id="historial-panel">
                                 <?php foreach ($historial as $i => $h): ?>
-                                    <?php $idHist = 'hist-' . $i; $colorH = $colores[$h['estado']]; ?>
+                                    <?php
+                                    $idHist = 'hist-' . $i;
+                                    $colorH = $colores[$h['estado']];
+
+                                    // Detalle completo (todas las variables) de ESTA captura puntual del historial.
+                                    // No requiere cambios en la BD: monitor_lecturas ya guarda cada lectura
+                                    // cruda por capturado_en, y obtenerDetalleLecturas() ya sabe reconstruirlo.
+                                    $detalleH = $repo->obtenerDetalleLecturas($instanciaId, $h['capturado_en'], $lang);
+                                    $detallePorComponenteH = ['procesos' => [], 'memoria' => [], 'archivos' => []];
+                                    foreach ($detalleH as $d) {
+                                        $detallePorComponenteH[$d['componente']][] = $d;
+                                    }
+                                    $estadoComponenteH = [
+                                            'procesos' => $repo->determinarEstado($instanciaId, (float) $h['indice_procesos']),
+                                            'memoria'  => $repo->determinarEstado($instanciaId, (float) $h['indice_memoria']),
+                                            'archivos' => $repo->determinarEstado($instanciaId, (float) $h['indice_archivos']),
+                                    ];
+                                    ?>
                                     <button type="button" class="hist-fila" data-bs-toggle="collapse" data-bs-target="#<?php echo $idHist; ?>" aria-expanded="false">
                                         <span class="hist-dot" style="background:<?php echo $colorH; ?>;"></span>
                                         <span class="hist-fecha"><?php echo formatearFecha($h['capturado_en'], $lang); ?></span>
@@ -539,16 +554,37 @@ function formatearFecha(string $capturadoEn, string $lang): string
                                             <div class="hist-mini-row">
                                                 <?php echo renderRoscaGrande((float) $h['indice_salud'], $colorH, 110); ?>
                                                 <?php foreach (['procesos', 'memoria', 'archivos'] as $comp): ?>
-                                                    <?php $estadoH = $repo->determinarEstado($instanciaId, (float) $h['indice_' . $comp]); $colorCompH = $colores[$estadoH]; ?>
-                                                    <div class="mini-gauge" style="flex:1; min-width:150px;">
-                                                        <?php echo renderGaugeChico((float) $h['indice_' . $comp]); ?>
-                                                        <div>
-                                                            <div class="mini-gauge-valor" style="color:<?php echo $colorCompH; ?>;"><?php echo number_format((float) $h['indice_' . $comp], 2); ?></div>
-                                                            <div class="mini-gauge-label"><?php echo $nombresComponente[$comp]; ?> (<?php echo $siglaComponente[$comp]; ?>)</div>
+                                                    <?php $colorCompH = $colores[$estadoComponenteH[$comp]]; $idComp = $idHist . '-' . $comp; ?>
+                                                    <div class="mini-gauge-h-wrap" style="flex:1; min-width:150px;">
+                                                        <div class="mini-gauge-h componente-card" role="button" data-bs-toggle="collapse" data-bs-target="#detalle-<?php echo $idComp; ?>" aria-expanded="false">
+                                                            <?php echo renderGaugeChico((float) $h['indice_' . $comp]); ?>
+                                                            <div class="mini-gauge-h-valor" style="color:<?php echo $colorCompH; ?>;"><?php echo number_format((float) $h['indice_' . $comp], 2); ?></div>
+                                                            <div class="mini-gauge-h-label">
+                                                                <?php echo $nombresComponente[$comp]; ?> (<?php echo $siglaComponente[$comp]; ?>)
+                                                                <i class="fa-solid fa-chevron-down chevron" style="font-size:0.65rem; color:var(--text-muted);"></i>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 <?php endforeach; ?>
                                             </div>
+
+                                            <?php foreach (['procesos', 'memoria', 'archivos'] as $comp): ?>
+                                                <?php $idComp = $idHist . '-' . $comp; $colorCompH = $colores[$estadoComponenteH[$comp]]; ?>
+                                                <div class="collapse mt-3" id="detalle-<?php echo $idComp; ?>">
+                                                    <div class="comp-block" style="border-left-color:<?php echo $colorCompH; ?>;">
+                                                        <div class="comp-block-header">
+                                                            <div class="comp-block-icon" style="color:<?php echo $colorCompH; ?>;"><i class="fa-solid <?php echo $iconoComponente[$comp]; ?>"></i></div>
+                                                            <div>
+                                                                <div class="comp-block-title"><?php echo $nombresComponente[$comp]; ?> <span style="color:var(--text-muted); font-weight:400;">(<?php echo $siglaComponente[$comp]; ?>)</span></div>
+                                                                <div class="comp-block-sub"><?php echo $subtituloDetalle; ?></div>
+                                                            </div>
+                                                        </div>
+                                                        <?php foreach ($detallePorComponenteH[$comp] as $d): ?>
+                                                            <?php echo renderBarraRango($d, $colores, $idComp); ?>
+                                                        <?php endforeach; ?>
+                                                    </div>
+                                                </div>
+                                            <?php endforeach; ?>
                                         </div>
                                     </div>
                                 <?php endforeach; ?>
