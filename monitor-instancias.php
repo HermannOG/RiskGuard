@@ -90,15 +90,36 @@ $instancias = $pdo->query("SELECT id, nombre, tipo_motor, host, puerto, nombre_b
                                 <label class="form-label"><?php echo t('monitor.instancias.nombre'); ?></label>
                                 <input type="text" name="nombre" class="form-control" required>
                             </div>
-                            <div class="mb-3">
-                                <label class="form-label"><?php echo t('monitor.instancias.motor'); ?></label>
-                                <select name="tipo_motor" class="form-select" required>
-                                    <option value="mariadb">MariaDB / MySQL</option>
-                                    <option value="oracle">Oracle</option>
-                                    <option value="postgres">PostgreSQL</option>
-                                    <option value="sqlserver">SQL Server</option>
-                                </select>
+                            <div class="d-flex flex-wrap gap-3 mb-3">
+                                <div style="flex:1; min-width:220px;">
+                                    <label class="form-label"><?php echo t('monitor.instancias.motor'); ?></label>
+                                    <select name="tipo_motor" class="form-select" required>
+                                        <option value="mariadb">MariaDB / MySQL</option>
+                                        <option value="oracle">Oracle</option>
+                                        <option value="postgres">PostgreSQL</option>
+                                        <option value="sqlserver">SQL Server</option>
+                                    </select>
+                                </div>
+                                <div style="flex:1; min-width:220px; display:none;" id="modo-oracle-wrap">
+                                    <label class="form-label"><?php echo $lang === 'en' ? 'Connection source' : 'Origen de la conexión'; ?></label>
+                                    <div class="d-flex flex-column gap-2 pt-2">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="modo_conexion" id="modo-tns" value="tns" checked>
+                                            <label class="form-check-label" for="modo-tns">
+                                                <?php echo $lang === 'en' ? 'Use tnsnames.ora alias' : 'Usar alias de tnsnames.ora'; ?>
+                                            </label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="modo_conexion" id="modo-manual" value="manual">
+                                            <label class="form-check-label" for="modo-manual">
+                                                <?php echo $lang === 'en' ? 'Enter manually' : 'Ingresar manualmente'; ?>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
+
+
 
                             <div class="mb-3" id="campo-tns" style="display:none;">
                                 <label class="form-label"><?php echo $lang === 'en' ? 'TNS alias (tnsnames.ora)' : 'Alias TNS (tnsnames.ora)'; ?></label>
@@ -186,14 +207,22 @@ $instancias = $pdo->query("SELECT id, nombre, tipo_motor, host, puerto, nombre_b
             var motorSelect = document.querySelector('select[name="tipo_motor"]');
             var camposManual = document.getElementById('campos-manual');
             var campoTns = document.getElementById('campo-tns');
+            var modoOracleWrap = document.getElementById('modo-oracle-wrap');
             var avisoTns = document.getElementById('aviso-tns');
             var selectTns = campoTns.querySelector('select[name="tns_alias"]');
+            var radiosModo = document.querySelectorAll('input[name="modo_conexion"]');
             var hayAliases = <?php echo !empty($tnsAliases) ? 'true' : 'false'; ?>;
+
+            function modoElegido() {
+                var marcado = document.querySelector('input[name="modo_conexion"]:checked');
+                return marcado ? marcado.value : 'tns';
+            }
 
             function actualizarVisibilidad() {
                 var esOracle = motorSelect.value === 'oracle';
-                var usarTns = esOracle && hayAliases;
+                var usarTns = esOracle && hayAliases && modoElegido() === 'tns';
 
+                modoOracleWrap.style.display = (esOracle && hayAliases) ? '' : 'none';
                 campoTns.style.display = usarTns ? '' : 'none';
                 avisoTns.style.display = (esOracle && !hayAliases) ? '' : 'none';
                 camposManual.style.display = usarTns ? 'none' : '';
@@ -205,6 +234,9 @@ $instancias = $pdo->query("SELECT id, nombre, tipo_motor, host, puerto, nombre_b
             }
 
             motorSelect.addEventListener('change', actualizarVisibilidad);
+            radiosModo.forEach(function (radio) {
+                radio.addEventListener('change', actualizarVisibilidad);
+            });
             actualizarVisibilidad();
         });
     </script>

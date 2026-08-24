@@ -375,11 +375,40 @@ h1, h2, h3, h4, h5, h6{
     border-color: var(--risk-mid);
     box-shadow: 0 0 0 3px rgba(242, 177, 52, 0.15);
 }
+
+/* Ícono nativo de "mostrar contraseña" del navegador (Edge/Chrome): por
+   defecto es oscuro. En modo oscuro (el default del sitio, sin
+   data-theme) lo invertimos para que se vea claro; en modo claro lo
+   dejamos como viene, porque ahí el ícono oscuro sí se lee bien. */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear{
+    filter: invert(1);
+}
+[data-theme="light"] input[type="password"]::-ms-reveal,
+[data-theme="light"] input[type="password"]::-ms-clear{
+    filter: none;
+}
+
+/* Autocompletado del navegador (usuario/contraseña guardados): Chrome/Edge
+   fuerzan fondo claro y texto negro con sus propios estilos internos,
+   pisando el tema oscuro. Este truco (sombra interna enorme) es la forma
+   estándar de recuperar el color de fondo real del sitio. */
+.form-control:-webkit-autofill,
+.form-control:-webkit-autofill:hover,
+.form-control:-webkit-autofill:focus,
+.form-control:-webkit-autofill:active{
+    -webkit-text-fill-color: var(--text) !important;
+    -webkit-box-shadow: 0 0 0px 1000px var(--surface-alt) inset !important;
+    box-shadow: 0 0 0px 1000px var(--surface-alt) inset !important;
+    caret-color: var(--text);
+    transition: background-color 5000s ease-in-out 0s;
+}
 .form-control::placeholder{ color: var(--text-muted); }
 .form-select option{
     background: var(--surface-alt);
     color: var(--text);
 }
+.form-text{ color: var(--text-muted); }
 
 /* ===== FOOTER ===== */
 .site-footer{
