@@ -528,3 +528,8 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
     border-radius: 4px;
     padding: 0.1rem 0.5rem;
 }
+.service-card--link:hover {
+    border-color: var(--risk-mid);
+    transform: translateY(-2px);
+    transition: transform 0.2s ease, border-color 0.2s ease;
+}
