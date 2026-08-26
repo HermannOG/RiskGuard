@@ -139,7 +139,8 @@
             </div>
         </div>
     </section>
-
+	
+	
     <!-- EQUIPO -->
     <section id="equipo" class="section section-alt">
         <div class="container">
@@ -207,6 +208,9 @@
             </div>
         </div>
     </section>
+	
+	
+	
 
 </main>
 

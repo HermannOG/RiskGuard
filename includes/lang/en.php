@@ -197,4 +197,12 @@ return [
         'monitor.isbd.titulo' => 'ISBD — Database Health Index',
         'monitor.isbd.intro'  => 'This is the number that summarizes, on a single 0-100 scale, how healthy your database is right now — it combines processes, memory, and files using the weights defined for this project (25% / 60% / 15%).',
         'monitor.isbd.ver'    => 'View the index and its detail',
+		
+	// Clientes
+	'nav.clientes'       => 'Clients',
+	'clientes.pagetitle' => 'Clients',
+	'clientes.eyebrow'   => 'Our work',
+	'clientes.title'     => 'Tools and services delivered',
+	'clientes.lead'      => 'Projects developed for organizations that trust RiskGuard to manage data base systems.',
+	'clientes.ver_demo'  => 'View tool',
 ];

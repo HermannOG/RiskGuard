@@ -34,6 +34,7 @@
                     <li class="nav-item"><a class="nav-link" href="index.php#normas"><?php echo t('nav.normas'); ?></a></li>
                     <li class="nav-item"><a class="nav-link" href="index.php#equipo"><?php echo t('nav.equipo'); ?></a></li>
                     <li class="nav-item"><a class="nav-link" href="index.php#contacto"><?php echo t('nav.contacto'); ?></a></li>
+					<?php if ($usuarioSesionNav && $usuarioSesionNav['rol'] === 'admin'): ?><li class="nav-item"><a class="nav-link" href="clientes.php"><?php echo t('nav.clientes'); ?></a></li><?php endif; ?>
                 </ul>
                 <button id="theme-toggle" type="button" class="theme-toggle" aria-label="Cambiar modo día/noche">
                     <i class="fa-solid fa-sun theme-icon-light"></i>

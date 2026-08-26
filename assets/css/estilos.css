@@ -498,3 +498,33 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
 .theme-toggle .theme-icon-dark{ display: inline; }
 [data-theme="light"] .theme-toggle .theme-icon-light{ display: inline; }
 [data-theme="light"] .theme-toggle .theme-icon-dark{ display: none; }
+
+
+/* ===== CLIENTES ===== */
+.cliente-badge {
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.75rem;
+    font-family: var(--font-mono);
+    color: var(--text-muted);
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 0.15rem 0.6rem;
+}
+
+.cliente-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+
+.cliente-tag {
+    font-size: 0.7rem;
+    font-family: var(--font-mono);
+    background: rgba(242, 177, 52, 0.08);
+    color: var(--risk-mid);
+    border: 1px solid rgba(242, 177, 52, 0.2);
+    border-radius: 4px;
+    padding: 0.1rem 0.5rem;
+}

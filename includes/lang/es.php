@@ -197,4 +197,14 @@ return [
         'monitor.isbd.titulo' => 'ISBD — Índice de Salud de la Base de Datos',
         'monitor.isbd.intro'  => 'Es el número que resume, en una sola escala de 0 a 100, qué tan saludable está tu base de datos ahora mismo — combina procesos, memoria y archivos con los pesos definidos para este proyecto (25% / 60% / 15%).',
         'monitor.isbd.ver'    => 'Ver el índice y su detalle',
+
+
+
+	//Seccion Clientes
+	'nav.clientes'       => 'Clientes',
+	'clientes.pagetitle' => 'Clientes',
+	'clientes.eyebrow'   => 'Nuestro trabajo',
+	'clientes.title'     => 'Herramientas y servicios entregados',
+	'clientes.lead'      => 'Proyectos desarrollados para organizaciones que confían en RiskGuard para gestionar sus sistemas de bases de datos. ',
+	'clientes.ver_demo'  => 'Ver herramienta',
 ];
