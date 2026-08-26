@@ -11,6 +11,9 @@ include 'includes/navbar.php';
 
 $repo      = new ClienteRepository(db());
 $proyectos = $repo->listarProyectos($LANG);
+echo '<pre style="background:#000;color:#fff;padding:20px;">';
+print_r($proyectos);
+echo '</pre>';
 ?>
 
 <main class="flex-grow-1">
