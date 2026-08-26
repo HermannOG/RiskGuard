@@ -42,7 +42,7 @@ $proyectos = $repo->listarProyectos($LANG);
               <?php endif; ?>
 
               <h5 class="mb-2"><?php echo htmlspecialchars($p['titulo']); ?></h5>
-              <p class="text-muted flex-grow-1"><?php echo htmlspecialchars($p['descripcion']); ?></p>
+             <p class="section-lead mb-5" style="color:var(--text)"><?php echo htmlspecialchars($p['descripcion']); ?></p>
 
               <?php if ($tags): ?>
                 <div class="cliente-tags mt-3">
