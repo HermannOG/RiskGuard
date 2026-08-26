@@ -14,6 +14,7 @@ $proyectos = $repo->listarProyectos($LANG);
 echo '<pre style="background:#000;color:#fff;padding:20px;">';
 print_r($proyectos);
 echo '</pre>';
+echo '<h1 style="color:red;">PRUEBA ESPH</h1>';
 ?>
 
 <main class="flex-grow-1">
