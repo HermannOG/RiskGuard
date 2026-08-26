@@ -13,6 +13,11 @@ $repo      = new ClienteRepository(db());
 $proyectos = $repo->listarProyectos($LANG);
 ?>
 
+
+
+
+
+
 <main class="flex-grow-1">
   <section class="section">
     <div class="container">
