@@ -1,69 +1,72 @@
 <?php
-
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
-
+if (session_status() === PHP_SESSION_NONE) { session_start(); }
 require_once __DIR__ . '/includes/auth.php';
+requiereAdmin();
 require_once __DIR__ . '/includes/db.php';
 require_once __DIR__ . '/includes/ClienteRepository.php';
 
-echo '<h1 style="color:red;">PASO 1</h1>';
+$pageTitleKey = 'clientes.pagetitle';
+include 'includes/header.php';
+include 'includes/navbar.php';
 
-requiereAdmin();
-
-echo '<h1 style="color:red;">PASO 2</h1>';
-
-$pdo = db();
-
-echo '<h1 style="color:red;">PASO 3</h1>';
-
-echo '<pre style="background:#111;color:#fff;padding:20px;">';
-
-echo "Base de datos:\n";
-echo $pdo->query("SELECT DATABASE()")->fetchColumn();
-
-echo "\n\nHost:\n";
-echo $pdo->query("SELECT @@hostname")->fetchColumn();
-
-echo "\n\nUsuario MySQL:\n";
-echo $pdo->query("SELECT CURRENT_USER()")->fetchColumn();
-
-echo "\n\nProyectos:\n";
-
-$stmt = $pdo->query("
-    SELECT
-        p.id,
-        p.titulo_es,
-        p.titulo_en,
-        p.activo,
-        p.destacado,
-        p.orden,
-        p.cliente_id,
-        c.nombre AS cliente_nombre
-    FROM proyectos p
-    LEFT JOIN clientes c ON c.id = p.cliente_id
-    ORDER BY p.id
-");
-
-$datos = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-print_r($datos);
-
-echo '</pre>';
-
-echo '<h1 style="color:red;">PASO 4</h1>';
-
-$repo = new ClienteRepository($pdo);
-
-echo '<h1 style="color:red;">PASO 5</h1>';
-
-$proyectos = $repo->listarProyectos('es');
-
-echo '<h1 style="color:red;">PASO 6</h1>';
-
-echo '<pre style="background:#111;color:#fff;padding:20px;">';
-print_r($proyectos);
-echo '</pre>';
-
+$repo      = new ClienteRepository(db());
+$proyectos = $repo->listarProyectos($LANG);
 ?>
+
+<main class="flex-grow-1">
+  <section class="section">
+    <div class="container">
+
+      <span class="section-eyebrow">
+        <i class="fa-solid fa-briefcase me-2"></i><?php echo t('clientes.eyebrow'); ?>
+      </span>
+      <h2 class="section-title"><?php echo t('clientes.title'); ?></h2>
+      <p class="section-lead mb-5" style="color:var(--text)"><?php echo t('clientes.lead'); ?></p>
+		
+      <div class="row g-4">
+        <?php foreach ($proyectos as $p): ?>
+          <?php $tags = array_filter(array_map('trim', explode(',', $p['etiquetas'] ?? ''))); ?>
+          <div class="col-md-6 col-lg-4">
+            <div class="service-card h-100 d-flex flex-column">
+
+              <i class="fa-solid <?php echo htmlspecialchars($p['icono']); ?> mb-3" style="font-size:1.6rem;color:var(--risk-mid)"></i>
+
+              <?php if ($p['cliente_nombre']): ?>
+                <span class="cliente-badge mb-2">
+                  <i class="fa-solid fa-building me-1"></i>
+                  <?php echo htmlspecialchars($p['cliente_nombre']); ?>
+                  <?php if ($p['cliente_sector']): ?>
+                    · <?php echo htmlspecialchars($p['cliente_sector']); ?>
+                  <?php endif; ?>
+                </span>
+              <?php endif; ?>
+
+              <h5 class="mb-2"><?php echo htmlspecialchars($p['titulo']); ?></h5>
+              <p class="text-muted flex-grow-1"><?php echo htmlspecialchars($p['descripcion']); ?></p>
+
+              <?php if ($tags): ?>
+                <div class="cliente-tags mt-3">
+                  <?php foreach ($tags as $tag): ?>
+                    <span class="cliente-tag"><?php echo htmlspecialchars($tag); ?></span>
+                  <?php endforeach; ?>
+                </div>
+              <?php endif; ?>
+
+              <?php if ($p['url_demo']): ?>
+                <a href="<?php echo htmlspecialchars($p['url_demo']); ?>"
+                   class="btn btn-sm btn-ghost mt-3" target="_blank" rel="noopener">
+                  <i class="fa-solid fa-arrow-up-right-from-square me-1"></i>
+                  <?php echo t('clientes.ver_demo'); ?>
+                </a>
+              <?php endif; ?>
+
+            </div>
+          </div>
+        <?php endforeach; ?>
+      </div>
+
+    </div>
+  </section>
+</main>
+
+<?php include 'includes/footer.php'; ?>
