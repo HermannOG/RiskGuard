@@ -30,6 +30,35 @@ class ClienteRepository
         ");
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
+    /** Obtiene un cliente por su slug */
+public function obtenerPorSlug(string $slug): ?array
+{
+    $stmt = $this->pdo->prepare(
+        "SELECT * FROM clientes WHERE slug = :slug AND activo = 1"
+    );
+    $stmt->execute([':slug' => $slug]);
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    return $row ?: null;
+}
+
+/** Proyectos de un cliente específico */
+public function listarPorCliente(int $clienteId, string $lang = 'es'): array
+{
+    $col_titulo = "titulo_$lang";
+    $col_desc   = "desc_$lang";
+
+    $stmt = $this->pdo->prepare("
+        SELECT p.id,
+               p.{$col_titulo}  AS titulo,
+               p.{$col_desc}    AS descripcion,
+               p.icono, p.etiquetas, p.url_demo, p.destacado, p.orden
+        FROM proyectos p
+        WHERE p.cliente_id = :cid AND p.activo = 1
+        ORDER BY p.orden ASC, p.id ASC
+    ");
+    $stmt->execute([':cid' => $clienteId]);
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
 
     /** Solo los destacados (para el preview en el home) */
     public function listarDestacados(string $lang = 'es', int $limite = 3): array
