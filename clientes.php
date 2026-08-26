@@ -30,8 +30,11 @@ echo '<h1 style="color:red;">PASO 7</h1>';
 
 $proyectos = $repo->listarProyectos($LANG);
 
-echo '<h1 style="color:red;">PASO 8</h1>';
+$stmt = db()->query("SELECT * FROM proyectos");
+$datos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+echo '<h1 style="color:red;">PRUEBA DIRECTA BD</h1>';
 
 echo '<pre>';
-print_r($proyectos);
+print_r($datos);
 echo '</pre>';
