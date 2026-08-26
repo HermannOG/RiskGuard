@@ -12,24 +12,30 @@ class ClienteRepository
 
     /** Devuelve todos los proyectos activos, ordenados */
     public function listarProyectos(string $lang = 'es'): array
-    {
-        $col_titulo = "titulo_$lang";
-        $col_desc   = "desc_$lang";
+{
+    $col_titulo = "titulo_$lang";
+    $col_desc   = "desc_$lang";
 
-        $stmt = $this->pdo->query("
-            SELECT p.id,
-                   p.{$col_titulo}  AS titulo,
-                   p.{$col_desc}    AS descripcion,
-                   p.icono, p.etiquetas, p.url_demo, p.destacado, p.orden,
-                   c.nombre         AS cliente_nombre,
-                   c.sector         AS cliente_sector
-            FROM proyectos p
-            LEFT JOIN clientes c ON c.id = p.cliente_id
-            WHERE p.activo = 1
-            ORDER BY p.destacado DESC, p.orden ASC, p.id ASC
-        ");
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
+    $stmt = $this->pdo->query("
+        SELECT p.id,
+               p.{$col_titulo}  AS titulo,
+               p.{$col_desc}    AS descripcion,
+               p.icono,
+               p.etiquetas,
+               p.url_demo,
+               p.destacado,
+               p.orden,
+               c.nombre         AS cliente_nombre,
+               c.sector         AS cliente_sector,
+               c.slug           AS cliente_slug
+        FROM proyectos p
+        LEFT JOIN clientes c ON c.id = p.cliente_id
+        WHERE p.activo = 1
+        ORDER BY p.destacado DESC, p.orden ASC, p.id ASC
+    ");
+
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
     /** Obtiene un cliente por su slug */
 public function obtenerPorSlug(string $slug): ?array
 {
