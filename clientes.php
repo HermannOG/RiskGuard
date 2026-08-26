@@ -23,11 +23,17 @@ $proyectos = $repo->listarProyectos($LANG);
       <h2 class="section-title"><?php echo t('clientes.title'); ?></h2>
       <p class="section-lead mb-5" style="color:var(--text)"><?php echo t('clientes.lead'); ?></p>
 		
-      <div class="row g-4">
-        <?php foreach ($proyectos as $p): ?>
-          <?php $tags = array_filter(array_map('trim', explode(',', $p['etiquetas'] ?? ''))); ?>
-          <div class="col-md-6 col-lg-4">
-            <div class="service-card h-100 d-flex flex-column">
+      <?php foreach ($proyectos as $p): ?> 
+		  <?php $tags = array_filter(array_map('trim', explode(',', $p['etiquetas'] ?? ''))); ?> 
+		
+		  <?php $slug = $p['cliente_slug'] ?? null; ?>
+		
+		  <div class="col-md-6 col-lg-4"> 
+		    <div class="service-card h-100 d-flex flex-column <?php echo $slug ? 'service-card--link' : ''; ?>"
+		         <?php if ($slug): ?>
+		             style="cursor:pointer"
+		             onclick="window.location='cliente-detalle.php?c=<?php echo htmlspecialchars($slug); ?>'"
+		         <?php endif; ?>>
 
               <i class="fa-solid <?php echo htmlspecialchars($p['icono']); ?> mb-3" style="font-size:1.6rem;color:var(--risk-mid)"></i>
 
