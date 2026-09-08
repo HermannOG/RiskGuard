@@ -68,16 +68,58 @@ $detallesClientes = [
             ],
 
             [
-                'nombre' => 'APP_DATA',
-                'desc'   => 'Datos empresariales. 50 MB iniciales, AUTOEXTEND hasta 500 MB.',
-                'icono'  => 'fa-table',
+                'nombre' => 'ESPH_RESIDUOS_DATA',
+                'desc'   => 'Datos del área de Residuos. 50 MB iniciales, AUTOEXTEND hasta 500 MB.',
+                'icono'  => 'fa-recycle',
                 'tipo'   => 'Aplicación'
             ],
 
             [
-                'nombre' => 'APP_INDEX',
-                'desc'   => 'Índices empresariales. 50 MB iniciales, AUTOEXTEND hasta 500 MB.',
-                'icono'  => 'fa-magnifying-glass',
+                'nombre' => 'ESPH_RESIDUOS_IDX',
+                'desc'   => 'Índices del área de Residuos. 50 MB iniciales, AUTOEXTEND hasta 500 MB.',
+                'icono'  => 'fa-recycle',
+                'tipo'   => 'Aplicación'
+            ],
+
+            [
+                'nombre' => 'ESPH_ENERGIA_DATA',
+                'desc'   => 'Datos del área de Energía Eléctrica. 50 MB iniciales, AUTOEXTEND hasta 500 MB.',
+                'icono'  => 'fa-bolt',
+                'tipo'   => 'Aplicación'
+            ],
+
+            [
+                'nombre' => 'ESPH_ENERGIA_IDX',
+                'desc'   => 'Índices del área de Energía Eléctrica. 50 MB iniciales, AUTOEXTEND hasta 500 MB.',
+                'icono'  => 'fa-bolt',
+                'tipo'   => 'Aplicación'
+            ],
+
+            [
+                'nombre' => 'ESPH_AGUA_DATA',
+                'desc'   => 'Datos del área de Agua Potable. 50 MB iniciales, AUTOEXTEND hasta 500 MB.',
+                'icono'  => 'fa-droplet',
+                'tipo'   => 'Aplicación'
+            ],
+
+            [
+                'nombre' => 'ESPH_AGUA_IDX',
+                'desc'   => 'Índices del área de Agua Potable. 50 MB iniciales, AUTOEXTEND hasta 500 MB.',
+                'icono'  => 'fa-droplet',
+                'tipo'   => 'Aplicación'
+            ],
+
+            [
+                'nombre' => 'ESPH_TIC_DATA',
+                'desc'   => 'Datos del área de Tecnologías de Información. 50 MB iniciales, AUTOEXTEND hasta 500 MB.',
+                'icono'  => 'fa-microchip',
+                'tipo'   => 'Aplicación'
+            ],
+
+            [
+                'nombre' => 'ESPH_TIC_IDX',
+                'desc'   => 'Índices del área de Tecnologías de Información. 50 MB iniciales, AUTOEXTEND hasta 500 MB.',
+                'icono'  => 'fa-microchip',
                 'tipo'   => 'Aplicación'
             ],
 
@@ -179,9 +221,9 @@ $detallesClientes = [
         'decisiones' => [
 
             [
-                'titulo' => 'Separación datos / índices',
+                'titulo' => 'Un tablespace por dominio',
 
-                'desc' => 'APP_DATA para segmentos de tabla y APP_INDEX para todos los índices, incluyendo PKs con USING INDEX TABLESPACE APP_INDEX.'
+                'desc' => 'Cada área de negocio posee su propio par de tablespaces (_DATA e _IDX), permitiendo administrar, monitorear y crecer el almacenamiento de forma completamente independiente por esquema.'
             ],
 
             [
@@ -219,11 +261,16 @@ $detallesClientes = [
 
 ];
 
-// Función auxiliar para formatear código SQL en las secciones del accordion
+// Función auxiliar para formatear código SQL en las secciones del accordion.
+// La función copiarCodigo() se emite UNA SOLA VEZ antes del accordion (ver más abajo).
 function renderSqlBlock($sql, $title = 'Script SQL') {
+    static $counter = 0;
+    $counter++;
+    $blockId = 'sql-block-' . $counter;
+
     $sql = trim($sql);
     if (empty($sql)) return '';
-    
+
     $html = '
     <div style="position:relative;margin-top:1.5rem;">
         <div style="display:flex;align-items:center;justify-content:space-between;padding:0.5rem 0.75rem;background:rgba(0,0,0,0.2);border:1px solid var(--border);border-radius:8px 8px 0 0;border-bottom:1px solid var(--border);">
@@ -236,39 +283,44 @@ function renderSqlBlock($sql, $title = 'Script SQL') {
                 Copiar
             </button>
         </div>
-        <pre style="margin:0;background:rgba(0,0,0,0.25);border:1px solid var(--border);border-top:none;border-radius:0 0 8px 8px;overflow-x:auto;padding:1rem;font-family:var(--font-mono);font-size:0.75rem;line-height:1.5;color:var(--text);"><code style="font-family:var(--font-mono);font-size:0.75rem;color:var(--text);">' . htmlspecialchars($sql) . '</code></pre>
+        <pre id="' . $blockId . '" style="margin:0;background:rgba(0,0,0,0.25);border:1px solid var(--border);border-top:none;border-radius:0 0 8px 8px;overflow-x:auto;padding:1rem;font-family:var(--font-mono);font-size:0.75rem;line-height:1.5;color:var(--text);"><code style="font-family:var(--font-mono);font-size:0.75rem;color:var(--text);">' . htmlspecialchars($sql) . '</code></pre>
     </div>
-    <script>
-    function copiarCodigo(btn) {
-        var pre = btn.closest("div").nextElementSibling;
-        var code = pre.querySelector("code");
-        var texto = code.textContent;
-        navigator.clipboard.writeText(texto).then(function() {
-            btn.innerHTML = \'<i class="fa-regular fa-check" style="margin-right:0.4rem;"></i> Copiado\';
-            setTimeout(function() {
-                btn.innerHTML = \'<i class="fa-regular fa-copy" style="margin-right:0.4rem;"></i> Copiar\';
-            }, 2000);
-        }).catch(function() {
-            // Fallback para navegadores que no soportan clipboard API
-            var area = document.createElement("textarea");
-            area.value = texto;
-            document.body.appendChild(area);
-            area.select();
-            document.execCommand("copy");
-            document.body.removeChild(area);
-            btn.innerHTML = \'<i class="fa-regular fa-check" style="margin-right:0.4rem;"></i> Copiado\';
-            setTimeout(function() {
-                btn.innerHTML = \'<i class="fa-regular fa-copy" style="margin-right:0.4rem;"></i> Copiar\';
-            }, 2000);
-        });
-    }
-    </script>
     ';
     return $html;
 }
 ?>
 
 <main class="flex-grow-1">
+
+  <!-- =========================================================
+       copiarCodigo() — declarada UNA SOLA VEZ aquí.
+       Usa el <pre> hermano del botón mediante closest().
+  ========================================================== -->
+  <script>
+  function copiarCodigo(btn) {
+      var wrapper = btn.closest('div[style*="position:relative"]');
+      var code    = wrapper.querySelector('pre code');
+      var texto   = code.textContent;
+
+      navigator.clipboard.writeText(texto).then(function () {
+          btn.innerHTML = '<i class="fa-regular fa-check" style="margin-right:0.4rem;"></i> Copiado';
+          setTimeout(function () {
+              btn.innerHTML = '<i class="fa-regular fa-copy" style="margin-right:0.4rem;"></i> Copiar';
+          }, 2000);
+      }).catch(function () {
+          var area = document.createElement('textarea');
+          area.value = texto;
+          document.body.appendChild(area);
+          area.select();
+          document.execCommand('copy');
+          document.body.removeChild(area);
+          btn.innerHTML = '<i class="fa-regular fa-check" style="margin-right:0.4rem;"></i> Copiado';
+          setTimeout(function () {
+              btn.innerHTML = '<i class="fa-regular fa-copy" style="margin-right:0.4rem;"></i> Copiar';
+          }, 2000);
+      });
+  }
+  </script>
 
   <section class="section">
 
@@ -618,7 +670,8 @@ function renderSqlBlock($sql, $title = 'Script SQL') {
     <div style="background:rgba(242,177,52,0.07);border:1px solid rgba(242,177,52,0.2);border-radius:8px;padding:1rem 1.25rem;margin-bottom:1.5rem;font-size:0.88rem;color:var(--text)">
         <strong style="color:var(--risk-mid)">¿Qué se realizó?</strong><br>
         Se diseñó y configuró una estructura de almacenamiento empresarial sobre <strong>Oracle Database 21c XE</strong>,
-        separando los datos empresariales, los índices, los esquemas por área de negocio y los privilegios de acceso.
+        asignando un par de tablespaces exclusivos (<code>_DATA</code> e <code>_IDX</code>) a cada área de negocio,
+        junto con sus esquemas, privilegios y modelos de datos.
         El objetivo es proporcionar una estructura organizada, controlada y escalable para representar diferentes dominios operativos de ESPH S.A.
     </div>
 
@@ -629,16 +682,16 @@ function renderSqlBlock($sql, $title = 'Script SQL') {
         <!-- 1. ENTORNO -->
         <div class="accordion-item" style="background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:0.5rem;overflow:hidden">
             <h2 class="accordion-header" id="headingEntorno">
-                <button class="accordion-button" type="button"
+                <button class="accordion-button collapsed" type="button"
                         data-bs-toggle="collapse"
                         data-bs-target="#collapseEntorno"
-                        aria-expanded="true"
-                        style="background:var(--surface);color:var(--text);box-shadow:none;border-bottom:1px solid var(--border)">
+                        aria-expanded="false"
+                        style="background:var(--surface);color:var(--text);box-shadow:none">
                     <i class="fa-solid fa-server me-2" style="color:var(--risk-mid)"></i>
                     1. Preparación y verificación del entorno Oracle
                 </button>
             </h2>
-            <div id="collapseEntorno" class="accordion-collapse collapse show" data-bs-parent="#accordionBD">
+            <div id="collapseEntorno" class="accordion-collapse collapse" data-bs-parent="#accordionBD">
                 <div class="accordion-body" style="background:var(--surface);color:var(--text)">
 
                     <h5 style="font-size:0.95rem;margin-bottom:0.5rem">¿Qué se hizo?</h5>
@@ -725,58 +778,58 @@ END;
 
                     <h5 style="font-size:0.95rem;margin-bottom:0.5rem">¿Qué se hizo?</h5>
                     <p style="font-size:0.88rem;color:var(--text-muted)">
-                        Se inspeccionaron los tablespaces existentes de Oracle y posteriormente se crearon dos tablespaces
-                        destinados exclusivamente a los objetos de la aplicación:
+                        Se inspeccionaron los tablespaces existentes de Oracle y posteriormente se crearon
+                        <strong style="color:var(--text)">ocho tablespaces de aplicación</strong>,
+                        asignando un par exclusivo (<code>_DATA</code> e <code>_IDX</code>) a cada área de negocio:
                     </p>
 
                     <div class="row g-3 mb-4">
+                        <?php
+                        $tsGroups = [
+                            ['icono'=>'fa-recycle','color'=>'var(--risk-mid)','data'=>'ESPH_RESIDUOS_DATA','idx'=>'ESPH_RESIDUOS_IDX','area'=>'Residuos'],
+                            ['icono'=>'fa-bolt',   'color'=>'var(--risk-mid)','data'=>'ESPH_ENERGIA_DATA', 'idx'=>'ESPH_ENERGIA_IDX', 'area'=>'Energía Eléctrica'],
+                            ['icono'=>'fa-droplet','color'=>'var(--risk-mid)','data'=>'ESPH_AGUA_DATA',    'idx'=>'ESPH_AGUA_IDX',    'area'=>'Agua Potable'],
+                            ['icono'=>'fa-microchip','color'=>'var(--risk-mid)','data'=>'ESPH_TIC_DATA',  'idx'=>'ESPH_TIC_IDX',     'area'=>'TIC'],
+                        ];
+                        foreach ($tsGroups as $tg):
+                        ?>
                         <div class="col-md-6">
                             <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(242,177,52,0.3);border-radius:10px;padding:1.25rem;height:100%">
-                                <h5 style="font-size:0.95rem;color:var(--risk-mid);margin-bottom:0.75rem">
-                                    <i class="fa-solid fa-table me-2"></i>APP_DATA
+                                <h5 style="font-size:0.9rem;color:var(--risk-mid);margin-bottom:0.75rem">
+                                    <i class="fa-solid <?php echo $tg['icono']; ?> me-2"></i>
+                                    <?php echo $tg['area']; ?>
                                 </h5>
-                                <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:0.75rem">
-                                    Destinado al almacenamiento de las <strong style="color:var(--text)">tablas y datos empresariales</strong>.
-                                </p>
-                                <ul style="font-size:0.82rem;color:var(--text-muted);padding-left:1.25rem;margin:0">
-                                    <li>Tamaño inicial: 50 MB</li>
-                                    <li>Incremento automático: 10 MB</li>
-                                    <li>Tamaño máximo: 500 MB</li>
-                                    <li>Extents administrados localmente</li>
-                                    <li>Segment Space Management automático</li>
-                                </ul>
+                                <div style="display:flex;flex-direction:column;gap:0.5rem">
+                                    <div style="background:rgba(0,0,0,0.15);border-radius:6px;padding:0.5rem 0.75rem;font-size:0.8rem">
+                                        <code style="color:var(--risk-mid)"><?php echo $tg['data']; ?></code>
+                                        <span style="color:var(--text-muted);margin-left:0.5rem">→ tablas y datos</span>
+                                    </div>
+                                    <div style="background:rgba(0,0,0,0.15);border-radius:6px;padding:0.5rem 0.75rem;font-size:0.8rem">
+                                        <code style="color:var(--risk-mid)"><?php echo $tg['idx']; ?></code>
+                                        <span style="color:var(--text-muted);margin-left:0.5rem">→ índices</span>
+                                    </div>
+                                    <div style="font-size:0.75rem;color:var(--text-muted);padding-left:0.25rem">
+                                        50 MB iniciales · AUTOEXTEND 10 MB · máx 500 MB
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(242,177,52,0.3);border-radius:10px;padding:1.25rem;height:100%">
-                                <h5 style="font-size:0.95rem;color:var(--risk-mid);margin-bottom:0.75rem">
-                                    <i class="fa-solid fa-table-columns me-2"></i>APP_INDEX
-                                </h5>
-                                <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:0.75rem">
-                                    Destinado exclusivamente al almacenamiento de los <strong style="color:var(--text)">índices</strong>.
-                                </p>
-                                <ul style="font-size:0.82rem;color:var(--text-muted);padding-left:1.25rem;margin:0">
-                                    <li>Tamaño inicial: 50 MB</li>
-                                    <li>Incremento automático: 10 MB</li>
-                                    <li>Tamaño máximo: 500 MB</li>
-                                    <li>Administración local de extents</li>
-                                    <li>Segment Space Management automático</li>
-                                </ul>
-                            </div>
-                        </div>
+                        <?php endforeach; ?>
                     </div>
 
-                    <h5 style="font-size:0.95rem;margin-bottom:0.5rem">¿Por qué se separaron los datos y los índices?</h5>
+                    <h5 style="font-size:0.95rem;margin-bottom:0.5rem">¿Por qué un par de tablespaces por dominio?</h5>
                     <p style="font-size:0.88rem;color:var(--text-muted)">
-                        La separación permite administrar de forma independiente el espacio utilizado por los datos y por las
-                        estructuras de indexación. Esto facilita tareas de administración, monitoreo y crecimiento de almacenamiento.
+                        Asignar tablespaces exclusivos por área de negocio permite administrar, monitorear y escalar
+                        el almacenamiento de forma completamente independiente. Si el área de Residuos crece,
+                        su tablespace puede ampliarse sin afectar al resto. Además, facilita tareas de respaldo y
+                        auditoría por dominio.
                     </p>
 
                     <div style="background:rgba(242,177,52,0.07);border:1px solid rgba(242,177,52,0.2);border-radius:8px;padding:0.85rem 1rem;font-size:0.82rem;color:var(--text)">
                         <strong style="color:var(--risk-mid)">Decisión de diseño:</strong><br>
-                        <code>APP_DATA</code> → tablas y datos &nbsp;·&nbsp; <code>APP_INDEX</code> → índices<br><br>
+                        <code>*_DATA</code> → tablas y datos del dominio &nbsp;·&nbsp; <code>*_IDX</code> → índices del dominio<br><br>
                         De esta forma se evita concentrar todos los objetos de aplicación en los tablespaces internos de Oracle
-                        como <code>SYSTEM</code> y <code>SYSAUX</code>.
+                        como <code>SYSTEM</code> y <code>SYSAUX</code>, y además cada área mantiene su propio espacio aislado.
                     </div>
 
                     <?php echo renderSqlBlock('
@@ -803,48 +856,136 @@ FROM dba_data_files
 ORDER BY tablespace_name, file_name;
 
 -- ============================================================
--- PARTE 7 - CREANDO APP_DATA
+-- PARTE 7 - CREANDO TABLESPACES POR DOMINIO
 -- ============================================================
 
+DEFINE DATA_DIR = \'C:\oracle\data\'
+
+-- ESPH_RESIDUOS_DATA
 DECLARE
-    v_omf      VARCHAR2(1000);
-    v_sql      VARCHAR2(4000);
+    v_omf VARCHAR2(1000);
+    v_sql VARCHAR2(4000);
 BEGIN
     SELECT value INTO v_omf FROM v$parameter WHERE name = \'db_create_file_dest\';
-
     IF v_omf IS NOT NULL THEN
-        DBMS_OUTPUT.PUT_LINE(\'Oracle Managed Files detectado: \' || v_omf);
-        v_sql := \'CREATE TABLESPACE APP_DATA SIZE 50M AUTOEXTEND ON NEXT 10M MAXSIZE 500M EXTENT MANAGEMENT LOCAL AUTOALLOCATE SEGMENT SPACE MANAGEMENT AUTO\';
+        v_sql := \'CREATE TABLESPACE ESPH_RESIDUOS_DATA SIZE 50M AUTOEXTEND ON NEXT 10M MAXSIZE 500M EXTENT MANAGEMENT LOCAL AUTOALLOCATE SEGMENT SPACE MANAGEMENT AUTO\';
     ELSE
-        DBMS_OUTPUT.PUT_LINE(\'OMF no esta configurado.\');
-        v_sql := \'CREATE TABLESPACE APP_DATA DATAFILE \'\'&DATA_DIR\\app_data01.dbf\'\' SIZE 50M AUTOEXTEND ON NEXT 10M MAXSIZE 500M EXTENT MANAGEMENT LOCAL AUTOALLOCATE SEGMENT SPACE MANAGEMENT AUTO\';
+        v_sql := \'CREATE TABLESPACE ESPH_RESIDUOS_DATA DATAFILE \'\'&DATA_DIR\\esph_residuos_data01.dbf\'\' SIZE 50M AUTOEXTEND ON NEXT 10M MAXSIZE 500M EXTENT MANAGEMENT LOCAL AUTOALLOCATE SEGMENT SPACE MANAGEMENT AUTO\';
     END IF;
-
     EXECUTE IMMEDIATE v_sql;
-    DBMS_OUTPUT.PUT_LINE(\'APP_DATA creado correctamente.\');
+    DBMS_OUTPUT.PUT_LINE(\'ESPH_RESIDUOS_DATA creado correctamente.\');
 END;
 /
 
--- ============================================================
--- PARTE 8 - CREANDO APP_INDEX
--- ============================================================
-
+-- ESPH_RESIDUOS_IDX
 DECLARE
-    v_omf      VARCHAR2(1000);
-    v_sql      VARCHAR2(4000);
+    v_omf VARCHAR2(1000);
+    v_sql VARCHAR2(4000);
 BEGIN
     SELECT value INTO v_omf FROM v$parameter WHERE name = \'db_create_file_dest\';
-
     IF v_omf IS NOT NULL THEN
-        DBMS_OUTPUT.PUT_LINE(\'Oracle Managed Files detectado: \' || v_omf);
-        v_sql := \'CREATE TABLESPACE APP_INDEX SIZE 50M AUTOEXTEND ON NEXT 10M MAXSIZE 500M EXTENT MANAGEMENT LOCAL AUTOALLOCATE SEGMENT SPACE MANAGEMENT AUTO\';
+        v_sql := \'CREATE TABLESPACE ESPH_RESIDUOS_IDX SIZE 50M AUTOEXTEND ON NEXT 10M MAXSIZE 500M EXTENT MANAGEMENT LOCAL AUTOALLOCATE SEGMENT SPACE MANAGEMENT AUTO\';
     ELSE
-        DBMS_OUTPUT.PUT_LINE(\'OMF no esta configurado.\');
-        v_sql := \'CREATE TABLESPACE APP_INDEX DATAFILE \'\'&DATA_DIR\\app_index01.dbf\'\' SIZE 50M AUTOEXTEND ON NEXT 10M MAXSIZE 500M EXTENT MANAGEMENT LOCAL AUTOALLOCATE SEGMENT SPACE MANAGEMENT AUTO\';
+        v_sql := \'CREATE TABLESPACE ESPH_RESIDUOS_IDX DATAFILE \'\'&DATA_DIR\\esph_residuos_idx01.dbf\'\' SIZE 50M AUTOEXTEND ON NEXT 10M MAXSIZE 500M EXTENT MANAGEMENT LOCAL AUTOALLOCATE SEGMENT SPACE MANAGEMENT AUTO\';
     END IF;
-
     EXECUTE IMMEDIATE v_sql;
-    DBMS_OUTPUT.PUT_LINE(\'APP_INDEX creado correctamente.\');
+    DBMS_OUTPUT.PUT_LINE(\'ESPH_RESIDUOS_IDX creado correctamente.\');
+END;
+/
+
+-- ESPH_ENERGIA_DATA
+DECLARE
+    v_omf VARCHAR2(1000);
+    v_sql VARCHAR2(4000);
+BEGIN
+    SELECT value INTO v_omf FROM v$parameter WHERE name = \'db_create_file_dest\';
+    IF v_omf IS NOT NULL THEN
+        v_sql := \'CREATE TABLESPACE ESPH_ENERGIA_DATA SIZE 50M AUTOEXTEND ON NEXT 10M MAXSIZE 500M EXTENT MANAGEMENT LOCAL AUTOALLOCATE SEGMENT SPACE MANAGEMENT AUTO\';
+    ELSE
+        v_sql := \'CREATE TABLESPACE ESPH_ENERGIA_DATA DATAFILE \'\'&DATA_DIR\\esph_energia_data01.dbf\'\' SIZE 50M AUTOEXTEND ON NEXT 10M MAXSIZE 500M EXTENT MANAGEMENT LOCAL AUTOALLOCATE SEGMENT SPACE MANAGEMENT AUTO\';
+    END IF;
+    EXECUTE IMMEDIATE v_sql;
+    DBMS_OUTPUT.PUT_LINE(\'ESPH_ENERGIA_DATA creado correctamente.\');
+END;
+/
+
+-- ESPH_ENERGIA_IDX
+DECLARE
+    v_omf VARCHAR2(1000);
+    v_sql VARCHAR2(4000);
+BEGIN
+    SELECT value INTO v_omf FROM v$parameter WHERE name = \'db_create_file_dest\';
+    IF v_omf IS NOT NULL THEN
+        v_sql := \'CREATE TABLESPACE ESPH_ENERGIA_IDX SIZE 50M AUTOEXTEND ON NEXT 10M MAXSIZE 500M EXTENT MANAGEMENT LOCAL AUTOALLOCATE SEGMENT SPACE MANAGEMENT AUTO\';
+    ELSE
+        v_sql := \'CREATE TABLESPACE ESPH_ENERGIA_IDX DATAFILE \'\'&DATA_DIR\\esph_energia_idx01.dbf\'\' SIZE 50M AUTOEXTEND ON NEXT 10M MAXSIZE 500M EXTENT MANAGEMENT LOCAL AUTOALLOCATE SEGMENT SPACE MANAGEMENT AUTO\';
+    END IF;
+    EXECUTE IMMEDIATE v_sql;
+    DBMS_OUTPUT.PUT_LINE(\'ESPH_ENERGIA_IDX creado correctamente.\');
+END;
+/
+
+-- ESPH_AGUA_DATA
+DECLARE
+    v_omf VARCHAR2(1000);
+    v_sql VARCHAR2(4000);
+BEGIN
+    SELECT value INTO v_omf FROM v$parameter WHERE name = \'db_create_file_dest\';
+    IF v_omf IS NOT NULL THEN
+        v_sql := \'CREATE TABLESPACE ESPH_AGUA_DATA SIZE 50M AUTOEXTEND ON NEXT 10M MAXSIZE 500M EXTENT MANAGEMENT LOCAL AUTOALLOCATE SEGMENT SPACE MANAGEMENT AUTO\';
+    ELSE
+        v_sql := \'CREATE TABLESPACE ESPH_AGUA_DATA DATAFILE \'\'&DATA_DIR\\esph_agua_data01.dbf\'\' SIZE 50M AUTOEXTEND ON NEXT 10M MAXSIZE 500M EXTENT MANAGEMENT LOCAL AUTOALLOCATE SEGMENT SPACE MANAGEMENT AUTO\';
+    END IF;
+    EXECUTE IMMEDIATE v_sql;
+    DBMS_OUTPUT.PUT_LINE(\'ESPH_AGUA_DATA creado correctamente.\');
+END;
+/
+
+-- ESPH_AGUA_IDX
+DECLARE
+    v_omf VARCHAR2(1000);
+    v_sql VARCHAR2(4000);
+BEGIN
+    SELECT value INTO v_omf FROM v$parameter WHERE name = \'db_create_file_dest\';
+    IF v_omf IS NOT NULL THEN
+        v_sql := \'CREATE TABLESPACE ESPH_AGUA_IDX SIZE 50M AUTOEXTEND ON NEXT 10M MAXSIZE 500M EXTENT MANAGEMENT LOCAL AUTOALLOCATE SEGMENT SPACE MANAGEMENT AUTO\';
+    ELSE
+        v_sql := \'CREATE TABLESPACE ESPH_AGUA_IDX DATAFILE \'\'&DATA_DIR\\esph_agua_idx01.dbf\'\' SIZE 50M AUTOEXTEND ON NEXT 10M MAXSIZE 500M EXTENT MANAGEMENT LOCAL AUTOALLOCATE SEGMENT SPACE MANAGEMENT AUTO\';
+    END IF;
+    EXECUTE IMMEDIATE v_sql;
+    DBMS_OUTPUT.PUT_LINE(\'ESPH_AGUA_IDX creado correctamente.\');
+END;
+/
+
+-- ESPH_TIC_DATA
+DECLARE
+    v_omf VARCHAR2(1000);
+    v_sql VARCHAR2(4000);
+BEGIN
+    SELECT value INTO v_omf FROM v$parameter WHERE name = \'db_create_file_dest\';
+    IF v_omf IS NOT NULL THEN
+        v_sql := \'CREATE TABLESPACE ESPH_TIC_DATA SIZE 50M AUTOEXTEND ON NEXT 10M MAXSIZE 500M EXTENT MANAGEMENT LOCAL AUTOALLOCATE SEGMENT SPACE MANAGEMENT AUTO\';
+    ELSE
+        v_sql := \'CREATE TABLESPACE ESPH_TIC_DATA DATAFILE \'\'&DATA_DIR\\esph_tic_data01.dbf\'\' SIZE 50M AUTOEXTEND ON NEXT 10M MAXSIZE 500M EXTENT MANAGEMENT LOCAL AUTOALLOCATE SEGMENT SPACE MANAGEMENT AUTO\';
+    END IF;
+    EXECUTE IMMEDIATE v_sql;
+    DBMS_OUTPUT.PUT_LINE(\'ESPH_TIC_DATA creado correctamente.\');
+END;
+/
+
+-- ESPH_TIC_IDX
+DECLARE
+    v_omf VARCHAR2(1000);
+    v_sql VARCHAR2(4000);
+BEGIN
+    SELECT value INTO v_omf FROM v$parameter WHERE name = \'db_create_file_dest\';
+    IF v_omf IS NOT NULL THEN
+        v_sql := \'CREATE TABLESPACE ESPH_TIC_IDX SIZE 50M AUTOEXTEND ON NEXT 10M MAXSIZE 500M EXTENT MANAGEMENT LOCAL AUTOALLOCATE SEGMENT SPACE MANAGEMENT AUTO\';
+    ELSE
+        v_sql := \'CREATE TABLESPACE ESPH_TIC_IDX DATAFILE \'\'&DATA_DIR\\esph_tic_idx01.dbf\'\' SIZE 50M AUTOEXTEND ON NEXT 10M MAXSIZE 500M EXTENT MANAGEMENT LOCAL AUTOALLOCATE SEGMENT SPACE MANAGEMENT AUTO\';
+    END IF;
+    EXECUTE IMMEDIATE v_sql;
+    DBMS_OUTPUT.PUT_LINE(\'ESPH_TIC_IDX creado correctamente.\');
 END;
 /
 '); ?>
@@ -873,6 +1014,7 @@ END;
                         El script comprueba si Oracle tiene configurado <code>DB_CREATE_FILE_DEST</code>.
                         Si está disponible, se utiliza <strong style="color:var(--text)">Oracle Managed Files (OMF)</strong>.
                         En caso contrario, se utiliza una ruta definida manualmente.
+                        Esta lógica se aplica a cada uno de los ocho tablespaces de dominio.
                     </p>
 
                     <h5 style="font-size:0.95rem;margin-bottom:0.5rem">¿Por qué?</h5>
@@ -884,6 +1026,7 @@ END;
                     <div style="background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:8px;padding:0.85rem 1rem;font-size:0.82rem;color:var(--text-muted)">
                         <strong style="color:var(--text)">Resultado:</strong><br>
                         El script puede adaptarse a diferentes instalaciones de Oracle sin modificar necesariamente toda la definición de almacenamiento.
+                        Cada tablespace tiene su propio datafile nombrado con el prefijo <code>ESPH_</code> para facilitar la identificación en disco.
                     </div>
 
                     <?php echo renderSqlBlock('
@@ -897,51 +1040,19 @@ SELECT
 FROM v$parameter
 WHERE name = \'db_create_file_dest\';
 
--- ============================================================
--- PARTE 7 y 8 - CREACIÓN DE TABLESPACES CON OMF
--- ============================================================
-
-DEFINE DATA_DIR = \'C:\oracle\data\'
-
--- El bloque DECLARE de APP_DATA (PARTE 7)
-DECLARE
-    v_omf      VARCHAR2(1000);
-    v_sql      VARCHAR2(4000);
-BEGIN
-    SELECT value INTO v_omf FROM v$parameter WHERE name = \'db_create_file_dest\';
-
-    IF v_omf IS NOT NULL THEN
-        DBMS_OUTPUT.PUT_LINE(\'Oracle Managed Files detectado: \' || v_omf);
-        v_sql := \'CREATE TABLESPACE APP_DATA SIZE 50M AUTOEXTEND ON NEXT 10M MAXSIZE 500M EXTENT MANAGEMENT LOCAL AUTOALLOCATE SEGMENT SPACE MANAGEMENT AUTO\';
-    ELSE
-        DBMS_OUTPUT.PUT_LINE(\'OMF no esta configurado.\');
-        v_sql := \'CREATE TABLESPACE APP_DATA DATAFILE \'\'&DATA_DIR\\app_data01.dbf\'\' SIZE 50M AUTOEXTEND ON NEXT 10M MAXSIZE 500M EXTENT MANAGEMENT LOCAL AUTOALLOCATE SEGMENT SPACE MANAGEMENT AUTO\';
-    END IF;
-
-    EXECUTE IMMEDIATE v_sql;
-    DBMS_OUTPUT.PUT_LINE(\'APP_DATA creado correctamente.\');
-END;
-/
-
--- El bloque DECLARE de APP_INDEX (PARTE 8)
-DECLARE
-    v_omf      VARCHAR2(1000);
-    v_sql      VARCHAR2(4000);
-BEGIN
-    SELECT value INTO v_omf FROM v$parameter WHERE name = \'db_create_file_dest\';
-
-    IF v_omf IS NOT NULL THEN
-        DBMS_OUTPUT.PUT_LINE(\'Oracle Managed Files detectado: \' || v_omf);
-        v_sql := \'CREATE TABLESPACE APP_INDEX SIZE 50M AUTOEXTEND ON NEXT 10M MAXSIZE 500M EXTENT MANAGEMENT LOCAL AUTOALLOCATE SEGMENT SPACE MANAGEMENT AUTO\';
-    ELSE
-        DBMS_OUTPUT.PUT_LINE(\'OMF no esta configurado.\');
-        v_sql := \'CREATE TABLESPACE APP_INDEX DATAFILE \'\'&DATA_DIR\\app_index01.dbf\'\' SIZE 50M AUTOEXTEND ON NEXT 10M MAXSIZE 500M EXTENT MANAGEMENT LOCAL AUTOALLOCATE SEGMENT SPACE MANAGEMENT AUTO\';
-    END IF;
-
-    EXECUTE IMMEDIATE v_sql;
-    DBMS_OUTPUT.PUT_LINE(\'APP_INDEX creado correctamente.\');
-END;
-/
+-- Cuando OMF está activo, Oracle asigna nombres y rutas automáticamente.
+-- Cuando no lo está, cada tablespace recibe un datafile con nombre propio:
+--
+--   ESPH_RESIDUOS_DATA  →  esph_residuos_data01.dbf
+--   ESPH_RESIDUOS_IDX   →  esph_residuos_idx01.dbf
+--   ESPH_ENERGIA_DATA   →  esph_energia_data01.dbf
+--   ESPH_ENERGIA_IDX    →  esph_energia_idx01.dbf
+--   ESPH_AGUA_DATA      →  esph_agua_data01.dbf
+--   ESPH_AGUA_IDX       →  esph_agua_idx01.dbf
+--   ESPH_TIC_DATA       →  esph_tic_data01.dbf
+--   ESPH_TIC_IDX        →  esph_tic_idx01.dbf
+--
+-- Ver la creación completa en la sección 2.
 '); ?>
 
                 </div>
@@ -965,16 +1076,17 @@ END;
 
                     <h5 style="font-size:0.95rem;margin-bottom:0.5rem">¿Qué se hizo?</h5>
                     <p style="font-size:0.88rem;color:var(--text-muted)">
-                        Se crearon cuatro usuarios de Oracle que funcionan también como <strong style="color:var(--text)">esquemas independientes</strong>:
+                        Se crearon cuatro usuarios de Oracle que funcionan también como <strong style="color:var(--text)">esquemas independientes</strong>.
+                        Cada usuario tiene como tablespace por defecto su propio <code>_DATA</code> y cuota independiente:
                     </p>
 
                     <div class="row g-3 mb-3">
                         <?php
                         $esquemas_info = [
-                            ['nombre'=>'ESPH_RESIDUOS','desc'=>'Sistemas relacionados con gestión de residuos.','sistemas'=>'SGA y SRR','icono'=>'fa-recycle'],
-                            ['nombre'=>'ESPH_ENERGIA', 'desc'=>'Sistemas relacionados con energía eléctrica.',  'sistemas'=>'SRED y SALP','icono'=>'fa-bolt'],
-                            ['nombre'=>'ESPH_AGUA',    'desc'=>'Sistemas relacionados con agua potable.',       'sistemas'=>'SCDA y SHH','icono'=>'fa-droplet'],
-                            ['nombre'=>'ESPH_TIC',     'desc'=>'Sistemas relacionados con tecnología de información.','sistemas'=>'SGTI y SAMS','icono'=>'fa-microchip'],
+                            ['nombre'=>'ESPH_RESIDUOS','desc'=>'Sistemas relacionados con gestión de residuos.','sistemas'=>'SGA y SRR','icono'=>'fa-recycle','data'=>'ESPH_RESIDUOS_DATA','idx'=>'ESPH_RESIDUOS_IDX'],
+                            ['nombre'=>'ESPH_ENERGIA', 'desc'=>'Sistemas relacionados con energía eléctrica.',  'sistemas'=>'SRED y SALP','icono'=>'fa-bolt','data'=>'ESPH_ENERGIA_DATA','idx'=>'ESPH_ENERGIA_IDX'],
+                            ['nombre'=>'ESPH_AGUA',    'desc'=>'Sistemas relacionados con agua potable.',       'sistemas'=>'SCDA y SHH','icono'=>'fa-droplet','data'=>'ESPH_AGUA_DATA','idx'=>'ESPH_AGUA_IDX'],
+                            ['nombre'=>'ESPH_TIC',     'desc'=>'Sistemas relacionados con tecnología de información.','sistemas'=>'SGTI y SAMS','icono'=>'fa-microchip','data'=>'ESPH_TIC_DATA','idx'=>'ESPH_TIC_IDX'],
                         ];
                         foreach ($esquemas_info as $ei):
                         ?>
@@ -984,8 +1096,11 @@ END;
                                     <i class="fa-solid <?php echo $ei['icono']; ?>" style="color:var(--risk-mid);font-size:0.85rem"></i>
                                     <strong style="font-size:0.85rem;font-family:var(--font-mono)"><?php echo $ei['nombre']; ?></strong>
                                 </div>
-                                <p style="font-size:0.82rem;color:var(--text-muted);margin:0 0 0.25rem 0"><?php echo $ei['desc']; ?></p>
-                                <span style="font-size:0.72rem;font-family:var(--font-mono);color:var(--risk-mid)"><?php echo $ei['sistemas']; ?></span>
+                                <p style="font-size:0.82rem;color:var(--text-muted);margin:0 0 0.4rem 0"><?php echo $ei['desc']; ?></p>
+                                <div style="font-size:0.72rem;font-family:var(--font-mono);color:var(--text-muted);line-height:1.6">
+                                    <span style="color:var(--risk-mid)"><?php echo $ei['data']; ?></span> · 200 MB<br>
+                                    <span style="color:var(--risk-mid)"><?php echo $ei['idx']; ?></span> · 100 MB
+                                </div>
                             </div>
                         </div>
                         <?php endforeach; ?>
@@ -993,15 +1108,17 @@ END;
 
                     <div style="border-top:1px solid var(--border);margin:1rem 0"></div>
 
-                    <h5 style="font-size:0.95rem;margin-bottom:0.5rem">¿Por qué utilizar esquemas separados?</h5>
+                    <h5 style="font-size:0.95rem;margin-bottom:0.5rem">¿Por qué utilizar esquemas separados con tablespaces propios?</h5>
                     <p style="font-size:0.88rem;color:var(--text-muted)">
-                        La separación por esquemas permite aplicar una división lógica de responsabilidades sobre los datos.
-                        Cada área posee sus propias tablas y objetos, evitando concentrar toda la información empresarial en un único esquema.
+                        La combinación de esquema exclusivo + tablespace exclusivo garantiza que cada dominio no pueda
+                        consumir espacio de otro. Las cuotas por tablespace limitan el crecimiento individual
+                        sin afectar al resto de las áreas.
                     </p>
 
                     <div style="background:rgba(242,177,52,0.07);border:1px solid rgba(242,177,52,0.2);border-radius:8px;padding:0.85rem 1rem;font-size:0.82rem;color:var(--text)">
                         <strong style="color:var(--risk-mid)">Principio aplicado: separación de responsabilidades.</strong><br>
-                        Cada dominio empresarial mantiene sus propios objetos de datos, mientras Oracle conserva el control administrativo general de la instancia.
+                        Cada dominio empresarial mantiene sus propios objetos de datos en su propio espacio de almacenamiento,
+                        mientras Oracle conserva el control administrativo general de la instancia.
                     </div>
 
                     <?php echo renderSqlBlock('
@@ -1016,31 +1133,31 @@ ACCEPT PWD_TIC      CHAR PROMPT \'Password ESPH_TIC     : \' HIDE
 
 CREATE USER esph_residuos
 IDENTIFIED BY "&PWD_RESIDUOS"
-DEFAULT TABLESPACE APP_DATA
+DEFAULT TABLESPACE ESPH_RESIDUOS_DATA
 TEMPORARY TABLESPACE TEMP
-QUOTA 200M ON APP_DATA
-QUOTA 100M ON APP_INDEX;
+QUOTA 200M ON ESPH_RESIDUOS_DATA
+QUOTA 100M ON ESPH_RESIDUOS_IDX;
 
 CREATE USER esph_energia
 IDENTIFIED BY "&PWD_ENERGIA"
-DEFAULT TABLESPACE APP_DATA
+DEFAULT TABLESPACE ESPH_ENERGIA_DATA
 TEMPORARY TABLESPACE TEMP
-QUOTA 200M ON APP_DATA
-QUOTA 100M ON APP_INDEX;
+QUOTA 200M ON ESPH_ENERGIA_DATA
+QUOTA 100M ON ESPH_ENERGIA_IDX;
 
 CREATE USER esph_agua
 IDENTIFIED BY "&PWD_AGUA"
-DEFAULT TABLESPACE APP_DATA
+DEFAULT TABLESPACE ESPH_AGUA_DATA
 TEMPORARY TABLESPACE TEMP
-QUOTA 200M ON APP_DATA
-QUOTA 100M ON APP_INDEX;
+QUOTA 200M ON ESPH_AGUA_DATA
+QUOTA 100M ON ESPH_AGUA_IDX;
 
 CREATE USER esph_tic
 IDENTIFIED BY "&PWD_TIC"
-DEFAULT TABLESPACE APP_DATA
+DEFAULT TABLESPACE ESPH_TIC_DATA
 TEMPORARY TABLESPACE TEMP
-QUOTA 200M ON APP_DATA
-QUOTA 100M ON APP_INDEX;
+QUOTA 200M ON ESPH_TIC_DATA
+QUOTA 100M ON ESPH_TIC_IDX;
 '); ?>
 
                 </div>
@@ -1160,6 +1277,8 @@ GRANT CREATE SYNONYM TO esph_tic;
                 'icono' => 'fa-recycle',
                 'titulo'=> 'Modelo de datos — Gestión de Residuos',
                 'esquema'=> 'ESPH_RESIDUOS',
+                'ts_data'=> 'ESPH_RESIDUOS_DATA',
+                'ts_idx' => 'ESPH_RESIDUOS_IDX',
                 'intro' => 'El esquema <code>ESPH_RESIDUOS</code> representa dos dominios: gestión de centros de acopio y operación de rutas de recolección.',
                 'cols'  => [
                     ['Tablas principales',   ['centro_acopio','tipo_residuo','ingreso_residuo','ruta','vehiculo','ejecucion_ruta']],
@@ -1171,6 +1290,8 @@ GRANT CREATE SYNONYM TO esph_tic;
                 'sql' => '
 -- ============================================================
 -- PARTE 12 - ESPH_RESIDUOS
+-- Tablespace datos : ESPH_RESIDUOS_DATA
+-- Tablespace índices: ESPH_RESIDUOS_IDX
 -- ============================================================
 
 CREATE TABLE esph_residuos.centro_acopio (
@@ -1180,18 +1301,18 @@ CREATE TABLE esph_residuos.centro_acopio (
     capacidad_ton NUMBER(8,2) NOT NULL,
     activo CHAR(1) DEFAULT \'S\' NOT NULL,
     fecha_registro DATE DEFAULT SYSDATE NOT NULL,
-    CONSTRAINT pk_centro_acopio PRIMARY KEY (id_centro) USING INDEX TABLESPACE APP_INDEX,
+    CONSTRAINT pk_centro_acopio PRIMARY KEY (id_centro) USING INDEX TABLESPACE ESPH_RESIDUOS_IDX,
     CONSTRAINT ck_ca_activo CHECK (activo IN (\'S\',\'N\'))
-) TABLESPACE APP_DATA;
+) TABLESPACE ESPH_RESIDUOS_DATA;
 
 CREATE TABLE esph_residuos.tipo_residuo (
     id_tipo NUMBER GENERATED ALWAYS AS IDENTITY,
     descripcion VARCHAR2(100) NOT NULL,
     categoria VARCHAR2(50) NOT NULL,
     unidad_medida VARCHAR2(20) DEFAULT \'KG\' NOT NULL,
-    CONSTRAINT pk_tipo_residuo PRIMARY KEY (id_tipo) USING INDEX TABLESPACE APP_INDEX,
+    CONSTRAINT pk_tipo_residuo PRIMARY KEY (id_tipo) USING INDEX TABLESPACE ESPH_RESIDUOS_IDX,
     CONSTRAINT ck_tr_cat CHECK (categoria IN (\'ORGANICO\',\'INORGANICO\',\'PELIGROSO\',\'ESPECIAL\'))
-) TABLESPACE APP_DATA;
+) TABLESPACE ESPH_RESIDUOS_DATA;
 
 CREATE TABLE esph_residuos.ingreso_residuo (
     id_ingreso NUMBER GENERATED ALWAYS AS IDENTITY,
@@ -1201,10 +1322,10 @@ CREATE TABLE esph_residuos.ingreso_residuo (
     fecha_ingreso DATE DEFAULT SYSDATE NOT NULL,
     origen VARCHAR2(150),
     observaciones VARCHAR2(500),
-    CONSTRAINT pk_ingreso_residuo PRIMARY KEY (id_ingreso) USING INDEX TABLESPACE APP_INDEX,
+    CONSTRAINT pk_ingreso_residuo PRIMARY KEY (id_ingreso) USING INDEX TABLESPACE ESPH_RESIDUOS_IDX,
     CONSTRAINT fk_ir_centro FOREIGN KEY (id_centro) REFERENCES esph_residuos.centro_acopio(id_centro),
     CONSTRAINT fk_ir_tipo FOREIGN KEY (id_tipo) REFERENCES esph_residuos.tipo_residuo(id_tipo)
-) TABLESPACE APP_DATA;
+) TABLESPACE ESPH_RESIDUOS_DATA;
 
 CREATE TABLE esph_residuos.ruta (
     id_ruta NUMBER GENERATED ALWAYS AS IDENTITY,
@@ -1213,10 +1334,10 @@ CREATE TABLE esph_residuos.ruta (
     dia_semana VARCHAR2(10) NOT NULL,
     hora_inicio VARCHAR2(5) NOT NULL,
     activa CHAR(1) DEFAULT \'S\' NOT NULL,
-    CONSTRAINT pk_ruta PRIMARY KEY (id_ruta) USING INDEX TABLESPACE APP_INDEX,
+    CONSTRAINT pk_ruta PRIMARY KEY (id_ruta) USING INDEX TABLESPACE ESPH_RESIDUOS_IDX,
     CONSTRAINT ck_ruta_dia CHECK (dia_semana IN (\'LUNES\',\'MARTES\',\'MIERCOLES\',\'JUEVES\',\'VIERNES\',\'SABADO\',\'DOMINGO\')),
     CONSTRAINT ck_ruta_activa CHECK (activa IN (\'S\',\'N\'))
-) TABLESPACE APP_DATA;
+) TABLESPACE ESPH_RESIDUOS_DATA;
 
 CREATE TABLE esph_residuos.vehiculo (
     id_vehiculo NUMBER GENERATED ALWAYS AS IDENTITY,
@@ -1224,10 +1345,10 @@ CREATE TABLE esph_residuos.vehiculo (
     tipo VARCHAR2(50) NOT NULL,
     capacidad_ton NUMBER(6,2) NOT NULL,
     en_servicio CHAR(1) DEFAULT \'S\' NOT NULL,
-    CONSTRAINT pk_vehiculo PRIMARY KEY (id_vehiculo) USING INDEX TABLESPACE APP_INDEX,
-    CONSTRAINT uk_vehiculo_placa UNIQUE (placa) USING INDEX TABLESPACE APP_INDEX,
+    CONSTRAINT pk_vehiculo PRIMARY KEY (id_vehiculo) USING INDEX TABLESPACE ESPH_RESIDUOS_IDX,
+    CONSTRAINT uk_vehiculo_placa UNIQUE (placa) USING INDEX TABLESPACE ESPH_RESIDUOS_IDX,
     CONSTRAINT ck_veh_servicio CHECK (en_servicio IN (\'S\',\'N\'))
-) TABLESPACE APP_DATA;
+) TABLESPACE ESPH_RESIDUOS_DATA;
 
 CREATE TABLE esph_residuos.ejecucion_ruta (
     id_ejecucion NUMBER GENERATED ALWAYS AS IDENTITY,
@@ -1236,15 +1357,15 @@ CREATE TABLE esph_residuos.ejecucion_ruta (
     fecha DATE DEFAULT SYSDATE NOT NULL,
     kg_recolectados NUMBER(10,3),
     incidencias VARCHAR2(500),
-    CONSTRAINT pk_ejecucion_ruta PRIMARY KEY (id_ejecucion) USING INDEX TABLESPACE APP_INDEX,
+    CONSTRAINT pk_ejecucion_ruta PRIMARY KEY (id_ejecucion) USING INDEX TABLESPACE ESPH_RESIDUOS_IDX,
     CONSTRAINT fk_er_ruta FOREIGN KEY (id_ruta) REFERENCES esph_residuos.ruta(id_ruta),
     CONSTRAINT fk_er_vehiculo FOREIGN KEY (id_vehiculo) REFERENCES esph_residuos.vehiculo(id_vehiculo)
-) TABLESPACE APP_DATA;
+) TABLESPACE ESPH_RESIDUOS_DATA;
 
-CREATE INDEX esph_residuos.idx_ir_centro ON esph_residuos.ingreso_residuo(id_centro) TABLESPACE APP_INDEX;
-CREATE INDEX esph_residuos.idx_ir_fecha ON esph_residuos.ingreso_residuo(fecha_ingreso) TABLESPACE APP_INDEX;
-CREATE INDEX esph_residuos.idx_er_ruta ON esph_residuos.ejecucion_ruta(id_ruta) TABLESPACE APP_INDEX;
-CREATE INDEX esph_residuos.idx_er_fecha ON esph_residuos.ejecucion_ruta(fecha) TABLESPACE APP_INDEX;
+CREATE INDEX esph_residuos.idx_ir_centro ON esph_residuos.ingreso_residuo(id_centro) TABLESPACE ESPH_RESIDUOS_IDX;
+CREATE INDEX esph_residuos.idx_ir_fecha ON esph_residuos.ingreso_residuo(fecha_ingreso) TABLESPACE ESPH_RESIDUOS_IDX;
+CREATE INDEX esph_residuos.idx_er_ruta ON esph_residuos.ejecucion_ruta(id_ruta) TABLESPACE ESPH_RESIDUOS_IDX;
+CREATE INDEX esph_residuos.idx_er_fecha ON esph_residuos.ejecucion_ruta(fecha) TABLESPACE ESPH_RESIDUOS_IDX;
 
 CREATE SEQUENCE esph_residuos.seq_folio_ingreso START WITH 1000 INCREMENT BY 1 NOCACHE NOCYCLE;
 ',
@@ -1255,6 +1376,8 @@ CREATE SEQUENCE esph_residuos.seq_folio_ingreso START WITH 1000 INCREMENT BY 1 N
                 'icono' => 'fa-bolt',
                 'titulo'=> 'Modelo de datos — Energía Eléctrica',
                 'esquema'=> 'ESPH_ENERGIA',
+                'ts_data'=> 'ESPH_ENERGIA_DATA',
+                'ts_idx' => 'ESPH_ENERGIA_IDX',
                 'intro' => 'El esquema <code>ESPH_ENERGIA</code> representa elementos relacionados con la distribución eléctrica y el alumbrado público.',
                 'cols'  => [
                     ['Distribución eléctrica', ['subestacion','circuito','medidor','lectura_medidor']],
@@ -1266,6 +1389,8 @@ CREATE SEQUENCE esph_residuos.seq_folio_ingreso START WITH 1000 INCREMENT BY 1 N
                 'sql' => '
 -- ============================================================
 -- PARTE 13 - ESPH_ENERGIA
+-- Tablespace datos : ESPH_ENERGIA_DATA
+-- Tablespace índices: ESPH_ENERGIA_IDX
 -- ============================================================
 
 CREATE TABLE esph_energia.subestacion (
@@ -1275,9 +1400,9 @@ CREATE TABLE esph_energia.subestacion (
     voltaje_kv NUMBER(6,2) NOT NULL,
     capacidad_mva NUMBER(8,2) NOT NULL,
     operativa CHAR(1) DEFAULT \'S\' NOT NULL,
-    CONSTRAINT pk_subestacion PRIMARY KEY (id_subestacion) USING INDEX TABLESPACE APP_INDEX,
+    CONSTRAINT pk_subestacion PRIMARY KEY (id_subestacion) USING INDEX TABLESPACE ESPH_ENERGIA_IDX,
     CONSTRAINT ck_sub_op CHECK (operativa IN (\'S\',\'N\'))
-) TABLESPACE APP_DATA;
+) TABLESPACE ESPH_ENERGIA_DATA;
 
 CREATE TABLE esph_energia.circuito (
     id_circuito NUMBER GENERATED ALWAYS AS IDENTITY,
@@ -1285,9 +1410,9 @@ CREATE TABLE esph_energia.circuito (
     nombre VARCHAR2(100) NOT NULL,
     zona_cobertura VARCHAR2(150) NOT NULL,
     clientes_aprox NUMBER(8) NOT NULL,
-    CONSTRAINT pk_circuito PRIMARY KEY (id_circuito) USING INDEX TABLESPACE APP_INDEX,
+    CONSTRAINT pk_circuito PRIMARY KEY (id_circuito) USING INDEX TABLESPACE ESPH_ENERGIA_IDX,
     CONSTRAINT fk_cir_sub FOREIGN KEY (id_subestacion) REFERENCES esph_energia.subestacion(id_subestacion)
-) TABLESPACE APP_DATA;
+) TABLESPACE ESPH_ENERGIA_DATA;
 
 CREATE TABLE esph_energia.medidor (
     id_medidor NUMBER GENERATED ALWAYS AS IDENTITY,
@@ -1296,12 +1421,12 @@ CREATE TABLE esph_energia.medidor (
     tipo VARCHAR2(30) NOT NULL,
     fecha_instalacion DATE DEFAULT SYSDATE NOT NULL,
     activo CHAR(1) DEFAULT \'S\' NOT NULL,
-    CONSTRAINT pk_medidor PRIMARY KEY (id_medidor) USING INDEX TABLESPACE APP_INDEX,
-    CONSTRAINT uk_medidor_serie UNIQUE (numero_serie) USING INDEX TABLESPACE APP_INDEX,
+    CONSTRAINT pk_medidor PRIMARY KEY (id_medidor) USING INDEX TABLESPACE ESPH_ENERGIA_IDX,
+    CONSTRAINT uk_medidor_serie UNIQUE (numero_serie) USING INDEX TABLESPACE ESPH_ENERGIA_IDX,
     CONSTRAINT ck_med_tipo CHECK (tipo IN (\'RESIDENCIAL\',\'COMERCIAL\',\'INDUSTRIAL\')),
     CONSTRAINT ck_med_activo CHECK (activo IN (\'S\',\'N\')),
     CONSTRAINT fk_med_cir FOREIGN KEY (id_circuito) REFERENCES esph_energia.circuito(id_circuito)
-) TABLESPACE APP_DATA;
+) TABLESPACE ESPH_ENERGIA_DATA;
 
 CREATE TABLE esph_energia.lectura_medidor (
     id_lectura NUMBER GENERATED ALWAYS AS IDENTITY,
@@ -1310,9 +1435,9 @@ CREATE TABLE esph_energia.lectura_medidor (
     kwh_acumulado NUMBER(12,3) NOT NULL,
     kwh_consumo NUMBER(10,3) NOT NULL,
     lector VARCHAR2(80),
-    CONSTRAINT pk_lectura_medidor PRIMARY KEY (id_lectura) USING INDEX TABLESPACE APP_INDEX,
+    CONSTRAINT pk_lectura_medidor PRIMARY KEY (id_lectura) USING INDEX TABLESPACE ESPH_ENERGIA_IDX,
     CONSTRAINT fk_lec_med FOREIGN KEY (id_medidor) REFERENCES esph_energia.medidor(id_medidor)
-) TABLESPACE APP_DATA;
+) TABLESPACE ESPH_ENERGIA_DATA;
 
 CREATE TABLE esph_energia.luminaria (
     id_luminaria NUMBER GENERATED ALWAYS AS IDENTITY,
@@ -1322,11 +1447,11 @@ CREATE TABLE esph_energia.luminaria (
     potencia_w NUMBER(6,2) NOT NULL,
     en_operacion CHAR(1) DEFAULT \'S\' NOT NULL,
     fecha_instalacion DATE DEFAULT SYSDATE NOT NULL,
-    CONSTRAINT pk_luminaria PRIMARY KEY (id_luminaria) USING INDEX TABLESPACE APP_INDEX,
-    CONSTRAINT uk_luminaria_codigo UNIQUE (codigo) USING INDEX TABLESPACE APP_INDEX,
+    CONSTRAINT pk_luminaria PRIMARY KEY (id_luminaria) USING INDEX TABLESPACE ESPH_ENERGIA_IDX,
+    CONSTRAINT uk_luminaria_codigo UNIQUE (codigo) USING INDEX TABLESPACE ESPH_ENERGIA_IDX,
     CONSTRAINT ck_lum_tipo CHECK (tipo_lampara IN (\'LED\',\'SODIO\',\'MERCURIO\',\'HALURO\')),
     CONSTRAINT ck_lum_op CHECK (en_operacion IN (\'S\',\'N\'))
-) TABLESPACE APP_DATA;
+) TABLESPACE ESPH_ENERGIA_DATA;
 
 CREATE TABLE esph_energia.orden_mant_luminaria (
     id_orden NUMBER GENERATED ALWAYS AS IDENTITY,
@@ -1336,17 +1461,17 @@ CREATE TABLE esph_energia.orden_mant_luminaria (
     fecha_atencion DATE,
     estado VARCHAR2(20) DEFAULT \'PENDIENTE\' NOT NULL,
     observaciones VARCHAR2(500),
-    CONSTRAINT pk_orden_mant_lum PRIMARY KEY (id_orden) USING INDEX TABLESPACE APP_INDEX,
+    CONSTRAINT pk_orden_mant_lum PRIMARY KEY (id_orden) USING INDEX TABLESPACE ESPH_ENERGIA_IDX,
     CONSTRAINT fk_oml_lum FOREIGN KEY (id_luminaria) REFERENCES esph_energia.luminaria(id_luminaria),
     CONSTRAINT ck_oml_estado CHECK (estado IN (\'PENDIENTE\',\'EN_PROCESO\',\'COMPLETADA\',\'CANCELADA\'))
-) TABLESPACE APP_DATA;
+) TABLESPACE ESPH_ENERGIA_DATA;
 
-CREATE INDEX esph_energia.idx_cir_sub ON esph_energia.circuito(id_subestacion) TABLESPACE APP_INDEX;
-CREATE INDEX esph_energia.idx_med_cir ON esph_energia.medidor(id_circuito) TABLESPACE APP_INDEX;
-CREATE INDEX esph_energia.idx_lec_med ON esph_energia.lectura_medidor(id_medidor) TABLESPACE APP_INDEX;
-CREATE INDEX esph_energia.idx_lec_fecha ON esph_energia.lectura_medidor(fecha_lectura) TABLESPACE APP_INDEX;
-CREATE INDEX esph_energia.idx_oml_lum ON esph_energia.orden_mant_luminaria(id_luminaria) TABLESPACE APP_INDEX;
-CREATE INDEX esph_energia.idx_oml_estado ON esph_energia.orden_mant_luminaria(estado) TABLESPACE APP_INDEX;
+CREATE INDEX esph_energia.idx_cir_sub ON esph_energia.circuito(id_subestacion) TABLESPACE ESPH_ENERGIA_IDX;
+CREATE INDEX esph_energia.idx_med_cir ON esph_energia.medidor(id_circuito) TABLESPACE ESPH_ENERGIA_IDX;
+CREATE INDEX esph_energia.idx_lec_med ON esph_energia.lectura_medidor(id_medidor) TABLESPACE ESPH_ENERGIA_IDX;
+CREATE INDEX esph_energia.idx_lec_fecha ON esph_energia.lectura_medidor(fecha_lectura) TABLESPACE ESPH_ENERGIA_IDX;
+CREATE INDEX esph_energia.idx_oml_lum ON esph_energia.orden_mant_luminaria(id_luminaria) TABLESPACE ESPH_ENERGIA_IDX;
+CREATE INDEX esph_energia.idx_oml_estado ON esph_energia.orden_mant_luminaria(estado) TABLESPACE ESPH_ENERGIA_IDX;
 ',
             ],
             [
@@ -1355,6 +1480,8 @@ CREATE INDEX esph_energia.idx_oml_estado ON esph_energia.orden_mant_luminaria(es
                 'icono' => 'fa-droplet',
                 'titulo'=> 'Modelo de datos — Agua Potable',
                 'esquema'=> 'ESPH_AGUA',
+                'ts_data'=> 'ESPH_AGUA_DATA',
+                'ts_idx' => 'ESPH_AGUA_IDX',
                 'intro' => 'El esquema <code>ESPH_AGUA</code> representa infraestructura de potabilización, almacenamiento, distribución y control de hidrantes.',
                 'cols'  => [
                     ['Infraestructura',      ['planta_potabilizadora','tanque','zona_distribucion']],
@@ -1366,6 +1493,8 @@ CREATE INDEX esph_energia.idx_oml_estado ON esph_energia.orden_mant_luminaria(es
                 'sql' => '
 -- ============================================================
 -- PARTE 14 - ESPH_AGUA
+-- Tablespace datos : ESPH_AGUA_DATA
+-- Tablespace índices: ESPH_AGUA_IDX
 -- ============================================================
 
 CREATE TABLE esph_agua.planta_potabilizadora (
@@ -1374,9 +1503,9 @@ CREATE TABLE esph_agua.planta_potabilizadora (
     ubicacion VARCHAR2(200) NOT NULL,
     capacidad_lps NUMBER(8,2) NOT NULL,
     operativa CHAR(1) DEFAULT \'S\' NOT NULL,
-    CONSTRAINT pk_planta_potabilizadora PRIMARY KEY (id_planta) USING INDEX TABLESPACE APP_INDEX,
+    CONSTRAINT pk_planta_potabilizadora PRIMARY KEY (id_planta) USING INDEX TABLESPACE ESPH_AGUA_IDX,
     CONSTRAINT ck_pp_op CHECK (operativa IN (\'S\',\'N\'))
-) TABLESPACE APP_DATA;
+) TABLESPACE ESPH_AGUA_DATA;
 
 CREATE TABLE esph_agua.tanque (
     id_tanque NUMBER GENERATED ALWAYS AS IDENTITY,
@@ -1385,17 +1514,17 @@ CREATE TABLE esph_agua.tanque (
     capacidad_m3 NUMBER(10,2) NOT NULL,
     ubicacion VARCHAR2(200) NOT NULL,
     cota_msnm NUMBER(7,2) NOT NULL,
-    CONSTRAINT pk_tanque PRIMARY KEY (id_tanque) USING INDEX TABLESPACE APP_INDEX,
+    CONSTRAINT pk_tanque PRIMARY KEY (id_tanque) USING INDEX TABLESPACE ESPH_AGUA_IDX,
     CONSTRAINT fk_tan_planta FOREIGN KEY (id_planta) REFERENCES esph_agua.planta_potabilizadora(id_planta)
-) TABLESPACE APP_DATA;
+) TABLESPACE ESPH_AGUA_DATA;
 
 CREATE TABLE esph_agua.zona_distribucion (
     id_zona NUMBER GENERATED ALWAYS AS IDENTITY,
     nombre VARCHAR2(100) NOT NULL,
     poblacion_est NUMBER(8) NOT NULL,
     conexiones_act NUMBER(8) NOT NULL,
-    CONSTRAINT pk_zona_distribucion PRIMARY KEY (id_zona) USING INDEX TABLESPACE APP_INDEX
-) TABLESPACE APP_DATA;
+    CONSTRAINT pk_zona_distribucion PRIMARY KEY (id_zona) USING INDEX TABLESPACE ESPH_AGUA_IDX
+) TABLESPACE ESPH_AGUA_DATA;
 
 CREATE TABLE esph_agua.conexion (
     id_conexion NUMBER GENERATED ALWAYS AS IDENTITY,
@@ -1405,12 +1534,12 @@ CREATE TABLE esph_agua.conexion (
     diametro_mm NUMBER(5,1) NOT NULL,
     activa CHAR(1) DEFAULT \'S\' NOT NULL,
     fecha_alta DATE DEFAULT SYSDATE NOT NULL,
-    CONSTRAINT pk_conexion PRIMARY KEY (id_conexion) USING INDEX TABLESPACE APP_INDEX,
-    CONSTRAINT uk_conexion_medidor UNIQUE (numero_medidor) USING INDEX TABLESPACE APP_INDEX,
+    CONSTRAINT pk_conexion PRIMARY KEY (id_conexion) USING INDEX TABLESPACE ESPH_AGUA_IDX,
+    CONSTRAINT uk_conexion_medidor UNIQUE (numero_medidor) USING INDEX TABLESPACE ESPH_AGUA_IDX,
     CONSTRAINT fk_con_zona FOREIGN KEY (id_zona) REFERENCES esph_agua.zona_distribucion(id_zona),
     CONSTRAINT ck_con_tipo CHECK (tipo IN (\'RESIDENCIAL\',\'COMERCIAL\',\'INDUSTRIAL\',\'MUNICIPAL\')),
     CONSTRAINT ck_con_activa CHECK (activa IN (\'S\',\'N\'))
-) TABLESPACE APP_DATA;
+) TABLESPACE ESPH_AGUA_DATA;
 
 CREATE TABLE esph_agua.lectura_agua (
     id_lectura NUMBER GENERATED ALWAYS AS IDENTITY,
@@ -1419,9 +1548,9 @@ CREATE TABLE esph_agua.lectura_agua (
     m3_acumulado NUMBER(12,3) NOT NULL,
     m3_consumo NUMBER(10,3) NOT NULL,
     lector VARCHAR2(80),
-    CONSTRAINT pk_lectura_agua PRIMARY KEY (id_lectura) USING INDEX TABLESPACE APP_INDEX,
+    CONSTRAINT pk_lectura_agua PRIMARY KEY (id_lectura) USING INDEX TABLESPACE ESPH_AGUA_IDX,
     CONSTRAINT fk_la_con FOREIGN KEY (id_conexion) REFERENCES esph_agua.conexion(id_conexion)
-) TABLESPACE APP_DATA;
+) TABLESPACE ESPH_AGUA_DATA;
 
 CREATE TABLE esph_agua.hidrante (
     id_hidrante NUMBER GENERATED ALWAYS AS IDENTITY,
@@ -1432,12 +1561,12 @@ CREATE TABLE esph_agua.hidrante (
     presion_psi NUMBER(6,2) NOT NULL,
     operativo CHAR(1) DEFAULT \'S\' NOT NULL,
     ultima_inspeccion DATE,
-    CONSTRAINT pk_hidrante PRIMARY KEY (id_hidrante) USING INDEX TABLESPACE APP_INDEX,
-    CONSTRAINT uk_hidrante_codigo UNIQUE (codigo) USING INDEX TABLESPACE APP_INDEX,
+    CONSTRAINT pk_hidrante PRIMARY KEY (id_hidrante) USING INDEX TABLESPACE ESPH_AGUA_IDX,
+    CONSTRAINT uk_hidrante_codigo UNIQUE (codigo) USING INDEX TABLESPACE ESPH_AGUA_IDX,
     CONSTRAINT fk_hid_zona FOREIGN KEY (id_zona) REFERENCES esph_agua.zona_distribucion(id_zona),
     CONSTRAINT ck_hid_tipo CHECK (tipo IN (\'COLUMNA\',\'BAJO_NIVEL\',\'MURAL\')),
     CONSTRAINT ck_hid_op CHECK (operativo IN (\'S\',\'N\'))
-) TABLESPACE APP_DATA;
+) TABLESPACE ESPH_AGUA_DATA;
 
 CREATE TABLE esph_agua.inspeccion_hidrante (
     id_inspeccion NUMBER GENERATED ALWAYS AS IDENTITY,
@@ -1448,17 +1577,17 @@ CREATE TABLE esph_agua.inspeccion_hidrante (
     resultado VARCHAR2(20) NOT NULL,
     inspector VARCHAR2(100),
     observaciones VARCHAR2(500),
-    CONSTRAINT pk_inspeccion_hidrante PRIMARY KEY (id_inspeccion) USING INDEX TABLESPACE APP_INDEX,
+    CONSTRAINT pk_inspeccion_hidrante PRIMARY KEY (id_inspeccion) USING INDEX TABLESPACE ESPH_AGUA_IDX,
     CONSTRAINT fk_ih_hid FOREIGN KEY (id_hidrante) REFERENCES esph_agua.hidrante(id_hidrante),
     CONSTRAINT ck_ih_res CHECK (resultado IN (\'APROBADO\',\'REPARACION\',\'FUERA_SERVICIO\'))
-) TABLESPACE APP_DATA;
+) TABLESPACE ESPH_AGUA_DATA;
 
-CREATE INDEX esph_agua.idx_con_zona ON esph_agua.conexion(id_zona) TABLESPACE APP_INDEX;
-CREATE INDEX esph_agua.idx_la_con ON esph_agua.lectura_agua(id_conexion) TABLESPACE APP_INDEX;
-CREATE INDEX esph_agua.idx_la_fecha ON esph_agua.lectura_agua(fecha_lectura) TABLESPACE APP_INDEX;
-CREATE INDEX esph_agua.idx_hid_zona ON esph_agua.hidrante(id_zona) TABLESPACE APP_INDEX;
-CREATE INDEX esph_agua.idx_ih_hid ON esph_agua.inspeccion_hidrante(id_hidrante) TABLESPACE APP_INDEX;
-CREATE INDEX esph_agua.idx_ih_fecha ON esph_agua.inspeccion_hidrante(fecha) TABLESPACE APP_INDEX;
+CREATE INDEX esph_agua.idx_con_zona ON esph_agua.conexion(id_zona) TABLESPACE ESPH_AGUA_IDX;
+CREATE INDEX esph_agua.idx_la_con ON esph_agua.lectura_agua(id_conexion) TABLESPACE ESPH_AGUA_IDX;
+CREATE INDEX esph_agua.idx_la_fecha ON esph_agua.lectura_agua(fecha_lectura) TABLESPACE ESPH_AGUA_IDX;
+CREATE INDEX esph_agua.idx_hid_zona ON esph_agua.hidrante(id_zona) TABLESPACE ESPH_AGUA_IDX;
+CREATE INDEX esph_agua.idx_ih_hid ON esph_agua.inspeccion_hidrante(id_hidrante) TABLESPACE ESPH_AGUA_IDX;
+CREATE INDEX esph_agua.idx_ih_fecha ON esph_agua.inspeccion_hidrante(fecha) TABLESPACE ESPH_AGUA_IDX;
 ',
             ],
             [
@@ -1467,6 +1596,8 @@ CREATE INDEX esph_agua.idx_ih_fecha ON esph_agua.inspeccion_hidrante(fecha) TABL
                 'icono' => 'fa-desktop',
                 'titulo'=> 'Modelo de datos — Tecnologías de Información',
                 'esquema'=> 'ESPH_TIC',
+                'ts_data'=> 'ESPH_TIC_DATA',
+                'ts_idx' => 'ESPH_TIC_IDX',
                 'intro' => 'El esquema <code>ESPH_TIC</code> representa activos tecnológicos, licenciamiento, usuarios internos y atención de incidentes mediante tickets.',
                 'cols'  => [
                     ['Gestión de activos', ['categoria_activo','activo_ti','licencia_software']],
@@ -1478,15 +1609,17 @@ CREATE INDEX esph_agua.idx_ih_fecha ON esph_agua.inspeccion_hidrante(fecha) TABL
                 'sql' => '
 -- ============================================================
 -- PARTE 15 - ESPH_TIC
+-- Tablespace datos : ESPH_TIC_DATA
+-- Tablespace índices: ESPH_TIC_IDX
 -- ============================================================
 
 CREATE TABLE esph_tic.categoria_activo (
     id_categoria NUMBER GENERATED ALWAYS AS IDENTITY,
     nombre VARCHAR2(80) NOT NULL,
     descripcion VARCHAR2(200),
-    CONSTRAINT pk_categoria_activo PRIMARY KEY (id_categoria) USING INDEX TABLESPACE APP_INDEX,
-    CONSTRAINT uk_categoria_activo UNIQUE (nombre) USING INDEX TABLESPACE APP_INDEX
-) TABLESPACE APP_DATA;
+    CONSTRAINT pk_categoria_activo PRIMARY KEY (id_categoria) USING INDEX TABLESPACE ESPH_TIC_IDX,
+    CONSTRAINT uk_categoria_activo UNIQUE (nombre) USING INDEX TABLESPACE ESPH_TIC_IDX
+) TABLESPACE ESPH_TIC_DATA;
 
 CREATE TABLE esph_tic.activo_ti (
     id_activo NUMBER GENERATED ALWAYS AS IDENTITY,
@@ -1501,11 +1634,11 @@ CREATE TABLE esph_tic.activo_ti (
     estado VARCHAR2(20) DEFAULT \'ACTIVO\' NOT NULL,
     fecha_adquisicion DATE,
     garantia_hasta DATE,
-    CONSTRAINT pk_activo_ti PRIMARY KEY (id_activo) USING INDEX TABLESPACE APP_INDEX,
-    CONSTRAINT uk_activo_codigo UNIQUE (codigo) USING INDEX TABLESPACE APP_INDEX,
+    CONSTRAINT pk_activo_ti PRIMARY KEY (id_activo) USING INDEX TABLESPACE ESPH_TIC_IDX,
+    CONSTRAINT uk_activo_codigo UNIQUE (codigo) USING INDEX TABLESPACE ESPH_TIC_IDX,
     CONSTRAINT fk_ati_cat FOREIGN KEY (id_categoria) REFERENCES esph_tic.categoria_activo(id_categoria),
     CONSTRAINT ck_ati_estado CHECK (estado IN (\'ACTIVO\',\'EN_MANTENIMIENTO\',\'DADO_DE_BAJA\',\'BODEGA\'))
-) TABLESPACE APP_DATA;
+) TABLESPACE ESPH_TIC_DATA;
 
 CREATE TABLE esph_tic.licencia_software (
     id_licencia NUMBER GENERATED ALWAYS AS IDENTITY,
@@ -1516,17 +1649,17 @@ CREATE TABLE esph_tic.licencia_software (
     fecha_vencimiento DATE,
     costo_anual NUMBER(12,2),
     observaciones VARCHAR2(300),
-    CONSTRAINT pk_licencia_software PRIMARY KEY (id_licencia) USING INDEX TABLESPACE APP_INDEX,
+    CONSTRAINT pk_licencia_software PRIMARY KEY (id_licencia) USING INDEX TABLESPACE ESPH_TIC_IDX,
     CONSTRAINT ck_lic_tipo CHECK (tipo_licencia IN (\'PERPETUA\',\'SUSCRIPCION\',\'OPEN_SOURCE\',\'FREEWARE\'))
-) TABLESPACE APP_DATA;
+) TABLESPACE ESPH_TIC_DATA;
 
 CREATE TABLE esph_tic.categoria_ticket (
     id_categoria NUMBER GENERATED ALWAYS AS IDENTITY,
     nombre VARCHAR2(80) NOT NULL,
     nivel_sla_horas NUMBER(4) NOT NULL,
-    CONSTRAINT pk_categoria_ticket PRIMARY KEY (id_categoria) USING INDEX TABLESPACE APP_INDEX,
-    CONSTRAINT uk_categoria_ticket UNIQUE (nombre) USING INDEX TABLESPACE APP_INDEX
-) TABLESPACE APP_DATA;
+    CONSTRAINT pk_categoria_ticket PRIMARY KEY (id_categoria) USING INDEX TABLESPACE ESPH_TIC_IDX,
+    CONSTRAINT uk_categoria_ticket UNIQUE (nombre) USING INDEX TABLESPACE ESPH_TIC_IDX
+) TABLESPACE ESPH_TIC_DATA;
 
 CREATE TABLE esph_tic.usuario_interno (
     id_usuario NUMBER GENERATED ALWAYS AS IDENTITY,
@@ -1535,11 +1668,11 @@ CREATE TABLE esph_tic.usuario_interno (
     area VARCHAR2(100) NOT NULL,
     correo VARCHAR2(150) NOT NULL,
     activo CHAR(1) DEFAULT \'S\' NOT NULL,
-    CONSTRAINT pk_usuario_interno PRIMARY KEY (id_usuario) USING INDEX TABLESPACE APP_INDEX,
-    CONSTRAINT uk_usuario_cedula UNIQUE (cedula) USING INDEX TABLESPACE APP_INDEX,
-    CONSTRAINT uk_usuario_correo UNIQUE (correo) USING INDEX TABLESPACE APP_INDEX,
+    CONSTRAINT pk_usuario_interno PRIMARY KEY (id_usuario) USING INDEX TABLESPACE ESPH_TIC_IDX,
+    CONSTRAINT uk_usuario_cedula UNIQUE (cedula) USING INDEX TABLESPACE ESPH_TIC_IDX,
+    CONSTRAINT uk_usuario_correo UNIQUE (correo) USING INDEX TABLESPACE ESPH_TIC_IDX,
     CONSTRAINT ck_ui_activo CHECK (activo IN (\'S\',\'N\'))
-) TABLESPACE APP_DATA;
+) TABLESPACE ESPH_TIC_DATA;
 
 CREATE TABLE esph_tic.ticket (
     id_ticket NUMBER GENERATED ALWAYS AS IDENTITY,
@@ -1554,20 +1687,20 @@ CREATE TABLE esph_tic.ticket (
     fecha_cierre DATE,
     tecnico_asig VARCHAR2(100),
     resolucion VARCHAR2(1000),
-    CONSTRAINT pk_ticket PRIMARY KEY (id_ticket) USING INDEX TABLESPACE APP_INDEX,
+    CONSTRAINT pk_ticket PRIMARY KEY (id_ticket) USING INDEX TABLESPACE ESPH_TIC_IDX,
     CONSTRAINT fk_tkt_cat FOREIGN KEY (id_categoria) REFERENCES esph_tic.categoria_ticket(id_categoria),
     CONSTRAINT fk_tkt_sol FOREIGN KEY (id_solicitante) REFERENCES esph_tic.usuario_interno(id_usuario),
     CONSTRAINT fk_tkt_ati FOREIGN KEY (id_activo) REFERENCES esph_tic.activo_ti(id_activo),
     CONSTRAINT ck_tkt_pri CHECK (prioridad IN (\'BAJA\',\'MEDIA\',\'ALTA\',\'CRITICA\')),
     CONSTRAINT ck_tkt_est CHECK (estado IN (\'ABIERTO\',\'EN_PROCESO\',\'RESUELTO\',\'CERRADO\',\'CANCELADO\'))
-) TABLESPACE APP_DATA;
+) TABLESPACE ESPH_TIC_DATA;
 
-CREATE INDEX esph_tic.idx_ati_cat ON esph_tic.activo_ti(id_categoria) TABLESPACE APP_INDEX;
-CREATE INDEX esph_tic.idx_ati_estado ON esph_tic.activo_ti(estado) TABLESPACE APP_INDEX;
-CREATE INDEX esph_tic.idx_tkt_cat ON esph_tic.ticket(id_categoria) TABLESPACE APP_INDEX;
-CREATE INDEX esph_tic.idx_tkt_sol ON esph_tic.ticket(id_solicitante) TABLESPACE APP_INDEX;
-CREATE INDEX esph_tic.idx_tkt_estado ON esph_tic.ticket(estado) TABLESPACE APP_INDEX;
-CREATE INDEX esph_tic.idx_tkt_fecha ON esph_tic.ticket(fecha_apertura) TABLESPACE APP_INDEX;
+CREATE INDEX esph_tic.idx_ati_cat ON esph_tic.activo_ti(id_categoria) TABLESPACE ESPH_TIC_IDX;
+CREATE INDEX esph_tic.idx_ati_estado ON esph_tic.activo_ti(estado) TABLESPACE ESPH_TIC_IDX;
+CREATE INDEX esph_tic.idx_tkt_cat ON esph_tic.ticket(id_categoria) TABLESPACE ESPH_TIC_IDX;
+CREATE INDEX esph_tic.idx_tkt_sol ON esph_tic.ticket(id_solicitante) TABLESPACE ESPH_TIC_IDX;
+CREATE INDEX esph_tic.idx_tkt_estado ON esph_tic.ticket(estado) TABLESPACE ESPH_TIC_IDX;
+CREATE INDEX esph_tic.idx_tkt_fecha ON esph_tic.ticket(fecha_apertura) TABLESPACE ESPH_TIC_IDX;
 ',
             ],
         ];
@@ -1587,6 +1720,20 @@ CREATE INDEX esph_tic.idx_tkt_fecha ON esph_tic.ticket(fecha_apertura) TABLESPAC
                 <div class="accordion-body" style="background:var(--surface);color:var(--text)">
 
                     <p style="font-size:0.88rem;color:var(--text-muted)"><?php echo $m['intro']; ?></p>
+
+                    <!-- Tablespaces del dominio -->
+                    <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1rem">
+                        <div style="background:rgba(0,0,0,0.15);border-radius:6px;padding:0.35rem 0.75rem;font-size:0.75rem">
+                            <i class="fa-solid fa-table me-1" style="color:var(--risk-mid)"></i>
+                            <code style="color:var(--risk-mid)"><?php echo $m['ts_data']; ?></code>
+                            <span style="color:var(--text-muted);margin-left:0.35rem">datos</span>
+                        </div>
+                        <div style="background:rgba(0,0,0,0.15);border-radius:6px;padding:0.35rem 0.75rem;font-size:0.75rem">
+                            <i class="fa-solid fa-magnifying-glass me-1" style="color:var(--risk-mid)"></i>
+                            <code style="color:var(--risk-mid)"><?php echo $m['ts_idx']; ?></code>
+                            <span style="color:var(--text-muted);margin-left:0.35rem">índices</span>
+                        </div>
+                    </div>
 
                     <div class="row g-3 mb-3">
                         <?php foreach ($m['cols'] as $col): ?>
@@ -1684,10 +1831,10 @@ CREATE INDEX esph_tic.idx_tkt_fecha ON esph_tic.ticket(fecha_apertura) TABLESPAC
 -- EJEMPLOS DE CONSTRAINTS REPRESENTATIVOS
 -- ============================================================
 
--- PRIMARY KEY con USING INDEX TABLESPACE APP_INDEX
+-- PRIMARY KEY con USING INDEX TABLESPACE propio del dominio
 CONSTRAINT pk_centro_acopio
     PRIMARY KEY (id_centro)
-    USING INDEX TABLESPACE APP_INDEX
+    USING INDEX TABLESPACE ESPH_RESIDUOS_IDX
 
 -- FOREIGN KEY (relación)
 CONSTRAINT fk_ir_centro
@@ -1697,7 +1844,7 @@ CONSTRAINT fk_ir_centro
 -- UNIQUE (evita duplicidad)
 CONSTRAINT uk_vehiculo_placa
     UNIQUE (placa)
-    USING INDEX TABLESPACE APP_INDEX
+    USING INDEX TABLESPACE ESPH_RESIDUOS_IDX
 
 -- CHECK (valores permitidos)
 CONSTRAINT ck_med_tipo
@@ -1729,16 +1876,17 @@ id_centro NUMBER GENERATED ALWAYS AS IDENTITY
                     <p style="font-size:0.88rem;color:var(--text-muted)">
                         Además de los índices generados por las claves primarias y restricciones <code>UNIQUE</code>,
                         se crearon índices adicionales sobre columnas utilizadas frecuentemente para búsquedas y relaciones.
+                        Todos los índices residen en el tablespace <code>_IDX</code> correspondiente al dominio.
                     </p>
 
                     <h5 style="font-size:0.95rem;margin-bottom:0.5rem">Ejemplos</h5>
                     <ul style="font-size:0.85rem;color:var(--text-muted);padding-left:1.25rem">
-                        <li><code>idx_ir_centro</code> → búsquedas de ingresos por centro de acopio.</li>
-                        <li><code>idx_ir_fecha</code> → consultas de ingresos por fecha.</li>
-                        <li><code>idx_lec_med</code> → búsquedas de lecturas por medidor.</li>
-                        <li><code>idx_lec_fecha</code> → consultas históricas por fecha.</li>
-                        <li><code>idx_tkt_estado</code> → filtrado de tickets según estado.</li>
-                        <li><code>idx_tkt_fecha</code> → consultas de tickets por fecha.</li>
+                        <li><code>idx_ir_centro</code> → búsquedas de ingresos por centro de acopio. <span style="font-family:var(--font-mono);font-size:0.75rem;color:var(--risk-mid)">[ESPH_RESIDUOS_IDX]</span></li>
+                        <li><code>idx_ir_fecha</code> → consultas de ingresos por fecha. <span style="font-family:var(--font-mono);font-size:0.75rem;color:var(--risk-mid)">[ESPH_RESIDUOS_IDX]</span></li>
+                        <li><code>idx_lec_med</code> → búsquedas de lecturas por medidor. <span style="font-family:var(--font-mono);font-size:0.75rem;color:var(--risk-mid)">[ESPH_ENERGIA_IDX]</span></li>
+                        <li><code>idx_lec_fecha</code> → consultas históricas por fecha. <span style="font-family:var(--font-mono);font-size:0.75rem;color:var(--risk-mid)">[ESPH_ENERGIA_IDX]</span></li>
+                        <li><code>idx_tkt_estado</code> → filtrado de tickets según estado. <span style="font-family:var(--font-mono);font-size:0.75rem;color:var(--risk-mid)">[ESPH_TIC_IDX]</span></li>
+                        <li><code>idx_tkt_fecha</code> → consultas de tickets por fecha. <span style="font-family:var(--font-mono);font-size:0.75rem;color:var(--risk-mid)">[ESPH_TIC_IDX]</span></li>
                     </ul>
 
                     <h5 style="font-size:0.95rem;margin-bottom:0.5rem">¿Por qué?</h5>
@@ -1749,42 +1897,43 @@ id_centro NUMBER GENERATED ALWAYS AS IDENTITY
                     <div style="background:rgba(255,200,50,0.07);border:1px solid rgba(255,200,50,0.25);border-radius:8px;padding:0.85rem 1rem;font-size:0.82rem;color:var(--text)">
                         <strong style="color:var(--risk-mid)">Decisión:</strong>
                         No se indexaron indiscriminadamente todas las columnas. Se seleccionaron principalmente columnas utilizadas en relaciones, búsquedas, filtros y consultas temporales.
+                        Cada índice queda físicamente aislado en el tablespace <code>_IDX</code> de su propio dominio.
                     </div>
 
                     <?php echo renderSqlBlock('
 -- ============================================================
--- ÍNDICES DE RENDIMIENTO POR ESQUEMA
+-- ÍNDICES DE RENDIMIENTO POR ESQUEMA Y TABLESPACE
 -- ============================================================
 
--- ESPH_RESIDUOS
-CREATE INDEX esph_residuos.idx_ir_centro ON esph_residuos.ingreso_residuo(id_centro) TABLESPACE APP_INDEX;
-CREATE INDEX esph_residuos.idx_ir_fecha ON esph_residuos.ingreso_residuo(fecha_ingreso) TABLESPACE APP_INDEX;
-CREATE INDEX esph_residuos.idx_er_ruta ON esph_residuos.ejecucion_ruta(id_ruta) TABLESPACE APP_INDEX;
-CREATE INDEX esph_residuos.idx_er_fecha ON esph_residuos.ejecucion_ruta(fecha) TABLESPACE APP_INDEX;
+-- ESPH_RESIDUOS → ESPH_RESIDUOS_IDX
+CREATE INDEX esph_residuos.idx_ir_centro ON esph_residuos.ingreso_residuo(id_centro) TABLESPACE ESPH_RESIDUOS_IDX;
+CREATE INDEX esph_residuos.idx_ir_fecha ON esph_residuos.ingreso_residuo(fecha_ingreso) TABLESPACE ESPH_RESIDUOS_IDX;
+CREATE INDEX esph_residuos.idx_er_ruta ON esph_residuos.ejecucion_ruta(id_ruta) TABLESPACE ESPH_RESIDUOS_IDX;
+CREATE INDEX esph_residuos.idx_er_fecha ON esph_residuos.ejecucion_ruta(fecha) TABLESPACE ESPH_RESIDUOS_IDX;
 
--- ESPH_ENERGIA
-CREATE INDEX esph_energia.idx_cir_sub ON esph_energia.circuito(id_subestacion) TABLESPACE APP_INDEX;
-CREATE INDEX esph_energia.idx_med_cir ON esph_energia.medidor(id_circuito) TABLESPACE APP_INDEX;
-CREATE INDEX esph_energia.idx_lec_med ON esph_energia.lectura_medidor(id_medidor) TABLESPACE APP_INDEX;
-CREATE INDEX esph_energia.idx_lec_fecha ON esph_energia.lectura_medidor(fecha_lectura) TABLESPACE APP_INDEX;
-CREATE INDEX esph_energia.idx_oml_lum ON esph_energia.orden_mant_luminaria(id_luminaria) TABLESPACE APP_INDEX;
-CREATE INDEX esph_energia.idx_oml_estado ON esph_energia.orden_mant_luminaria(estado) TABLESPACE APP_INDEX;
+-- ESPH_ENERGIA → ESPH_ENERGIA_IDX
+CREATE INDEX esph_energia.idx_cir_sub ON esph_energia.circuito(id_subestacion) TABLESPACE ESPH_ENERGIA_IDX;
+CREATE INDEX esph_energia.idx_med_cir ON esph_energia.medidor(id_circuito) TABLESPACE ESPH_ENERGIA_IDX;
+CREATE INDEX esph_energia.idx_lec_med ON esph_energia.lectura_medidor(id_medidor) TABLESPACE ESPH_ENERGIA_IDX;
+CREATE INDEX esph_energia.idx_lec_fecha ON esph_energia.lectura_medidor(fecha_lectura) TABLESPACE ESPH_ENERGIA_IDX;
+CREATE INDEX esph_energia.idx_oml_lum ON esph_energia.orden_mant_luminaria(id_luminaria) TABLESPACE ESPH_ENERGIA_IDX;
+CREATE INDEX esph_energia.idx_oml_estado ON esph_energia.orden_mant_luminaria(estado) TABLESPACE ESPH_ENERGIA_IDX;
 
--- ESPH_AGUA
-CREATE INDEX esph_agua.idx_con_zona ON esph_agua.conexion(id_zona) TABLESPACE APP_INDEX;
-CREATE INDEX esph_agua.idx_la_con ON esph_agua.lectura_agua(id_conexion) TABLESPACE APP_INDEX;
-CREATE INDEX esph_agua.idx_la_fecha ON esph_agua.lectura_agua(fecha_lectura) TABLESPACE APP_INDEX;
-CREATE INDEX esph_agua.idx_hid_zona ON esph_agua.hidrante(id_zona) TABLESPACE APP_INDEX;
-CREATE INDEX esph_agua.idx_ih_hid ON esph_agua.inspeccion_hidrante(id_hidrante) TABLESPACE APP_INDEX;
-CREATE INDEX esph_agua.idx_ih_fecha ON esph_agua.inspeccion_hidrante(fecha) TABLESPACE APP_INDEX;
+-- ESPH_AGUA → ESPH_AGUA_IDX
+CREATE INDEX esph_agua.idx_con_zona ON esph_agua.conexion(id_zona) TABLESPACE ESPH_AGUA_IDX;
+CREATE INDEX esph_agua.idx_la_con ON esph_agua.lectura_agua(id_conexion) TABLESPACE ESPH_AGUA_IDX;
+CREATE INDEX esph_agua.idx_la_fecha ON esph_agua.lectura_agua(fecha_lectura) TABLESPACE ESPH_AGUA_IDX;
+CREATE INDEX esph_agua.idx_hid_zona ON esph_agua.hidrante(id_zona) TABLESPACE ESPH_AGUA_IDX;
+CREATE INDEX esph_agua.idx_ih_hid ON esph_agua.inspeccion_hidrante(id_hidrante) TABLESPACE ESPH_AGUA_IDX;
+CREATE INDEX esph_agua.idx_ih_fecha ON esph_agua.inspeccion_hidrante(fecha) TABLESPACE ESPH_AGUA_IDX;
 
--- ESPH_TIC
-CREATE INDEX esph_tic.idx_ati_cat ON esph_tic.activo_ti(id_categoria) TABLESPACE APP_INDEX;
-CREATE INDEX esph_tic.idx_ati_estado ON esph_tic.activo_ti(estado) TABLESPACE APP_INDEX;
-CREATE INDEX esph_tic.idx_tkt_cat ON esph_tic.ticket(id_categoria) TABLESPACE APP_INDEX;
-CREATE INDEX esph_tic.idx_tkt_sol ON esph_tic.ticket(id_solicitante) TABLESPACE APP_INDEX;
-CREATE INDEX esph_tic.idx_tkt_estado ON esph_tic.ticket(estado) TABLESPACE APP_INDEX;
-CREATE INDEX esph_tic.idx_tkt_fecha ON esph_tic.ticket(fecha_apertura) TABLESPACE APP_INDEX;
+-- ESPH_TIC → ESPH_TIC_IDX
+CREATE INDEX esph_tic.idx_ati_cat ON esph_tic.activo_ti(id_categoria) TABLESPACE ESPH_TIC_IDX;
+CREATE INDEX esph_tic.idx_ati_estado ON esph_tic.activo_ti(estado) TABLESPACE ESPH_TIC_IDX;
+CREATE INDEX esph_tic.idx_tkt_cat ON esph_tic.ticket(id_categoria) TABLESPACE ESPH_TIC_IDX;
+CREATE INDEX esph_tic.idx_tkt_sol ON esph_tic.ticket(id_solicitante) TABLESPACE ESPH_TIC_IDX;
+CREATE INDEX esph_tic.idx_tkt_estado ON esph_tic.ticket(estado) TABLESPACE ESPH_TIC_IDX;
+CREATE INDEX esph_tic.idx_tkt_fecha ON esph_tic.ticket(fecha_apertura) TABLESPACE ESPH_TIC_IDX;
 '); ?>
 
                 </div>
@@ -2015,7 +2164,7 @@ COMMIT;
                             ['fa-user-check','Usuarios',   'Se comprueba el estado de las cuentas, tablespaces y fecha de creación.'],
                             ['fa-key',       'Privilegios','Se consultan los privilegios otorgados a cada esquema.'],
                             ['fa-table',     'Tablas',     'Se verifica la cantidad de tablas existentes por área de negocio.'],
-                            ['fa-chart-bar', 'Espacio',    'Se revisa el espacio utilizado y disponible en APP_DATA y APP_INDEX.'],
+                            ['fa-chart-bar', 'Espacio',    'Se revisa el espacio utilizado y disponible en cada par de tablespaces.'],
                         ];
                         foreach ($verificaciones as $v):
                         ?>
@@ -2055,7 +2204,7 @@ WHERE username IN (\'ESPH_RESIDUOS\', \'ESPH_ENERGIA\', \'ESPH_AGUA\', \'ESPH_TI
 ORDER BY username;
 
 -- ============================================================
--- PARTE 17 - CUOTAS
+-- PARTE 17 - CUOTAS POR TABLESPACE DE DOMINIO
 -- ============================================================
 
 SELECT
@@ -2102,19 +2251,20 @@ ORDER BY grantee, privilege;
 
                     <h5 style="font-size:0.95rem;text-align:center;margin-bottom:1.25rem">Arquitectura de almacenamiento</h5>
 
+                    <!-- Capa Oracle -->
                     <div class="row text-center g-3 mb-3">
                         <?php
                         $arq = [
-                            ['Oracle','Motor de base de datos'],
-                            ['APP_DATA','Datos empresariales'],
-                            ['APP_INDEX','Índices'],
+                            ['Oracle Database 21c XE','Motor de base de datos · PDB: XEPDB1'],
+                            ['TEMP',                  'Operaciones temporales compartidas'],
+                            ['UNDO',                  'Rollback y gestión de transacciones'],
                         ];
                         foreach ($arq as $a):
                         ?>
                         <div class="col-md-4">
                             <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:8px;padding:1rem">
-                                <strong style="font-family:var(--font-mono);font-size:0.85rem;color:var(--risk-mid)"><?php echo $a[0]; ?></strong><br>
-                                <span style="font-size:0.78rem;color:var(--text-muted)"><?php echo $a[1]; ?></span>
+                                <strong style="font-family:var(--font-mono);font-size:0.8rem;color:var(--risk-mid)"><?php echo $a[0]; ?></strong><br>
+                                <span style="font-size:0.75rem;color:var(--text-muted)"><?php echo $a[1]; ?></span>
                             </div>
                         </div>
                         <?php endforeach; ?>
@@ -2122,20 +2272,27 @@ ORDER BY grantee, privilege;
 
                     <div style="border-top:1px solid var(--border);margin:1rem 0"></div>
 
-                    <div class="row text-center g-3 mb-4">
+                    <!-- Capa dominios -->
+                    <div class="row g-3 mb-4">
                         <?php
-                        $esquemas_res = [
-                            ['ESPH_RESIDUOS','Residuos'],
-                            ['ESPH_ENERGIA','Energía'],
-                            ['ESPH_AGUA','Agua'],
-                            ['ESPH_TIC','Tecnologías de Información'],
+                        $dominios = [
+                            ['icono'=>'fa-recycle', 'esquema'=>'ESPH_RESIDUOS', 'data'=>'ESPH_RESIDUOS_DATA', 'idx'=>'ESPH_RESIDUOS_IDX'],
+                            ['icono'=>'fa-bolt',    'esquema'=>'ESPH_ENERGIA',  'data'=>'ESPH_ENERGIA_DATA',  'idx'=>'ESPH_ENERGIA_IDX'],
+                            ['icono'=>'fa-droplet', 'esquema'=>'ESPH_AGUA',     'data'=>'ESPH_AGUA_DATA',     'idx'=>'ESPH_AGUA_IDX'],
+                            ['icono'=>'fa-microchip','esquema'=>'ESPH_TIC',     'data'=>'ESPH_TIC_DATA',      'idx'=>'ESPH_TIC_IDX'],
                         ];
-                        foreach ($esquemas_res as $er):
+                        foreach ($dominios as $d):
                         ?>
-                        <div class="col-md-3">
-                            <div style="background:rgba(242,177,52,0.06);border:1px solid rgba(242,177,52,0.2);border-radius:8px;padding:0.85rem">
-                                <strong style="font-family:var(--font-mono);font-size:0.75rem;color:var(--risk-mid)"><?php echo $er[0]; ?></strong><br>
-                                <small style="color:var(--text-muted)"><?php echo $er[1]; ?></small>
+                        <div class="col-md-6">
+                            <div style="background:rgba(242,177,52,0.06);border:1px solid rgba(242,177,52,0.2);border-radius:8px;padding:0.85rem 1rem">
+                                <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem">
+                                    <i class="fa-solid <?php echo $d['icono']; ?>" style="color:var(--risk-mid)"></i>
+                                    <strong style="font-family:var(--font-mono);font-size:0.8rem;color:var(--risk-mid)"><?php echo $d['esquema']; ?></strong>
+                                </div>
+                                <div style="font-size:0.72rem;font-family:var(--font-mono);color:var(--text-muted);line-height:1.8">
+                                    <i class="fa-solid fa-table me-1"></i><?php echo $d['data']; ?> · 200 MB<br>
+                                    <i class="fa-solid fa-magnifying-glass me-1"></i><?php echo $d['idx']; ?> · 100 MB
+                                </div>
                             </div>
                         </div>
                         <?php endforeach; ?>
@@ -2143,9 +2300,9 @@ ORDER BY grantee, privilege;
 
                     <div style="background:rgba(242,177,52,0.07);border:1px solid rgba(242,177,52,0.2);border-radius:8px;padding:1rem 1.25rem;font-size:0.88rem;color:var(--text)">
                         <strong style="color:var(--risk-mid)">En resumen:</strong>
-                        La base de datos fue estructurada para separar la información empresarial por dominios, controlar el almacenamiento,
-                        restringir los privilegios, mantener la integridad referencial, optimizar las consultas y facilitar la administración
-                        futura del entorno Oracle.
+                        La base de datos fue estructurada para separar la información empresarial por dominios con tablespaces exclusivos,
+                        controlar el almacenamiento mediante cuotas individuales, restringir los privilegios, mantener la integridad referencial,
+                        optimizar las consultas y facilitar la administración futura del entorno Oracle.
                     </div>
 
                     <?php echo renderSqlBlock('
@@ -2162,7 +2319,7 @@ GROUP BY owner
 ORDER BY owner;
 
 -- ============================================================
--- PARTE 20 - TABLAS EN APP_DATA
+-- PARTE 20 - TABLAS POR TABLESPACE DE DOMINIO
 -- ============================================================
 
 SELECT
@@ -2174,7 +2331,7 @@ WHERE owner IN (\'ESPH_RESIDUOS\', \'ESPH_ENERGIA\', \'ESPH_AGUA\', \'ESPH_TIC\'
 ORDER BY owner, table_name;
 
 -- ============================================================
--- PARTE 21 - INDICES EN APP_INDEX
+-- PARTE 21 - INDICES POR TABLESPACE DE DOMINIO
 -- ============================================================
 
 SELECT
@@ -2189,7 +2346,7 @@ WHERE owner IN (\'ESPH_RESIDUOS\', \'ESPH_ENERGIA\', \'ESPH_AGUA\', \'ESPH_TIC\'
 ORDER BY owner, table_name, index_name;
 
 -- ============================================================
--- PARTE 22 - SEGMENTOS
+-- PARTE 22 - SEGMENTOS POR DOMINIO
 -- ============================================================
 
 SELECT
@@ -2203,7 +2360,7 @@ WHERE owner IN (\'ESPH_RESIDUOS\', \'ESPH_ENERGIA\', \'ESPH_AGUA\', \'ESPH_TIC\'
 ORDER BY owner, tablespace_name, segment_type, segment_name;
 
 -- ============================================================
--- PARTE 23 - SEGMENTOS POR TABLESPACE
+-- PARTE 23 - SEGMENTOS POR TABLESPACE DE DOMINIO
 -- ============================================================
 
 SELECT
@@ -2212,12 +2369,17 @@ SELECT
     COUNT(*) AS cantidad_segmentos,
     ROUND(SUM(bytes) / 1024 / 1024, 2) AS total_mb
 FROM dba_segments
-WHERE tablespace_name IN (\'APP_DATA\', \'APP_INDEX\')
+WHERE tablespace_name IN (
+    \'ESPH_RESIDUOS_DATA\', \'ESPH_RESIDUOS_IDX\',
+    \'ESPH_ENERGIA_DATA\',  \'ESPH_ENERGIA_IDX\',
+    \'ESPH_AGUA_DATA\',     \'ESPH_AGUA_IDX\',
+    \'ESPH_TIC_DATA\',      \'ESPH_TIC_IDX\'
+)
 GROUP BY tablespace_name, segment_type
 ORDER BY tablespace_name, segment_type;
 
 -- ============================================================
--- PARTE 24 - EXTENTS
+-- PARTE 24 - EXTENTS POR DOMINIO
 -- ============================================================
 
 SELECT
@@ -2233,7 +2395,7 @@ GROUP BY owner, segment_name, segment_type, tablespace_name
 ORDER BY owner, tablespace_name, segment_name;
 
 -- ============================================================
--- PARTE 25 - ESPACIO UTILIZADO
+-- PARTE 25 - ESPACIO UTILIZADO POR TABLESPACE DE DOMINIO
 -- ============================================================
 
 SELECT
@@ -2246,21 +2408,31 @@ FROM
 (
     SELECT tablespace_name, SUM(bytes) / 1024 / 1024 AS total_mb
     FROM dba_data_files
-    WHERE tablespace_name IN (\'APP_DATA\', \'APP_INDEX\')
+    WHERE tablespace_name IN (
+        \'ESPH_RESIDUOS_DATA\', \'ESPH_RESIDUOS_IDX\',
+        \'ESPH_ENERGIA_DATA\',  \'ESPH_ENERGIA_IDX\',
+        \'ESPH_AGUA_DATA\',     \'ESPH_AGUA_IDX\',
+        \'ESPH_TIC_DATA\',      \'ESPH_TIC_IDX\'
+    )
     GROUP BY tablespace_name
 ) df
 LEFT JOIN
 (
     SELECT tablespace_name, SUM(bytes) / 1024 / 1024 AS free_mb
     FROM dba_free_space
-    WHERE tablespace_name IN (\'APP_DATA\', \'APP_INDEX\')
+    WHERE tablespace_name IN (
+        \'ESPH_RESIDUOS_DATA\', \'ESPH_RESIDUOS_IDX\',
+        \'ESPH_ENERGIA_DATA\',  \'ESPH_ENERGIA_IDX\',
+        \'ESPH_AGUA_DATA\',     \'ESPH_AGUA_IDX\',
+        \'ESPH_TIC_DATA\',      \'ESPH_TIC_IDX\'
+    )
     GROUP BY tablespace_name
 ) fs
 ON df.tablespace_name = fs.tablespace_name
 ORDER BY df.tablespace_name;
 
 -- ============================================================
--- PARTE 26 - DATAFILES
+-- PARTE 26 - DATAFILES POR TABLESPACE DE DOMINIO
 -- ============================================================
 
 SELECT
@@ -2271,11 +2443,16 @@ SELECT
     ROUND(maxbytes / 1024 / 1024, 2) AS max_size_mb,
     ROUND(increment_by * 8192 / 1024 / 1024, 2) AS autoextend_next_mb
 FROM dba_data_files
-WHERE tablespace_name IN (\'APP_DATA\', \'APP_INDEX\')
+WHERE tablespace_name IN (
+    \'ESPH_RESIDUOS_DATA\', \'ESPH_RESIDUOS_IDX\',
+    \'ESPH_ENERGIA_DATA\',  \'ESPH_ENERGIA_IDX\',
+    \'ESPH_AGUA_DATA\',     \'ESPH_AGUA_IDX\',
+    \'ESPH_TIC_DATA\',      \'ESPH_TIC_IDX\'
+)
 ORDER BY tablespace_name, file_name;
 
 -- ============================================================
--- PARTE 27 - RESUMEN FINAL
+-- PARTE 27 - RESUMEN FINAL DE TABLESPACES
 -- ============================================================
 
 SELECT
@@ -2285,19 +2462,617 @@ SELECT
     extent_management,
     segment_space_management
 FROM dba_tablespaces
-WHERE tablespace_name IN (\'SYSTEM\', \'SYSAUX\', \'TEMP\', \'APP_DATA\', \'APP_INDEX\')
+WHERE tablespace_name IN (
+    \'SYSTEM\', \'SYSAUX\', \'TEMP\',
+    \'ESPH_RESIDUOS_DATA\', \'ESPH_RESIDUOS_IDX\',
+    \'ESPH_ENERGIA_DATA\',  \'ESPH_ENERGIA_IDX\',
+    \'ESPH_AGUA_DATA\',     \'ESPH_AGUA_IDX\',
+    \'ESPH_TIC_DATA\',      \'ESPH_TIC_IDX\'
+)
 OR contents = \'UNDO\'
 ORDER BY
     CASE tablespace_name
-        WHEN \'SYSTEM\' THEN 1
-        WHEN \'SYSAUX\' THEN 2
-        WHEN \'UNDO\' THEN 3
-        WHEN \'TEMP\' THEN 4
-        WHEN \'APP_DATA\' THEN 5
-        WHEN \'APP_INDEX\' THEN 6
-        ELSE 7
+        WHEN \'SYSTEM\'              THEN 1
+        WHEN \'SYSAUX\'             THEN 2
+        WHEN \'UNDO\'               THEN 3  -- nombre real varía
+        WHEN \'TEMP\'               THEN 4
+        WHEN \'ESPH_RESIDUOS_DATA\' THEN 5
+        WHEN \'ESPH_RESIDUOS_IDX\'  THEN 6
+        WHEN \'ESPH_ENERGIA_DATA\'  THEN 7
+        WHEN \'ESPH_ENERGIA_IDX\'   THEN 8
+        WHEN \'ESPH_AGUA_DATA\'     THEN 9
+        WHEN \'ESPH_AGUA_IDX\'      THEN 10
+        WHEN \'ESPH_TIC_DATA\'      THEN 11
+        WHEN \'ESPH_TIC_IDX\'       THEN 12
+        ELSE 13
     END;
 '); ?>
+
+                </div>
+            </div>
+        </div>
+
+
+
+        <!-- 15. ARCHIVELOG -->
+        <div class="accordion-item" style="background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:0.5rem;overflow:hidden">
+            <h2 class="accordion-header" id="headingArchivelog">
+                <button class="accordion-button collapsed" type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#collapseArchivelog"
+                        style="background:var(--surface);color:var(--text);box-shadow:none">
+                    <i class="fa-solid fa-box-archive me-2" style="color:var(--risk-mid)"></i>
+                    15. Modo de archivado — ARCHIVELOG
+                </button>
+            </h2>
+            <div id="collapseArchivelog" class="accordion-collapse collapse" data-bs-parent="#accordionBD">
+                <div class="accordion-body" style="background:var(--surface);color:var(--text)">
+
+                    <h5 style="font-size:0.95rem;margin-bottom:0.5rem">¿Qué son los Redo Logs?</h5>
+                    <p style="font-size:0.88rem;color:var(--text-muted)">
+                        Oracle escribe cada cambio en la base de datos (INSERT, UPDATE, DELETE) en archivos circulares
+                        llamados <strong style="color:var(--text)">Online Redo Logs</strong> antes de aplicarlos a los datafiles.
+                        Son la primera línea de defensa ante fallos: si Oracle cae en medio de una operación,
+                        los redo logs permiten reconstruir los cambios al reiniciar.
+                    </p>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;padding:1.25rem;height:100%">
+                                <h5 style="font-size:0.9rem;margin-bottom:0.75rem">
+                                    <i class="fa-solid fa-circle-xmark me-2" style="color:#e05c5c"></i>
+                                    NOARCHIVELOG
+                                </h5>
+                                <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:0.5rem">
+                                    Modo por defecto en XE. Los grupos de redo se reutilizan en ciclo
+                                    y el contenido anterior se sobreescribe permanentemente.
+                                </p>
+                                <ul style="font-size:0.8rem;color:var(--text-muted);padding-left:1.25rem;margin:0">
+                                    <li>Sin historial de cambios</li>
+                                    <li>Recuperación solo al último backup completo</li>
+                                    <li>Pérdida de datos entre backups</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(242,177,52,0.3);border-radius:10px;padding:1.25rem;height:100%">
+                                <h5 style="font-size:0.9rem;color:var(--risk-mid);margin-bottom:0.75rem">
+                                    <i class="fa-solid fa-circle-check me-2"></i>
+                                    ARCHIVELOG
+                                </h5>
+                                <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:0.5rem">
+                                    Antes de reutilizar un grupo de redo, Oracle lo copia como archivo histórico
+                                    (archive log). Esto habilita recuperación point-in-time.
+                                </p>
+                                <ul style="font-size:0.8rem;color:var(--text-muted);padding-left:1.25rem;margin:0">
+                                    <li>Historial completo de cambios</li>
+                                    <li>Recuperación a cualquier punto en el tiempo</li>
+                                    <li>Sin pérdida de datos ante fallos de disco</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h5 style="font-size:0.95rem;margin-bottom:0.5rem">¿Cómo se activa?</h5>
+                    <p style="font-size:0.88rem;color:var(--text-muted)">
+                        El cambio de modo no puede hacerse con la base abierta. Requiere un ciclo controlado:
+                        bajar la instancia, subirla en modo <code>MOUNT</code>, ejecutar el cambio y volver a abrirla.
+                        El script verifica el modo actual antes de proceder para evitar ejecutar el ciclo innecesariamente.
+                    </p>
+
+                    <div style="background:rgba(242,177,52,0.07);border:1px solid rgba(242,177,52,0.2);border-radius:8px;padding:0.85rem 1rem;font-size:0.82rem;color:var(--text);margin-bottom:1rem">
+                        <strong style="color:var(--risk-mid)">Importante:</strong>
+                        Este procedimiento reinicia la base de datos. Debe ejecutarse en una ventana de mantenimiento
+                        cuando no haya sesiones activas. En el entorno de ESPH S.A. sobre Oracle XE local,
+                        el impacto es inmediato y controlado.
+                    </div>
+
+                    <div style="background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:8px;padding:1rem;margin-bottom:1rem;font-size:0.85rem">
+                        <strong>Secuencia de operaciones:</strong>
+                        <ol style="margin:0.5rem 0 0 0;padding-left:1.25rem;color:var(--text-muted);line-height:2">
+                            <li>Verificar modo actual con <code>v$database</code></li>
+                            <li>Si ya es ARCHIVELOG, detener — no se necesita hacer nada</li>
+                            <li><code>SHUTDOWN IMMEDIATE</code> — cierre limpio</li>
+                            <li><code>STARTUP MOUNT</code> — instancia arriba, base sin abrir</li>
+                            <li><code>ALTER DATABASE ARCHIVELOG</code> — cambio de modo</li>
+                            <li><code>ALTER DATABASE OPEN</code> — base disponible</li>
+                            <li>Verificar con <code>SELECT log_mode FROM v$database</code></li>
+                        </ol>
+                    </div>
+
+                    <?php echo renderSqlBlock('
+-- ============================================================
+-- PARTE 28 - VERIFICACION Y ACTIVACION DE ARCHIVELOG
+-- ============================================================
+
+-- Paso 1: Verificar modo actual
+SELECT
+    name,
+    log_mode,
+    db_unique_name
+FROM v$database;
+
+-- Paso 2: Verificar grupos de redo actuales
+SELECT
+    l.group#,
+    l.members,
+    l.status,
+    ROUND(l.bytes / 1024 / 1024, 2) AS size_mb,
+    l.archived
+FROM v$log l
+ORDER BY l.group#;
+
+-- Paso 3: Verificar archivos de redo
+SELECT
+    lf.group#,
+    lf.member,
+    lf.status
+FROM v$logfile lf
+ORDER BY lf.group#, lf.member;
+
+-- ============================================================
+-- Ejecutar solo si log_mode = \'NOARCHIVELOG\'
+-- ============================================================
+
+-- Paso 4: Bajar la instancia de forma limpia
+SHUTDOWN IMMEDIATE;
+
+-- Paso 5: Subir en modo MOUNT (instancia activa, base sin abrir)
+STARTUP MOUNT;
+
+-- Paso 6: Activar modo ARCHIVELOG
+ALTER DATABASE ARCHIVELOG;
+
+-- Paso 7: Abrir la base de datos
+ALTER DATABASE OPEN;
+
+-- ============================================================
+-- PARTE 29 - VERIFICACION POST-ACTIVACION
+-- ============================================================
+
+-- Confirmar que el modo cambió
+SELECT
+    name,
+    log_mode,
+    db_unique_name
+FROM v$database;
+
+-- Confirmar que el archivado está activo
+SELECT
+    dest_id,
+    dest_name,
+    status,
+    target,
+    archiver,
+    destination
+FROM v$archive_dest
+WHERE status = \'VALID\'
+  AND target = \'PRIMARY\';
+
+-- Ver archive logs generados
+SELECT
+    sequence#,
+    name,
+    ROUND(blocks * block_size / 1024 / 1024, 2) AS size_mb,
+    archived,
+    status,
+    completion_time
+FROM v$archived_log
+ORDER BY sequence# DESC
+FETCH FIRST 10 ROWS ONLY;
+', 'Activación de ARCHIVELOG'); ?>
+
+                </div>
+            </div>
+        </div>
+
+
+        <!-- 16. FAST RECOVERY AREA -->
+        <div class="accordion-item" style="background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:0.5rem;overflow:hidden">
+            <h2 class="accordion-header" id="headingFRA">
+                <button class="accordion-button collapsed" type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#collapseFRA"
+                        style="background:var(--surface);color:var(--text);box-shadow:none">
+                    <i class="fa-solid fa-hard-drive me-2" style="color:var(--risk-mid)"></i>
+                    16. Fast Recovery Area — control del espacio de archivado
+                </button>
+            </h2>
+            <div id="collapseFRA" class="accordion-collapse collapse" data-bs-parent="#accordionBD">
+                <div class="accordion-body" style="background:var(--surface);color:var(--text)">
+
+                    <h5 style="font-size:0.95rem;margin-bottom:0.5rem">¿Qué es la Fast Recovery Area?</h5>
+                    <p style="font-size:0.88rem;color:var(--text-muted)">
+                        La <strong style="color:var(--text)">Fast Recovery Area (FRA)</strong> es una ubicación en disco
+                        administrada por Oracle donde se almacenan los archive logs, backups y otros archivos de recuperación.
+                        Oracle gestiona automáticamente el espacio dentro de ella: cuando se acerca al límite,
+                        elimina los archive logs que ya están cubiertos por un backup, sin intervención manual.
+                    </p>
+
+                    <div style="background:rgba(242,177,52,0.07);border:1px solid rgba(242,177,52,0.2);border-radius:8px;padding:0.85rem 1rem;font-size:0.82rem;color:var(--text);margin-bottom:1.5rem">
+                        <strong style="color:var(--risk-mid)">El riesgo crítico sin FRA configurada correctamente:</strong><br>
+                        Si el destino de archive logs se llena, Oracle <strong>detiene completamente todas las escrituras</strong>
+                        hasta que se libere espacio. La base queda inaccesible aunque el motor esté activo.
+                        La FRA con un tamaño definido evita este escenario gestionando el espacio de forma autónoma.
+                    </div>
+
+                    <h5 style="font-size:0.95rem;margin-bottom:0.5rem">¿Cómo se configura?</h5>
+                    <p style="font-size:0.88rem;color:var(--text-muted)">
+                        El script detecta automáticamente si XE ya tiene una FRA configurada consultando
+                        <code>DB_RECOVERY_FILE_DEST</code> en <code>v$parameter</code>, igual que se hizo con OMF
+                        para los tablespaces. Si ya existe, solo se ajusta el tamaño. Si no existe, se define la ruta
+                        estándar de XE y el tamaño máximo.
+                    </p>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-4">
+                            <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:8px;padding:1rem;height:100%">
+                                <h6 style="font-size:0.82rem;color:var(--risk-mid);margin-bottom:0.4rem">
+                                    <i class="fa-solid fa-folder me-1"></i>DB_RECOVERY_FILE_DEST
+                                </h6>
+                                <p style="font-size:0.78rem;color:var(--text-muted);margin:0">
+                                    Ruta en disco donde Oracle almacena los archive logs y backups.
+                                    Se detecta automáticamente de la instalación existente de XE.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:8px;padding:1rem;height:100%">
+                                <h6 style="font-size:0.82rem;color:var(--risk-mid);margin-bottom:0.4rem">
+                                    <i class="fa-solid fa-weight-hanging me-1"></i>DB_RECOVERY_FILE_DEST_SIZE
+                                </h6>
+                                <p style="font-size:0.78rem;color:var(--text-muted);margin:0">
+                                    Límite máximo de espacio que Oracle puede usar en la FRA.
+                                    Al acercarse al límite, Oracle purga archive logs obsoletos automáticamente.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:8px;padding:1rem;height:100%">
+                                <h6 style="font-size:0.82rem;color:var(--risk-mid);margin-bottom:0.4rem">
+                                    <i class="fa-solid fa-rotate me-1"></i>LOG_ARCHIVE_DEST_1
+                                </h6>
+                                <p style="font-size:0.78rem;color:var(--text-muted);margin:0">
+                                    Apunta los archive logs hacia la FRA usando
+                                    <code>USE_DB_RECOVERY_FILE_DEST</code> para que Oracle los gestione centralizadamente.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h5 style="font-size:0.95rem;margin-bottom:0.5rem">¿Qué pasa cuando la FRA se llena?</h5>
+                    <p style="font-size:0.88rem;color:var(--text-muted)">
+                        Oracle aplica una política de limpieza automática en tres pasos antes de llegar al límite:
+                    </p>
+
+                    <ol style="font-size:0.85rem;color:var(--text-muted);padding-left:1.25rem;line-height:2">
+                        <li>Elimina archive logs ya aplicados y cubiertos por un backup.</li>
+                        <li>Elimina backups obsoletos según la política de retención configurada.</li>
+                        <li>Si aun así no hay espacio, emite alertas en el <code>alert.log</code> y eventualmente detiene las escrituras.</li>
+                    </ol>
+
+                    <div style="background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:8px;padding:0.85rem 1rem;font-size:0.82rem;color:var(--text-muted);margin-bottom:1rem">
+                        <strong style="color:var(--text)">Por eso el tamaño importa:</strong><br>
+                        En el entorno de ESPH S.A. sobre XE local, se configura la FRA en <strong>10 GB</strong> como punto de partida razonable.
+                        Este valor puede ajustarse en línea con <code>ALTER SYSTEM</code> sin reiniciar la base.
+                    </div>
+
+                    <?php echo renderSqlBlock('
+-- ============================================================
+-- PARTE 30 - VERIFICACION Y CONFIGURACION DE LA FRA
+-- ============================================================
+
+-- Paso 1: Detectar si ya existe FRA configurada en XE
+SELECT
+    name,
+    value,
+    description
+FROM v$parameter
+WHERE name IN (
+    \'db_recovery_file_dest\',
+    \'db_recovery_file_dest_size\',
+    \'log_archive_dest_1\'
+)
+ORDER BY name;
+
+-- Paso 2: Ver uso actual de la FRA
+SELECT
+    space_limit,
+    space_used,
+    space_reclaimable,
+    number_of_files,
+    ROUND(space_used / space_limit * 100, 2) AS pct_usado
+FROM v$recovery_file_dest;
+
+-- ============================================================
+-- PARTE 31 - CONFIGURACION AUTOMATICA DE LA FRA
+-- Detecta la ruta existente de XE y ajusta el tamaño.
+-- Si no existe FRA, usa el directorio de recuperación
+-- estándar de Oracle XE.
+-- ============================================================
+
+DECLARE
+    v_fra_dest      VARCHAR2(512);
+    v_fra_size      VARCHAR2(100);
+BEGIN
+    -- Detectar FRA existente
+    BEGIN
+        SELECT value INTO v_fra_dest
+        FROM v$parameter
+        WHERE name = \'db_recovery_file_dest\';
+    EXCEPTION
+        WHEN NO_DATA_FOUND THEN v_fra_dest := NULL;
+    END;
+
+    IF v_fra_dest IS NOT NULL AND v_fra_dest != \'\' THEN
+        DBMS_OUTPUT.PUT_LINE(\'FRA existente detectada: \' || v_fra_dest);
+        DBMS_OUTPUT.PUT_LINE(\'Solo se ajustara el tamaño maximo.\');
+    ELSE
+        -- FRA no configurada: usar ruta por defecto de XE
+        DBMS_OUTPUT.PUT_LINE(\'FRA no configurada. Se usara el directorio de recuperacion de XE.\');
+        EXECUTE IMMEDIATE
+            \'ALTER SYSTEM SET db_recovery_file_dest = \'\'C:\app\oracle\fast_recovery_area\'\' SCOPE=BOTH\';
+        DBMS_OUTPUT.PUT_LINE(\'db_recovery_file_dest configurado.\');
+    END IF;
+
+    -- Definir tamaño máximo de la FRA: 10 GB
+    EXECUTE IMMEDIATE
+        \'ALTER SYSTEM SET db_recovery_file_dest_size = 10G SCOPE=BOTH\';
+    DBMS_OUTPUT.PUT_LINE(\'db_recovery_file_dest_size = 10G configurado.\');
+
+    -- Apuntar archive logs a la FRA
+    EXECUTE IMMEDIATE
+        \'ALTER SYSTEM SET log_archive_dest_1 = \'\'LOCATION=USE_DB_RECOVERY_FILE_DEST\'\' SCOPE=BOTH\';
+    DBMS_OUTPUT.PUT_LINE(\'log_archive_dest_1 apuntado a la FRA.\');
+
+END;
+/
+
+-- ============================================================
+-- PARTE 32 - VERIFICACION POST-CONFIGURACION
+-- ============================================================
+
+-- Confirmar parámetros activos
+SELECT
+    name,
+    value
+FROM v$parameter
+WHERE name IN (
+    \'db_recovery_file_dest\',
+    \'db_recovery_file_dest_size\',
+    \'log_archive_dest_1\'
+)
+ORDER BY name;
+
+-- Estado actualizado de la FRA
+SELECT
+    ROUND(space_limit / 1024 / 1024 / 1024, 2)       AS limite_gb,
+    ROUND(space_used  / 1024 / 1024 / 1024, 2)       AS usado_gb,
+    ROUND(space_reclaimable / 1024 / 1024 / 1024, 2) AS recuperable_gb,
+    number_of_files,
+    ROUND(space_used / space_limit * 100, 2)          AS pct_usado
+FROM v$recovery_file_dest;
+
+-- Archivos dentro de la FRA por tipo
+SELECT
+    file_type,
+    COUNT(*)                                          AS cantidad,
+    ROUND(SUM(space_used) / 1024 / 1024, 2)          AS mb_usados,
+    ROUND(SUM(space_reclaimable) / 1024 / 1024, 2)   AS mb_recuperables
+FROM v$recovery_area_usage
+GROUP BY file_type
+ORDER BY mb_usados DESC;
+', 'Configuración de la Fast Recovery Area'); ?>
+
+                </div>
+            </div>
+        </div>
+
+
+        <!-- 17. REDO LOG GROUPS -->
+        <div class="accordion-item" style="background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:0.5rem;overflow:hidden">
+            <h2 class="accordion-header" id="headingRedoGroups">
+                <button class="accordion-button collapsed" type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#collapseRedoGroups"
+                        style="background:var(--surface);color:var(--text);box-shadow:none">
+                    <i class="fa-solid fa-layer-group me-2" style="color:var(--risk-mid)"></i>
+                    17. Redo Log Groups — dimensionamiento y protección
+                </button>
+            </h2>
+            <div id="collapseRedoGroups" class="accordion-collapse collapse" data-bs-parent="#accordionBD">
+                <div class="accordion-body" style="background:var(--surface);color:var(--text)">
+
+                    <h5 style="font-size:0.95rem;margin-bottom:0.5rem">¿Qué son los Redo Log Groups?</h5>
+                    <p style="font-size:0.88rem;color:var(--text-muted)">
+                        Oracle organiza los redo logs en <strong style="color:var(--text)">grupos</strong>.
+                        Cada grupo contiene uno o más archivos físicos llamados <strong style="color:var(--text)">miembros</strong>.
+                        Oracle escribe en un grupo a la vez de forma circular: cuando un grupo se llena ocurre un
+                        <strong style="color:var(--text)">log switch</strong> y Oracle pasa al siguiente grupo.
+                        Si está en modo ARCHIVELOG, antes de reutilizar un grupo lo archiva.
+                    </p>
+
+                    <div style="background:rgba(242,177,52,0.07);border:1px solid rgba(242,177,52,0.2);border-radius:8px;padding:0.85rem 1rem;font-size:0.82rem;color:var(--text);margin-bottom:1.5rem">
+                        <strong style="color:var(--risk-mid)">El problema con la configuración por defecto de XE:</strong><br>
+                        XE viene con 3 grupos de ~50 MB cada uno. En una base con actividad media,
+                        esto provoca log switches cada pocos minutos, lo que genera carga de I/O innecesaria
+                        y, en modo ARCHIVELOG, presión constante sobre la FRA.
+                        Con grupos más grandes y más cantidad, los switches ocurren con mucha menor frecuencia.
+                    </div>
+
+                    <h5 style="font-size:0.95rem;margin-bottom:0.5rem">¿Qué se hace?</h5>
+                    <p style="font-size:0.88rem;color:var(--text-muted)">
+                        Se agregan tres grupos nuevos (4, 5 y 6) con miembros de <strong style="color:var(--text)">200 MB</strong> cada uno.
+                        Los grupos originales de XE (1, 2 y 3) no se pueden eliminar mientras estén activos,
+                        pero al agregar los nuevos Oracle los irá dejando inactivos en su ciclo normal
+                        y eventualmente podrán eliminarse. El script detecta automáticamente qué grupos
+                        ya existen para no intentar crear duplicados.
+                    </p>
+
+                    <div class="row g-3 mb-4">
+                        <?php
+                        $redoInfo = [
+                            ['fa-circle-exclamation','XE por defecto','3 grupos · ~50 MB c/u · log switches frecuentes','#e05c5c'],
+                            ['fa-circle-check',      'Con mejora',    '6 grupos · 200 MB c/u · switches reducidos notablemente','var(--risk-mid)'],
+                            ['fa-rotate',            'Log switch',    'Evento en que Oracle pasa al siguiente grupo. Menos frecuencia = mejor rendimiento','var(--text-muted)'],
+                        ];
+                        foreach ($redoInfo as $ri):
+                        ?>
+                        <div class="col-md-4">
+                            <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:8px;padding:1rem;height:100%">
+                                <h6 style="font-size:0.82rem;margin-bottom:0.4rem">
+                                    <i class="fa-solid <?php echo $ri[0]; ?> me-1" style="color:<?php echo $ri[3]; ?>"></i>
+                                    <?php echo $ri[1]; ?>
+                                </h6>
+                                <p style="font-size:0.78rem;color:var(--text-muted);margin:0"><?php echo $ri[2]; ?></p>
+                            </div>
+                        </div>
+                        <?php endforeach; ?>
+                    </div>
+
+                    <h5 style="font-size:0.95rem;margin-bottom:0.5rem">¿Por qué no simplemente ampliar los grupos existentes?</h5>
+                    <p style="font-size:0.88rem;color:var(--text-muted)">
+                        Un grupo de redo no puede redimensionarse en línea. La única forma de cambiar el tamaño
+                        de un grupo existente es eliminarlo y recrearlo, lo que requiere que el grupo esté
+                        en estado <code>INACTIVE</code>. Agregar grupos nuevos con el tamaño correcto
+                        es la vía segura que no interrumpe la operación.
+                    </p>
+
+                    <div style="background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:8px;padding:0.85rem 1rem;font-size:0.82rem;color:var(--text-muted);margin-bottom:1rem">
+                        <strong style="color:var(--text)">Nota sobre miembros múltiples:</strong><br>
+                        Cada grupo puede tener más de un miembro (copia del mismo archivo en rutas distintas).
+                        Oracle escribe en todos los miembros del grupo simultáneamente. En este entorno XE local
+                        se define un solo miembro por grupo, ya que el objetivo es académico y no hay múltiples
+                        discos físicos para separar las copias.
+                    </div>
+
+                    <?php echo renderSqlBlock('
+-- ============================================================
+-- PARTE 33 - ESTADO ACTUAL DE LOS REDO LOG GROUPS
+-- ============================================================
+
+-- Ver grupos actuales
+SELECT
+    l.group#,
+    l.members,
+    l.status,
+    ROUND(l.bytes / 1024 / 1024, 2) AS size_mb,
+    l.archived,
+    l.sequence#
+FROM v$log l
+ORDER BY l.group#;
+
+-- Ver archivos físicos de cada grupo
+SELECT
+    lf.group#,
+    lf.member,
+    lf.type,
+    lf.status
+FROM v$logfile lf
+ORDER BY lf.group#, lf.member;
+
+-- Frecuencia actual de log switches (por hora)
+SELECT
+    TO_CHAR(first_time, \'YYYY-MM-DD HH24\') AS hora,
+    COUNT(*)                                 AS switches
+FROM v$log_history
+WHERE first_time >= SYSDATE - 1
+GROUP BY TO_CHAR(first_time, \'YYYY-MM-DD HH24\')
+ORDER BY hora;
+
+-- ============================================================
+-- PARTE 34 - AGREGAR GRUPOS CON DETECCION AUTOMATICA
+-- Detecta si la FRA está disponible para usar OMF.
+-- Si no, los miembros se crean en la ruta estándar de XE.
+-- ============================================================
+
+DECLARE
+    v_fra      VARCHAR2(512);
+    v_omf      VARCHAR2(512);
+    v_usa_omf  BOOLEAN := FALSE;
+    v_max_grp  NUMBER;
+BEGIN
+    -- Detectar FRA (configurada en PARTE 31)
+    SELECT value INTO v_fra
+    FROM v$parameter
+    WHERE name = \'db_recovery_file_dest\';
+
+    -- Detectar OMF
+    SELECT value INTO v_omf
+    FROM v$parameter
+    WHERE name = \'db_create_file_dest\';
+
+    v_usa_omf := (v_omf IS NOT NULL AND v_omf != \'\')
+              OR (v_fra IS NOT NULL AND v_fra != \'\');
+
+    DBMS_OUTPUT.PUT_LINE(
+        CASE WHEN v_usa_omf
+             THEN \'OMF/FRA disponible: Oracle gestionara los miembros automaticamente.\'
+             ELSE \'OMF/FRA no detectado: se usara ruta manual.\'
+        END
+    );
+
+    -- Saber cuántos grupos existen actualmente
+    SELECT MAX(group#) INTO v_max_grp FROM v$log;
+    DBMS_OUTPUT.PUT_LINE(\'Grupos actuales: \' || v_max_grp);
+
+    -- Agregar grupos 4, 5 y 6 si no existen
+    FOR i IN 4..6 LOOP
+        DECLARE
+            v_existe NUMBER;
+        BEGIN
+            SELECT COUNT(*) INTO v_existe FROM v$log WHERE group# = i;
+
+            IF v_existe = 0 THEN
+                IF v_usa_omf THEN
+                    EXECUTE IMMEDIATE
+                        \'ALTER DATABASE ADD LOGFILE GROUP \' || i ||
+                        \' SIZE 200M\';
+                ELSE
+                    EXECUTE IMMEDIATE
+                        \'ALTER DATABASE ADD LOGFILE GROUP \' || i ||
+                        \' (\'\'C:\app\oracle\oradata\XE\redo0\' || i || \'.log\'\') SIZE 200M\';
+                END IF;
+                DBMS_OUTPUT.PUT_LINE(\'Grupo \' || i || \' agregado correctamente (200 MB).\');
+            ELSE
+                DBMS_OUTPUT.PUT_LINE(\'Grupo \' || i || \' ya existe. Se omite.\');
+            END IF;
+        END;
+    END LOOP;
+
+END;
+/
+
+-- ============================================================
+-- PARTE 35 - VERIFICACION POST-CONFIGURACION
+-- ============================================================
+
+-- Estado final de todos los grupos
+SELECT
+    l.group#,
+    l.members,
+    l.status,
+    ROUND(l.bytes / 1024 / 1024, 2) AS size_mb,
+    l.archived,
+    l.sequence#
+FROM v$log l
+ORDER BY l.group#;
+
+-- Archivos físicos resultantes
+SELECT
+    lf.group#,
+    lf.member,
+    lf.status
+FROM v$logfile lf
+ORDER BY lf.group#, lf.member;
+
+-- Resumen: tamaño total de redo configurado
+SELECT
+    COUNT(*)                                    AS total_grupos,
+    ROUND(SUM(bytes) / 1024 / 1024, 2)         AS total_mb_redo,
+    ROUND(AVG(bytes) / 1024 / 1024, 2)         AS promedio_mb_por_grupo
+FROM v$log;
+', 'Dimensionamiento de Redo Log Groups'); ?>
 
                 </div>
             </div>
