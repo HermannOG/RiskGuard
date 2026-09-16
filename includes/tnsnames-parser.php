@@ -302,3 +302,47 @@ function refrescarInstanciaDesdeTns(array $instancia): array
 
     return $instancia;
 }
+
+/**
+ * Abre una conexion OCI8 a una instancia Oracle del monitor, reutilizando
+ * la misma logica que la captura de salud: si la instancia tiene alias
+ * TNS se conecta por el alias (dejando que el cliente Oracle resuelva
+ * host/puerto/service_name via TNS_ADMIN); si no, arma el connection
+ * string host:puerto/service_name a mano. Requiere la extension oci8 y
+ * que $instancia traiga ya el password descifrado en 'password_plano'.
+ *
+ * @param array $instancia fila de monitor_instancias + 'password_plano'
+ * @return resource conexion oci8
+ * @throws RuntimeException si oci8 no esta o la conexion falla
+ */
+function conectarOracleInstancia(array $instancia)
+{
+    if (!extension_loaded('oci8')) {
+        throw new RuntimeException('La extension oci8 de PHP no esta habilitada en este servidor.');
+    }
+
+    if (!empty($instancia['tns_alias'])) {
+        $carpetaTns = obtenerCarpetaTnsAdmin();
+        if ($carpetaTns) {
+            putenv('TNS_ADMIN=' . $carpetaTns);
+        }
+        $connString = $instancia['tns_alias'];
+    } else {
+        // 'nombre_bd' se usa como SERVICE_NAME de Oracle (ej. XEPDB1).
+        $connString = sprintf('%s:%s/%s', $instancia['host'], $instancia['puerto'], $instancia['nombre_bd']);
+    }
+
+    $ociConn = @oci_connect(
+        $instancia['usuario'],
+        $instancia['password_plano'] ?? '',
+        $connString,
+        'AL32UTF8'
+    );
+
+    if (!$ociConn) {
+        $e = oci_error();
+        throw new RuntimeException('No se pudo conectar a Oracle: ' . ($e['message'] ?? 'error desconocido'));
+    }
+
+    return $ociConn;
+}

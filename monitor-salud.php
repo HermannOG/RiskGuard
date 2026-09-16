@@ -10,6 +10,7 @@ require_once __DIR__ . '/includes/monitor-crypto.php';
 require_once __DIR__ . '/includes/MonitorAdapterInterface.php';
 require_once __DIR__ . '/includes/MariaDBAdapter.php';
 require_once __DIR__ . '/includes/OracleAdapter.php';
+require_once __DIR__ . '/includes/OracleStress.php';
 require_once __DIR__ . '/includes/MonitorRepository.php';
 require_once __DIR__ . '/includes/monitor-render.php';
 require_once __DIR__ . '/includes/tnsnames-parser.php';
@@ -47,39 +48,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['capturar'])) {
             ]);
             $adapter = new MariaDBAdapter($pdoObjetivo);
         } elseif ($instancia['tipo_motor'] === 'oracle') {
-            if (!extension_loaded('oci8')) {
-                throw new RuntimeException('La extension oci8 de PHP no esta habilitada en este servidor.');
-            }
-
-            if (!empty($instancia['tns_alias'])) {
-                // Conectamos usando el alias TNS directamente: el propio
-                // cliente Oracle (OCI8) resuelve host/puerto/service_name
-                // leyendo tnsnames.ora, usando TNS_ADMIN.
-                $carpetaTns = obtenerCarpetaTnsAdmin();
-                if ($carpetaTns) {
-                    putenv('TNS_ADMIN=' . $carpetaTns);
-                }
-                $connString = $instancia['tns_alias'];
-            } else {
-                // Instancia sin alias TNS (registrada antes de este
-                // cambio, o sin tnsnames.ora disponible): seguimos
-                // armando el connection string a mano, como antes.
-                // 'nombre_bd' se usa como SERVICE_NAME de Oracle (ej. XEPDB1, ORCLPDB1).
-                $connString = sprintf('%s:%s/%s', $instancia['host'], $instancia['puerto'], $instancia['nombre_bd']);
-            }
-
-            $ociConn = @oci_connect(
-                    $instancia['usuario'],
-                    monitorDecrypt($instancia['password_enc']),
-                    $connString,
-                    'AL32UTF8'
-            );
-
-            if (!$ociConn) {
-                $e = oci_error();
-                throw new RuntimeException('No se pudo conectar a Oracle: ' . ($e['message'] ?? 'error desconocido'));
-            }
-
+            $instancia['password_plano'] = monitorDecrypt($instancia['password_enc']);
+            $ociConn = conectarOracleInstancia($instancia);
             $adapter = new OracleAdapter($ociConn);
         } else {
             throw new RuntimeException('El adaptador para "' . $instancia['tipo_motor'] . '" todavia no esta implementado.');
@@ -95,6 +65,65 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['capturar'])) {
         $detalle = $repo->obtenerDetalleLecturas($instanciaId, $capturadoEn, $lang);
     } catch (Throwable $e) {
         $error = $e->getMessage();
+    }
+}
+
+// --- Prueba de estres (solo Oracle) ---------------------------------
+// Estado que la vista necesita para pintar el panel de estres.
+$esOracle       = $instancia['tipo_motor'] === 'oracle';
+$estresActivo   = ['total' => 0, 'corriendo' => 0];
+$dbLinks        = [];
+$estresMensaje  = null;   // aviso verde (exito)
+$estresError    = null;   // aviso rojo (fallo del estres, separado de $error de captura)
+
+if ($esOracle) {
+    // Acciones POST del estres: iniciar, detener, o refrescar la lista de
+    // links. Cada una abre su propia conexion OCI8 y la usa para operar.
+    $accionEstres = $_POST['estres'] ?? null;
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && $accionEstres !== null) {
+        try {
+            $instancia['password_plano'] = monitorDecrypt($instancia['password_enc']);
+            $ociEstres = conectarOracleInstancia($instancia);
+            $stress = new OracleStress($ociEstres);
+
+            if ($accionEstres === 'iniciar') {
+                $manual   = trim($_POST['db_link_manual'] ?? '');
+                $dbLink   = $manual !== '' ? $manual : trim($_POST['db_link'] ?? '');
+                $sesiones = (int) ($_POST['sesiones'] ?? 5);
+                $segundos = (int) ($_POST['segundos'] ?? 60);
+                if ($dbLink === '') {
+                    throw new InvalidArgumentException($lang === 'en'
+                        ? 'Choose or type a database link first.'
+                        : 'Elige o escribe un database link primero.');
+                }
+                $creados = $stress->iniciar($dbLink, $sesiones, $segundos);
+                $estresMensaje = $lang === 'en'
+                    ? sprintf('Stress started: %d session(s) reading through "%s" for %ds.', $creados, $dbLink, $segundos)
+                    : sprintf('Estrés iniciado: %d sesión(es) leyendo por "%s" durante %ds.', $creados, $dbLink, $segundos);
+            } elseif ($accionEstres === 'detener') {
+                $restantes = $stress->detenerYLimpiar();
+                $estresMensaje = $restantes === 0
+                    ? ($lang === 'en' ? 'Base restored: 0 stress jobs remaining.' : 'Base restaurada: 0 jobs de estrés restantes.')
+                    : ($lang === 'en' ? sprintf('%d job(s) could not be removed.', $restantes) : sprintf('%d job(s) no se pudieron eliminar.', $restantes));
+            }
+            // Para cualquier accion (incluye 'refrescar') releemos estado y links.
+            $estresActivo = $stress->estado();
+            $dbLinks = $stress->listarDbLinks();
+        } catch (Throwable $e) {
+            $estresError = $e->getMessage();
+        }
+    } else {
+        // GET normal: consultamos estado y links para pintar el panel,
+        // pero sin abortar la pagina si Oracle no responde.
+        try {
+            $instancia['password_plano'] = monitorDecrypt($instancia['password_enc']);
+            $ociEstres = conectarOracleInstancia($instancia);
+            $stress = new OracleStress($ociEstres);
+            $estresActivo = $stress->estado();
+            $dbLinks = $stress->listarDbLinks();
+        } catch (Throwable $e) {
+            $estresError = $e->getMessage();
+        }
     }
 }
 
@@ -225,6 +254,85 @@ $justificacionComponente = [
 
                 <?php if ($error): ?>
                     <div class="alert alert-danger">Error: <?php echo htmlspecialchars($error); ?></div>
+                <?php endif; ?>
+
+                <?php if ($esOracle): ?>
+                    <?php $hayEstres = ($estresActivo['total'] ?? 0) > 0; ?>
+                    <div class="eval-control mb-4" style="border-left:4px solid <?php echo $hayEstres ? '#e0a800' : 'var(--border, #444)'; ?>;">
+                        <h2 class="section-title" style="font-size:1.15rem; margin-top:0;">
+                            <i class="fa-solid fa-gauge-high me-2"></i><?php echo t('monitor.estres.titulo'); ?>
+                        </h2>
+                        <p class="section-lead" style="max-width:none;"><?php echo t('monitor.estres.intro'); ?></p>
+
+                        <?php if ($estresMensaje): ?>
+                            <div class="alert alert-success"><?php echo htmlspecialchars($estresMensaje); ?></div>
+                        <?php endif; ?>
+                        <?php if ($estresError): ?>
+                            <div class="alert alert-danger"><?php echo t('monitor.estres.error'); ?>: <?php echo htmlspecialchars($estresError); ?></div>
+                        <?php endif; ?>
+
+                        <?php if ($hayEstres): ?>
+                            <div class="alert alert-warning d-flex align-items-center gap-2">
+                                <i class="fa-solid fa-bolt"></i>
+                                <span><?php echo sprintf(t('monitor.estres.activo'), (int) $estresActivo['corriendo'], (int) $estresActivo['total']); ?></span>
+                            </div>
+                            <div class="d-flex gap-2 flex-wrap">
+                                <form method="post">
+                                    <input type="hidden" name="estres" value="detener">
+                                    <button type="submit" class="btn btn-cta"><i class="fa-solid fa-stop me-2"></i><?php echo t('monitor.estres.detener'); ?></button>
+                                </form>
+                                <form method="post">
+                                    <input type="hidden" name="estres" value="refrescar">
+                                    <button type="submit" class="btn btn-ghost"><i class="fa-solid fa-rotate me-2"></i><?php echo t('monitor.estres.refrescar'); ?></button>
+                                </form>
+                            </div>
+                        <?php else: ?>
+                            <form method="post" class="row g-3 align-items-end">
+                                <input type="hidden" name="estres" value="iniciar">
+                                <div class="col-md-5">
+                                    <label class="form-label"><?php echo t('monitor.estres.link'); ?></label>
+                                    <?php if (!empty($dbLinks)): ?>
+                                        <select name="db_link" id="estres-link-select" class="form-select">
+                                            <?php foreach ($dbLinks as $lk): ?>
+                                                <option value="<?php echo htmlspecialchars($lk); ?>"><?php echo htmlspecialchars($lk); ?></option>
+                                            <?php endforeach; ?>
+                                            <option value=""><?php echo t('monitor.estres.link.otro'); ?></option>
+                                        </select>
+                                    <?php else: ?>
+                                        <p class="text-muted mb-1" style="font-size:0.85rem;"><?php echo t('monitor.estres.link.ninguno'); ?></p>
+                                        <input type="hidden" name="db_link" value="">
+                                    <?php endif; ?>
+                                    <input type="text" name="db_link_manual" id="estres-link-manual"
+                                           class="form-control mt-2 <?php echo !empty($dbLinks) ? 'd-none' : ''; ?>"
+                                           placeholder="<?php echo t('monitor.estres.link.manual'); ?>"
+                                           pattern="[A-Za-z0-9_$#.]+" maxlength="128">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label"><?php echo t('monitor.estres.sesiones'); ?></label>
+                                    <input type="number" name="sesiones" class="form-control" value="5" min="1" max="50">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label"><?php echo t('monitor.estres.duracion'); ?></label>
+                                    <input type="number" name="segundos" class="form-control" value="60" min="1" max="600">
+                                </div>
+                                <div class="col-md-1">
+                                    <button type="submit" class="btn btn-cta w-100"><i class="fa-solid fa-play"></i></button>
+                                </div>
+                            </form>
+                            <p class="text-muted mt-2 mb-0" style="font-size:0.8rem;"><i class="fa-solid fa-shield-halved me-1"></i><?php echo t('monitor.estres.nota'); ?></p>
+                        <?php endif; ?>
+                    </div>
+                    <script>
+                        (function () {
+                            var sel = document.getElementById('estres-link-select');
+                            var man = document.getElementById('estres-link-manual');
+                            if (!sel || !man) return;
+                            sel.addEventListener('change', function () {
+                                if (sel.value === '') { man.classList.remove('d-none'); man.focus(); }
+                                else { man.classList.add('d-none'); man.value = ''; }
+                            });
+                        })();
+                    </script>
                 <?php endif; ?>
 
                 <?php if ($resultado): ?>
