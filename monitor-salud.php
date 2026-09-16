@@ -88,18 +88,25 @@ if ($esOracle) {
 
             if ($accionEstres === 'iniciar') {
                 $manual   = trim($_POST['db_link_manual'] ?? '');
-                $dbLink   = $manual !== '' ? $manual : trim($_POST['db_link'] ?? '');
+                $sel      = trim($_POST['db_link'] ?? '');
                 $sesiones = (int) ($_POST['sesiones'] ?? 5);
                 $segundos = (int) ($_POST['segundos'] ?? 60);
-                if ($dbLink === '') {
-                    throw new InvalidArgumentException($lang === 'en'
-                        ? 'Choose or type a database link first.'
-                        : 'Elige o escribe un database link primero.');
+                // Local si eligen "__local__" o dejan todo vacio; por link si
+                // escriben uno a mano o seleccionan un link real.
+                if ($manual !== '') {
+                    $dbLink = $manual;
+                } elseif ($sel === '' || $sel === '__local__') {
+                    $dbLink = null; // carga LOCAL sobre la base monitoreada
+                } else {
+                    $dbLink = $sel;
                 }
                 $creados = $stress->iniciar($dbLink, $sesiones, $segundos);
+                $destino = $dbLink === null
+                    ? ($lang === 'en' ? 'this database (local load)' : 'esta base (carga local)')
+                    : '"' . $dbLink . '"';
                 $estresMensaje = $lang === 'en'
-                    ? sprintf('Stress started: %d session(s) reading through "%s" for %ds.', $creados, $dbLink, $segundos)
-                    : sprintf('Estrés iniciado: %d sesión(es) leyendo por "%s" durante %ds.', $creados, $dbLink, $segundos);
+                    ? sprintf('Stress started: %d session(s) loading %s for %ds.', $creados, $destino, $segundos)
+                    : sprintf('Estrés iniciado: %d sesión(es) generando carga en %s durante %ds.', $creados, $destino, $segundos);
             } elseif ($accionEstres === 'detener') {
                 $restantes = $stress->detenerYLimpiar();
                 $estresMensaje = $restantes === 0
@@ -271,8 +278,18 @@ $justificacionComponente = [
                             <div class="alert alert-danger"><?php echo t('monitor.estres.error'); ?>: <?php echo htmlspecialchars($estresError); ?></div>
                         <?php endif; ?>
 
+                        <?php if ($resultado): ?>
+                            <div class="form-check form-switch mb-3">
+                                <input class="form-check-input" type="checkbox" role="switch" id="vivo-toggle">
+                                <label class="form-check-label" for="vivo-toggle"><?php echo t('monitor.estres.envivo'); ?></label>
+                                <span id="vivo-indicador" class="ms-2" style="display:none; color:#e0a800; font-weight:600;">
+                                    <i class="fa-solid fa-circle fa-beat" style="font-size:0.55rem;"></i> <?php echo t('monitor.estres.envivo.on'); ?>
+                                </span>
+                            </div>
+                        <?php endif; ?>
+
                         <?php if ($hayEstres): ?>
-                            <div class="alert alert-warning d-flex align-items-center gap-2">
+                            <div class="alert alert-warning d-flex align-items-center gap-2" id="estres-aviso">
                                 <i class="fa-solid fa-bolt"></i>
                                 <span><?php echo sprintf(t('monitor.estres.activo'), (int) $estresActivo['corriendo'], (int) $estresActivo['total']); ?></span>
                             </div>
@@ -290,20 +307,16 @@ $justificacionComponente = [
                             <form method="post" class="row g-3 align-items-end">
                                 <input type="hidden" name="estres" value="iniciar">
                                 <div class="col-md-5">
-                                    <label class="form-label"><?php echo t('monitor.estres.link'); ?></label>
-                                    <?php if (!empty($dbLinks)): ?>
-                                        <select name="db_link" id="estres-link-select" class="form-select">
-                                            <?php foreach ($dbLinks as $lk): ?>
-                                                <option value="<?php echo htmlspecialchars($lk); ?>"><?php echo htmlspecialchars($lk); ?></option>
-                                            <?php endforeach; ?>
-                                            <option value=""><?php echo t('monitor.estres.link.otro'); ?></option>
-                                        </select>
-                                    <?php else: ?>
-                                        <p class="text-muted mb-1" style="font-size:0.85rem;"><?php echo t('monitor.estres.link.ninguno'); ?></p>
-                                        <input type="hidden" name="db_link" value="">
-                                    <?php endif; ?>
+                                    <label class="form-label"><?php echo t('monitor.estres.origen'); ?></label>
+                                    <select name="db_link" id="estres-link-select" class="form-select">
+                                        <option value="__local__"><?php echo t('monitor.estres.origen.local'); ?></option>
+                                        <?php foreach ($dbLinks as $lk): ?>
+                                            <option value="<?php echo htmlspecialchars($lk); ?>"><?php echo t('monitor.estres.origen.porlink'); ?> <?php echo htmlspecialchars($lk); ?></option>
+                                        <?php endforeach; ?>
+                                        <option value=""><?php echo t('monitor.estres.link.otro'); ?></option>
+                                    </select>
                                     <input type="text" name="db_link_manual" id="estres-link-manual"
-                                           class="form-control mt-2 <?php echo !empty($dbLinks) ? 'd-none' : ''; ?>"
+                                           class="form-control mt-2 d-none"
                                            placeholder="<?php echo t('monitor.estres.link.manual'); ?>"
                                            pattern="[A-Za-z0-9_$#.]+" maxlength="128">
                                 </div>
@@ -319,7 +332,7 @@ $justificacionComponente = [
                                     <button type="submit" class="btn btn-cta w-100"><i class="fa-solid fa-play"></i></button>
                                 </div>
                             </form>
-                            <p class="text-muted mt-2 mb-0" style="font-size:0.8rem;"><i class="fa-solid fa-shield-halved me-1"></i><?php echo t('monitor.estres.nota'); ?></p>
+                            <p class="mt-2 mb-0" style="font-size:0.8rem; color:var(--text-muted);"><i class="fa-solid fa-shield-halved me-1"></i><?php echo t('monitor.estres.nota'); ?></p>
                         <?php endif; ?>
                     </div>
                     <script>
@@ -333,6 +346,79 @@ $justificacionComponente = [
                             });
                         })();
                     </script>
+                    <?php if ($resultado): ?>
+                    <script>
+                        // Modo "en vivo": refresca las MISMAS roscas/gauges/barras cada 3 s
+                        // pidiendo una captura efímera (no se guarda en historial). Es
+                        // INDEPENDIENTE de la deteccion de jobs: se controla con el
+                        // interruptor, y se enciende solo al iniciar una prueba de estres.
+                        // Nunca recarga la pagina, asi que no cierra los paneles abiertos.
+                        (function () {
+                            var instanciaId = <?php echo (int) $instanciaId; ?>;
+                            var key = 'monitorVivo_' + instanciaId;
+                            var toggle = document.getElementById('vivo-toggle');
+                            var indic = document.getElementById('vivo-indicador');
+                            var rosca = document.getElementById('vivo-rosca');
+                            var timer = null;
+
+                            function aplicar(d) {
+                                if (!d || !d.ok) return;
+                                if (rosca && d.rosca_html) rosca.innerHTML = d.rosca_html;
+                                if (d.gauges) {
+                                    Object.keys(d.gauges).forEach(function (comp) {
+                                        var g = d.gauges[comp];
+                                        var svg = document.querySelector('[data-vivo-gauge="' + comp + '"]');
+                                        if (svg) svg.innerHTML = g.svg;
+                                        var val = document.querySelector('[data-vivo-valor="' + comp + '"]');
+                                        if (val) { val.textContent = g.valor; val.style.color = g.color; }
+                                        // No regeneramos el detalle si hay un popover "?" abierto
+                                        // dentro, para no cerrarlo mientras el usuario lo lee.
+                                        var det = document.querySelector('[data-vivo-detalle="' + comp + '"]');
+                                        if (det && typeof g.detalle === 'string' && !det.querySelector('.popover-simple.show')) {
+                                            det.innerHTML = g.detalle;
+                                        }
+                                    });
+                                }
+                            }
+                            function tick() {
+                                fetch('api/monitor-vivo.php?instancia_id=' + instanciaId)
+                                    .then(function (r) { return r.json(); })
+                                    .then(aplicar)
+                                    .catch(function () {});
+                            }
+                            function start() {
+                                if (timer) return;
+                                if (indic) indic.style.display = 'inline';
+                                tick();
+                                timer = setInterval(tick, 3000);
+                            }
+                            function stop() {
+                                if (timer) { clearInterval(timer); timer = null; }
+                                if (indic) indic.style.display = 'none';
+                            }
+
+                            if (toggle) {
+                                var on = false;
+                                try { on = localStorage.getItem(key) === '1'; } catch (e) {}
+                                toggle.checked = on;
+                                toggle.addEventListener('change', function () {
+                                    try { localStorage.setItem(key, toggle.checked ? '1' : '0'); } catch (e) {}
+                                    if (toggle.checked) start(); else stop();
+                                });
+                                if (on) start();
+                            }
+
+                            // Al iniciar una prueba de estres, dejamos encendido el modo en
+                            // vivo para que, tras el POST, la pagina siga actualizando sola.
+                            var iniciarInput = document.querySelector('input[name="estres"][value="iniciar"]');
+                            if (iniciarInput && iniciarInput.form) {
+                                iniciarInput.form.addEventListener('submit', function () {
+                                    try { localStorage.setItem(key, '1'); } catch (e) {}
+                                });
+                            }
+                        })();
+                    </script>
+                    <?php endif; ?>
                 <?php endif; ?>
 
                 <?php if ($resultado): ?>
@@ -349,7 +435,7 @@ $justificacionComponente = [
                                 <button type="button" class="btn-ayuda" data-popover-target="isbd">?</button>
                                 <?php echo renderPopover('isbd', $ayudaComponente['isbd'], $colores); ?>
                             </div>
-                            <?php echo renderRoscaGrande((float) $resultado['indice_salud'], $colorGeneral); ?>
+                            <div id="vivo-rosca"><?php echo renderRoscaGrande((float) $resultado['indice_salud'], $colorGeneral); ?></div>
                         </div>
                     </div>
                     <div class="text-center mt-3">
@@ -366,8 +452,8 @@ $justificacionComponente = [
                                     <button type="button" class="btn-ayuda mini-ayuda-btn" data-popover-target="<?php echo $comp; ?>">?</button>
                                     <?php echo renderPopover($comp, $ayudaComponente[$comp], $colores); ?>
                                     <div class="mini-gauge-h componente-card" role="button" data-bs-toggle="collapse" data-bs-target="#detalle-<?php echo $comp; ?>" aria-expanded="false">
-                                        <?php echo renderGaugeChico($valorComp); ?>
-                                        <div class="mini-gauge-h-valor" style="color:<?php echo $colorComp; ?>;"><?php echo number_format($valorComp, 2); ?></div>
+                                        <span data-vivo-gauge="<?php echo $comp; ?>"><?php echo renderGaugeChico($valorComp); ?></span>
+                                        <div class="mini-gauge-h-valor" data-vivo-valor="<?php echo $comp; ?>" style="color:<?php echo $colorComp; ?>;"><?php echo number_format($valorComp, 2); ?></div>
                                         <div class="mini-gauge-h-label">
                                             <?php echo $nombresComponente[$comp]; ?> (<?php echo $siglaComponente[$comp]; ?>)
                                             <i class="fa-solid fa-chevron-down chevron" style="font-size:0.65rem; color:var(--text-muted);"></i>
@@ -394,9 +480,11 @@ $justificacionComponente = [
                                             <?php echo renderPopoverJustificacion($comp, $justificacionComponente[$comp]); ?>
                                         </div>
                                     </div>
-                                    <?php foreach ($detallePorComponente[$comp] as $d): ?>
-                                        <?php echo renderBarraRango($d, $colores); ?>
-                                    <?php endforeach; ?>
+                                    <div data-vivo-detalle="<?php echo $comp; ?>">
+                                        <?php foreach ($detallePorComponente[$comp] as $d): ?>
+                                            <?php echo renderBarraRango($d, $colores); ?>
+                                        <?php endforeach; ?>
+                                    </div>
                                 </div>
                             </div>
                         <?php endforeach; ?>
@@ -492,18 +580,20 @@ $justificacionComponente = [
                 target.addEventListener('hide.bs.collapse', () => card.setAttribute('aria-expanded', 'false'));
             });
 
-            document.querySelectorAll('[data-popover-target]').forEach((btn) => {
-                btn.addEventListener('click', function (e) {
+            // Delegacion de eventos: funciona tambien para los botones "?"
+            // que el modo en vivo regenera cada 3 s al refrescar el detalle.
+            document.addEventListener('click', function (e) {
+                const btn = e.target.closest('[data-popover-target]');
+                if (btn) {
                     e.stopPropagation();
-                    const id = 'pop-' + this.dataset.popoverTarget;
-                    const pop = document.getElementById(id);
+                    const pop = document.getElementById('pop-' + btn.dataset.popoverTarget);
+                    if (!pop) return;
                     const yaAbierto = pop.classList.contains('show');
                     document.querySelectorAll('.popover-simple.show').forEach((p) => p.classList.remove('show'));
                     if (!yaAbierto) pop.classList.add('show');
-                });
-            });
-
-            document.addEventListener('click', function () {
+                    return;
+                }
+                // Clic fuera de un boton: cierra cualquier popover abierto.
                 document.querySelectorAll('.popover-simple.show').forEach((p) => p.classList.remove('show'));
             });
         });

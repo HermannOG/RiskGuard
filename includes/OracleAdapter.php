@@ -54,6 +54,27 @@ class OracleAdapter implements MonitorAdapterInterface
         return $fila && isset($fila[0]) ? (float) $fila[0] : 0.0;
     }
 
+    /**
+     * Devuelve los contadores CRUDOS acumulados que usan m2 (presion de
+     * memoria) y m3 (cache hit ratio). Sirven para que el modo en vivo
+     * calcule esas metricas por DIFERENCIA entre dos lecturas (delta del
+     * intervalo) en vez del acumulado de por vida -- asi Memoria responde
+     * a la carga en tiempo real.
+     *
+     * @return array{logical:float, fisica:float, mem_waits:float, total_waits:float}
+     */
+    public function obtenerCrudosMemoria(): array
+    {
+        return [
+            'logical'     => $this->consultarValor("SELECT value FROM v\$sysstat WHERE name = 'session logical reads'"),
+            'fisica'      => $this->consultarValor("SELECT value FROM v\$sysstat WHERE name = 'physical reads'"),
+            'mem_waits'   => $this->consultarValor(
+                "SELECT NVL(SUM(total_waits), 0) FROM v\$system_event WHERE event IN ('free buffer waits', 'buffer busy waits')"
+            ),
+            'total_waits' => $this->consultarValor("SELECT NVL(SUM(total_waits), 0) FROM v\$system_event"),
+        ];
+    }
+
     private function contarProcesos(): float
     {
         return $this->consultarValor("SELECT COUNT(*) FROM v\$process");

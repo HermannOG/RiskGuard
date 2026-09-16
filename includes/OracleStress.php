@@ -68,14 +68,21 @@ class OracleStress
     }
 
     /**
-     * Lanza la prueba de estres: crea $sesiones jobs, cada uno haciendo
-     * lecturas en bucle a traves del link durante $segundos segundos.
+     * Lanza la prueba de estres: crea $sesiones jobs que generan carga en
+     * bucle durante $segundos segundos.
+     *
+     * Si $dbLink es null o cadena vacia, la carga es LOCAL (consultas
+     * pesadas sobre la MISMA base monitoreada) -- que es lo que hace subir
+     * los indices de esa instancia (procesos, sesiones activas, lecturas).
+     * Si se pasa un link valido, la carga se ejecuta a traves de el (util
+     * solo si el link apunta a una base remota real).
      *
      * @return int cantidad de jobs efectivamente creados
      */
-    public function iniciar(string $dbLink, int $sesiones, int $segundos): int
+    public function iniciar(?string $dbLink, int $sesiones, int $segundos): int
     {
-        if (!self::nombreLinkValido($dbLink)) {
+        $usarLink = $dbLink !== null && $dbLink !== '';
+        if ($usarLink && !self::nombreLinkValido($dbLink)) {
             throw new InvalidArgumentException('Nombre de database link no valido: ' . $dbLink);
         }
         $sesiones = max(1, min($sesiones, 50));
@@ -84,22 +91,49 @@ class OracleStress
         // Por si quedaron jobs de una corrida anterior, limpiamos primero.
         $this->detenerYLimpiar();
 
-        // Bloque que ejecutara cada job: lee del link en bucle hasta que
-        // se cumpla el tiempo. GET_TIME esta en centesimas de segundo.
-        // El nombre del link ya esta validado; se cita entre comillas
-        // dobles para respetar su forma exacta.
-        $accion = sprintf(
-            'DECLARE
-                 v_fin NUMBER := DBMS_UTILITY.GET_TIME + (%d * 100);
-                 v_n   NUMBER;
-             BEGIN
-                 WHILE DBMS_UTILITY.GET_TIME < v_fin LOOP
-                     EXECUTE IMMEDIATE ' . "'" . 'SELECT COUNT(*) FROM all_objects@"%s"' . "'" . ' INTO v_n;
-                 END LOOP;
-             END;',
-            $segundos,
-            $dbLink
-        );
+        // Bloque PL/SQL que ejecuta cada job en bucle hasta cumplir el
+        // tiempo (GET_TIME esta en centesimas de segundo). No modifica
+        // datos en ningun caso.
+        //
+        //  - LOCAL: quema CPU con un bucle aritmetico. Mantiene la sesion
+        //    ACTIVA todo el tiempo, lo que sube procesos (p1), sesiones
+        //    activas (p2) y operaciones prolongadas (p4) de ESTA base --
+        //    que es lo que mueve el ISBD de la instancia monitoreada.
+        //    Se evita a proposito un auto-join de all_objects: esa vista de
+        //    diccionario es carisima y una sola iteracion tardaria demasiado
+        //    en revisar el reloj.
+        //  - LINK: lee del catalogo remoto por el database link (util solo
+        //    si el link apunta a una base remota real).
+        if ($usarLink) {
+            $accion = sprintf(
+                'DECLARE
+                     v_fin NUMBER := DBMS_UTILITY.GET_TIME + (%d * 100);
+                     v_n   NUMBER;
+                 BEGIN
+                     WHILE DBMS_UTILITY.GET_TIME < v_fin LOOP
+                         EXECUTE IMMEDIATE ' . "'" . 'SELECT COUNT(*) FROM all_objects@"%s"' . "'" . ' INTO v_n;
+                     END LOOP;
+                 END;',
+                $segundos,
+                $dbLink
+            );
+        } else {
+            $accion = sprintf(
+                'DECLARE
+                     v_fin NUMBER := DBMS_UTILITY.GET_TIME + (%d * 100);
+                     v_n   NUMBER := 0;
+                     v_c   NUMBER;
+                 BEGIN
+                     WHILE DBMS_UTILITY.GET_TIME < v_fin LOOP
+                         FOR i IN 1..200000 LOOP
+                             v_n := v_n + SQRT(i);
+                         END LOOP;
+                         SELECT COUNT(*) INTO v_c FROM all_objects;
+                     END LOOP;
+                 END;',
+                $segundos
+            );
+        }
 
         $creados = 0;
         for ($n = 1; $n <= $sesiones; $n++) {

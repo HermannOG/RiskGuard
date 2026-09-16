@@ -79,6 +79,130 @@ class MonitorRepository
         ];
     }
 
+    /**
+     * Calcula los indices (IP/IM/IA/ISBD + estados) a partir de un arreglo
+     * de lecturas EN MEMORIA, replicando exactamente la misma
+     * normalizacion y ponderacion que calcularIndices(), pero SIN escribir
+     * nada en la base (ni monitor_lecturas ni monitor_indices). Se usa para
+     * el modo "estres en vivo": refresca los gauges cada pocos segundos sin
+     * ensuciar el historial con capturas efimeras.
+     *
+     * @param array<string,float> $lecturas claves p1..a3
+     * @return array{indice_procesos:float,indice_memoria:float,indice_archivos:float,indice_salud:float,estado:string,estado_procesos:string,estado_memoria:string,estado_archivos:string}
+     */
+    public function calcularIndicesEnVivo(int $instanciaId, array $lecturas): array
+    {
+        $stmt = $this->pdo->query(
+            "SELECT id, componente, tipo_normalizacion, peso_default, limite_default FROM monitor_variables"
+        );
+        $variables = $stmt->fetchAll();
+
+        $sumaPonderada = ['procesos' => 0.0, 'memoria' => 0.0, 'archivos' => 0.0];
+        $sumaPesos     = ['procesos' => 0.0, 'memoria' => 0.0, 'archivos' => 0.0];
+
+        foreach ($variables as $v) {
+            $comp = $v['componente'];
+            if (!isset($sumaPonderada[$comp]) || !array_key_exists($v['id'], $lecturas)) {
+                continue;
+            }
+            $valor = (float) $lecturas[$v['id']];
+            $peso  = (float) $v['peso_default'];
+            $limite = (float) $v['limite_default'];
+
+            switch ($v['tipo_normalizacion']) {
+                case 'directo':
+                    $norm = min($valor, 100);
+                    break;
+                case 'inverso':
+                    $norm = min(max(100 - $valor, 0), 100);
+                    break;
+                case 'limite':
+                    $norm = $limite > 0 ? min($valor / $limite * 100, 100) : 0.0;
+                    break;
+                default:
+                    $norm = 0.0;
+            }
+
+            $sumaPonderada[$comp] += $norm * $peso;
+            $sumaPesos[$comp]     += $peso;
+        }
+
+        $ip = $sumaPesos['procesos'] > 0 ? $sumaPonderada['procesos'] / $sumaPesos['procesos'] : 0.0;
+        $im = $sumaPesos['memoria']  > 0 ? $sumaPonderada['memoria']  / $sumaPesos['memoria']  : 0.0;
+        $ia = $sumaPesos['archivos'] > 0 ? $sumaPonderada['archivos'] / $sumaPesos['archivos'] : 0.0;
+        $isbd = ($ip * 0.25) + ($im * 0.60) + ($ia * 0.15);
+
+        return [
+            'indice_procesos'  => round($ip, 2),
+            'indice_memoria'   => round($im, 2),
+            'indice_archivos'  => round($ia, 2),
+            'indice_salud'     => round($isbd, 2),
+            'estado'           => $this->determinarEstado($instanciaId, $isbd),
+            'estado_procesos'  => $this->determinarEstado($instanciaId, $ip),
+            'estado_memoria'   => $this->determinarEstado($instanciaId, $im),
+            'estado_archivos'  => $this->determinarEstado($instanciaId, $ia),
+        ];
+    }
+
+    /**
+     * Igual que obtenerDetalleLecturas() pero a partir de lecturas EN
+     * MEMORIA (sin leer monitor_lecturas), para el modo estres en vivo.
+     * Devuelve el detalle por variable con nombre/descripcion/bandas
+     * traducidos, valor crudo, valor normalizado y estado, listo para
+     * pasar a renderBarraRango().
+     *
+     * @param array<string,float> $lecturas
+     * @return array<int,array<string,mixed>>
+     */
+    public function obtenerDetalleEnVivo(int $instanciaId, array $lecturas, string $lang = 'es'): array
+    {
+        $colNombre     = $lang === 'en' ? 'nombre_en' : 'nombre';
+        $colDescripcion= $lang === 'en' ? 'descripcion_en' : 'descripcion';
+        $colVerde      = $lang === 'en' ? 'banda_verde_en' : 'banda_verde';
+        $colAmarillo   = $lang === 'en' ? 'banda_amarillo_en' : 'banda_amarillo';
+        $colAnaranjado = $lang === 'en' ? 'banda_anaranjado_en' : 'banda_anaranjado';
+        $colRojo       = $lang === 'en' ? 'banda_rojo_en' : 'banda_rojo';
+
+        $sql = "
+            SELECT id AS variable_id, componente, tipo_normalizacion, limite_default,
+                   {$colNombre} AS nombre, {$colDescripcion} AS descripcion,
+                   {$colVerde} AS banda_verde, {$colAmarillo} AS banda_amarillo,
+                   {$colAnaranjado} AS banda_anaranjado, {$colRojo} AS banda_rojo
+            FROM monitor_variables
+            ORDER BY componente, id
+        ";
+        $variables = $this->pdo->query($sql)->fetchAll();
+
+        $detalle = [];
+        foreach ($variables as $v) {
+            if (!array_key_exists($v['variable_id'], $lecturas)) {
+                continue;
+            }
+            $valor  = (float) $lecturas[$v['variable_id']];
+            $limite = (float) $v['limite_default'];
+
+            switch ($v['tipo_normalizacion']) {
+                case 'directo':
+                    $norm = min($valor, 100);
+                    break;
+                case 'inverso':
+                    $norm = min(max(100 - $valor, 0), 100);
+                    break;
+                case 'limite':
+                    $norm = $limite > 0 ? min($valor / $limite * 100, 100) : 0.0;
+                    break;
+                default:
+                    $norm = 0.0;
+            }
+
+            $v['valor_crudo']       = $valor;
+            $v['valor_normalizado'] = round($norm, 2);
+            $v['estado']            = $this->determinarEstado($instanciaId, $norm);
+            $detalle[] = $v;
+        }
+        return $detalle;
+    }
+
     public function determinarEstado(int $instanciaId, float $isbd): string
     {
         $stmt = $this->pdo->prepare("
