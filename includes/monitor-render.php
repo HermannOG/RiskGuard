@@ -297,6 +297,18 @@ function renderEstilosMonitor(): string
         .comp-block-title{ font-size:1.05rem; font-weight:600; }
         .comp-block-sub{ font-size:0.8rem; color:var(--text-muted); }
 
+        /* ---- Prueba de estrés ---- */
+        .estres-card{ background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.25rem; }
+        .estres-card .form-label{ font-size:0.85rem; color:var(--text-muted); margin-bottom:0.4rem; }
+        .estres-msg{ display:flex; align-items:center; gap:0.6rem; background:var(--bg); border:1px solid var(--border); border-left:4px solid var(--border); border-radius:8px; padding:0.85rem 1rem; margin-bottom:1rem; font-size:0.9rem; }
+        .estres-msg i{ flex-shrink:0; }
+        .estres-msg.ok{ border-left-color:#3FB950; }
+        .estres-msg.ok i{ color:#3FB950; }
+        .estres-msg.warn{ border-left-color:#F2B134; }
+        .estres-msg.warn i{ color:#F2B134; }
+        .estres-msg.err{ border-left-color:#E5484D; }
+        .estres-msg.err i{ color:#E5484D; }
+
         .isbd-row{ display:flex; gap:2.5rem; align-items:center; justify-content:space-between; flex-wrap:wrap; margin-top:1.5rem; }
         .tabla-contexto-wrap{ flex:1 1 420px; background:var(--bg); border:1px solid var(--border); border-radius:12px; padding:1.2rem 1.4rem; }
         .tabla-contexto{ width:100%; border-collapse:collapse; font-size:0.85rem; }
@@ -336,6 +348,61 @@ function renderEstilosMonitor(): string
 
         .captura-nav{ display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap; margin-bottom:1.5rem; }
         .captura-nav .btn[disabled]{ opacity:0.35; pointer-events:none; }
+
+        /* ---- Refresh visual Monitor de Salud ---- */
+        .monitor-page-header{ margin-bottom:1.4rem; }
+        .monitor-page-header .section-eyebrow{ display:inline-flex; align-items:center; padding:.38rem .7rem; border:1px solid var(--border); border-radius:999px; background:rgba(255,255,255,.025); }
+        .monitor-page-header .section-title{ margin:.7rem 0 .2rem; letter-spacing:-.025em; }
+        .monitor-actions{ display:flex; gap:.65rem; flex-wrap:wrap; margin-bottom:1.4rem; padding-bottom:1.35rem; border-bottom:1px solid var(--border); }
+        .monitor-actions .btn{ min-height:42px; display:inline-flex; align-items:center; justify-content:center; border-radius:10px; padding:.62rem 1rem; font-weight:600; }
+
+        .estres-card{ position:relative; overflow:hidden; padding:1.65rem 1.75rem; border-radius:16px; box-shadow:0 12px 30px rgba(0,0,0,.16); }
+        .estres-card::after{ content:\'\'; position:absolute; width:180px; height:180px; border-radius:50%; right:-90px; top:-105px; background:radial-gradient(circle, rgba(242,177,52,.10), transparent 68%); pointer-events:none; }
+        .estres-card .section-title{ display:flex; align-items:center; gap:.25rem; }
+        .estres-card .section-lead{ margin-bottom:1.2rem; }
+        .estres-card .form-switch{ display:flex; align-items:center; gap:.5rem; background:var(--bg); border:1px solid var(--border); border-radius:10px; padding:.7rem .85rem; width:max-content; max-width:100%; }
+        .estres-card .form-switch .form-check-input{ margin:0; }
+        .estres-card .row.g-3{ background:var(--bg); border:1px solid var(--border); border-radius:12px; padding:.9rem .7rem .7rem; margin-left:0; margin-right:0; }
+        .estres-card .form-control, .estres-card .form-select{ min-height:42px; border-radius:9px; }
+        .estres-card .col-md-1 .btn{ min-height:42px; border-radius:9px; }
+        .estres-msg{ border-radius:10px; box-shadow:0 6px 18px rgba(0,0,0,.10); }
+
+        .eval-control{ background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:1.7rem; box-shadow:0 12px 30px rgba(0,0,0,.14); }
+        .eval-control > .section-title{ margin-bottom:.35rem !important; }
+        .eval-control > .section-lead{ margin-bottom:0; }
+        .isbd-row{ gap:1.4rem; align-items:stretch; }
+        .tabla-contexto-wrap{ background:linear-gradient(145deg, var(--bg), rgba(255,255,255,.018)); border-radius:14px; padding:1.25rem 1.4rem; }
+        .tabla-contexto-titulo{ font-size:.76rem; font-family:var(--font-mono); text-transform:uppercase; letter-spacing:.065em; color:var(--text-muted); margin-bottom:.7rem; }
+        .tabla-contexto th, .tabla-contexto td{ padding:.48rem 0; }
+        .tabla-contexto tr + tr th, .tabla-contexto tr + tr td{ border-top-color:rgba(255,255,255,.055); }
+        .dash-isbd{ flex:0 0 280px; min-height:280px; display:flex; align-items:center; justify-content:center; border:1px solid var(--border); border-radius:14px; background:linear-gradient(145deg, rgba(255,255,255,.025), var(--bg)); }
+        .rosca-css{ filter:drop-shadow(0 8px 18px rgba(0,0,0,.20)); }
+        .rosca-css::before{ box-shadow:inset 0 0 0 1px rgba(255,255,255,.035); }
+        .rosca-valor{ letter-spacing:-.04em; }
+
+        .dash-mini-row{ gap:.85rem; }
+        .mini-gauge-h{ min-height:190px; display:flex; flex-direction:column; justify-content:center; background:linear-gradient(145deg, var(--bg), rgba(255,255,255,.02)); border:1px solid var(--border); border-radius:14px; transition:transform .18s ease, border-color .18s ease, box-shadow .18s ease; }
+        .mini-gauge-h:hover{ transform:translateY(-2px); box-shadow:0 10px 24px rgba(0,0,0,.14); }
+        .mini-gauge-h-valor{ letter-spacing:-.035em; }
+        .mini-ayuda-btn{ background:var(--surface); }
+
+        .comp-block{ border-radius:14px; box-shadow:0 8px 22px rgba(0,0,0,.10); }
+        .rango-fila{ grid-template-columns:minmax(190px,240px) 1fr 78px; padding:.8rem 0; }
+        .rango-track{ height:12px; overflow:visible; box-shadow:inset 0 0 0 1px rgba(255,255,255,.06); }
+        .rango-marcador{ top:-6px; height:24px; width:4px; }
+
+        .hist-fila{ border:1px solid var(--border); border-radius:10px; padding:.85rem 1rem; }
+        .hist-fila:hover{ border-color:rgba(242,177,52,.45); transform:translateX(2px); }
+        .hist-detalle{ border-left:1px solid var(--border); margin-left:1.2rem; }
+
+        @media (max-width: 768px){
+            .eval-control, .estres-card{ padding:1.2rem; }
+            .dash-isbd{ flex:1 1 100%; min-height:250px; }
+            .tabla-contexto-wrap{ flex-basis:100%; }
+            .rango-fila{ grid-template-columns:1fr 64px; gap:.55rem; }
+            .rango-fila > :first-child{ grid-column:1 / -1; }
+            .monitor-actions .btn{ flex:1 1 180px; }
+        }
     </style>
     ';
 }

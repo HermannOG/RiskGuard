@@ -244,11 +244,13 @@ $justificacionComponente = [
     <main class="flex-grow-1">
         <section class="section">
             <div class="container">
+                <div class="monitor-page-header">
                 <span class="section-eyebrow"><i class="fa-solid fa-heart-pulse me-2"></i><?php echo t('monitor.nav.item'); ?></span>
                 <h1 class="section-title"><?php echo htmlspecialchars($instancia['nombre']); ?></h1>
                 <p class="section-lead"><?php echo htmlspecialchars($instancia['tipo_motor']); ?> · <?php echo htmlspecialchars($instancia['host']); ?></p>
+                </div>
 
-                <div class="d-flex gap-2 flex-wrap mb-4">
+                <div class="monitor-actions">
                     <form method="post">
                         <button type="submit" name="capturar" value="1" class="btn btn-cta">
                             <i class="fa-solid fa-rotate me-2"></i><?php echo t('monitor.salud.capturar'); ?>
@@ -265,17 +267,17 @@ $justificacionComponente = [
 
                 <?php if ($esOracle): ?>
                     <?php $hayEstres = ($estresActivo['total'] ?? 0) > 0; ?>
-                    <div class="eval-control mb-4" style="border-left:4px solid <?php echo $hayEstres ? '#e0a800' : 'var(--border, #444)'; ?>;">
+                    <div class="estres-card mb-4" style="border-left:4px solid <?php echo $hayEstres ? '#F2B134' : 'var(--border)'; ?>;">
                         <h2 class="section-title" style="font-size:1.15rem; margin-top:0;">
                             <i class="fa-solid fa-gauge-high me-2"></i><?php echo t('monitor.estres.titulo'); ?>
                         </h2>
                         <p class="section-lead" style="max-width:none;"><?php echo t('monitor.estres.intro'); ?></p>
 
                         <?php if ($estresMensaje): ?>
-                            <div class="alert alert-success"><?php echo htmlspecialchars($estresMensaje); ?></div>
+                            <div class="estres-msg ok"><i class="fa-solid fa-circle-check"></i><span><?php echo htmlspecialchars($estresMensaje); ?></span></div>
                         <?php endif; ?>
                         <?php if ($estresError): ?>
-                            <div class="alert alert-danger"><?php echo t('monitor.estres.error'); ?>: <?php echo htmlspecialchars($estresError); ?></div>
+                            <div class="estres-msg err"><i class="fa-solid fa-circle-exclamation"></i><span><?php echo t('monitor.estres.error'); ?>: <?php echo htmlspecialchars($estresError); ?></span></div>
                         <?php endif; ?>
 
                         <?php if ($resultado): ?>
@@ -289,7 +291,7 @@ $justificacionComponente = [
                         <?php endif; ?>
 
                         <?php if ($hayEstres): ?>
-                            <div class="alert alert-warning d-flex align-items-center gap-2" id="estres-aviso">
+                            <div class="estres-msg warn" id="estres-aviso">
                                 <i class="fa-solid fa-bolt"></i>
                                 <span><?php echo sprintf(t('monitor.estres.activo'), (int) $estresActivo['corriendo'], (int) $estresActivo['total']); ?></span>
                             </div>
