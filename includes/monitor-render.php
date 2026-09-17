@@ -299,8 +299,17 @@ function renderEstilosMonitor(): string
 
         /* ---- Prueba de estrés ---- */
         .estres-card{ background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.25rem; }
-        .estres-card .form-label{ font-size:0.85rem; color:var(--text-muted); margin-bottom:0.4rem; }
-        .estres-msg{ display:flex; align-items:center; gap:0.6rem; background:var(--bg); border:1px solid var(--border); border-left:4px solid var(--border); border-radius:8px; padding:0.85rem 1rem; margin-bottom:1rem; font-size:0.9rem; }
+        .estres-card-header{ display:flex; flex-direction:column; gap:0.9rem; }
+        .estres-card-titulo{ display:flex; align-items:center; gap:0.6rem; font-size:1.05rem; font-weight:600; }
+        .estres-card-titulo i{ color:var(--risk-mid); }
+        .estres-badge-activo{ display:inline-flex; align-items:center; gap:0.4rem; font-family:var(--font-mono); font-size:0.68rem; text-transform:uppercase; letter-spacing:0.06em; background:rgba(242,177,52,0.12); color:#F2B134; border:1px solid rgba(242,177,52,0.3); border-radius:20px; padding:0.2rem 0.65rem; }
+        .estres-badge-listo{ display:inline-flex; align-items:center; gap:0.4rem; font-family:var(--font-mono); font-size:0.68rem; text-transform:uppercase; letter-spacing:0.06em; background:rgba(63,185,80,0.1); color:#3FB950; border:1px solid rgba(63,185,80,0.25); border-radius:20px; padding:0.2rem 0.65rem; }
+        .estres-bd-info{ display:flex; align-items:center; gap:0.85rem; background:var(--bg); border:1px solid var(--border); border-radius:10px; padding:0.85rem 1rem; }
+        .estres-bd-icono{ width:38px; height:38px; border-radius:9px; background:rgba(242,177,52,0.1); color:var(--risk-mid); display:flex; align-items:center; justify-content:center; font-size:1.1rem; flex-shrink:0; }
+        .estres-bd-eyebrow{ font-family:var(--font-mono); font-size:0.65rem; text-transform:uppercase; letter-spacing:0.06em; color:var(--text-muted); margin-bottom:0.2rem; }
+        .estres-bd-nombre{ font-weight:600; font-size:0.95rem; }
+        .estres-bd-meta{ font-size:0.8rem; color:var(--text-muted); font-family:var(--font-mono); margin-top:0.15rem; }
+        .estres-msg{ display:flex; align-items:center; gap:0.6rem; background:var(--bg); border:1px solid var(--border); border-left:4px solid var(--border); border-radius:8px; padding:0.85rem 1rem; font-size:0.9rem; }
         .estres-msg i{ flex-shrink:0; }
         .estres-msg.ok{ border-left-color:#3FB950; }
         .estres-msg.ok i{ color:#3FB950; }
@@ -308,6 +317,13 @@ function renderEstilosMonitor(): string
         .estres-msg.warn i{ color:#F2B134; }
         .estres-msg.err{ border-left-color:#E5484D; }
         .estres-msg.err i{ color:#E5484D; }
+        .estres-form-wrap{ margin-top:1rem; background:var(--bg); border:1px solid var(--border); border-radius:10px; padding:1.2rem; }
+        .estres-form-grid{ display:grid; grid-template-columns: 2fr 1fr 1fr auto; gap:1rem; align-items:end; }
+        @media(max-width:768px){ .estres-form-grid{ grid-template-columns:1fr 1fr; } .estres-form-btn{ grid-column:1/-1; } }
+        .estres-label{ font-size:0.82rem; font-weight:500; color:var(--text-muted); display:block; margin-bottom:0.4rem; }
+        .estres-sublabel{ font-size:0.72rem; color:var(--text-muted); margin-top:0.3rem; }
+        .estres-form-btn{ align-self:end; }
+        .estres-nota{ font-size:0.78rem; color:var(--text-muted); margin-top:1rem; margin-bottom:0; }
 
         .isbd-row{ display:flex; gap:2.5rem; align-items:center; justify-content:space-between; flex-wrap:wrap; margin-top:1.5rem; }
         .tabla-contexto-wrap{ flex:1 1 420px; background:var(--bg); border:1px solid var(--border); border-radius:12px; padding:1.2rem 1.4rem; }
@@ -348,86 +364,6 @@ function renderEstilosMonitor(): string
 
         .captura-nav{ display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap; margin-bottom:1.5rem; }
         .captura-nav .btn[disabled]{ opacity:0.35; pointer-events:none; }
-
-        /* ---- Refresh visual Monitor de Salud ---- */
-        .monitor-page-header{ margin-bottom:1.4rem; }
-        .monitor-page-header .section-eyebrow{ display:inline-flex; align-items:center; padding:.38rem .7rem; border:1px solid var(--border); border-radius:999px; background:rgba(255,255,255,.025); }
-        .monitor-page-header .section-title{ margin:.7rem 0 .2rem; letter-spacing:-.025em; }
-        .monitor-actions{ display:flex; gap:.65rem; flex-wrap:wrap; margin-bottom:1.4rem; padding-bottom:1.35rem; border-bottom:1px solid var(--border); }
-        .monitor-actions .btn{ min-height:42px; display:inline-flex; align-items:center; justify-content:center; border-radius:10px; padding:.62rem 1rem; font-weight:600; }
-
-        .estres-card{ position:relative; overflow:hidden; padding:1.65rem 1.75rem; border-radius:16px; box-shadow:0 12px 30px rgba(0,0,0,.16); }
-        .estres-card::after{ content:\'\'; position:absolute; width:180px; height:180px; border-radius:50%; right:-90px; top:-105px; background:radial-gradient(circle, rgba(242,177,52,.10), transparent 68%); pointer-events:none; }
-        .estres-card .section-title{ display:flex; align-items:center; gap:.25rem; }
-        .estres-card .section-lead{ margin-bottom:1.2rem; }
-        .estres-card .form-switch{ display:flex; align-items:center; gap:.5rem; background:var(--bg); border:1px solid var(--border); border-radius:10px; padding:.7rem .85rem; width:max-content; max-width:100%; }
-        .estres-card .form-switch .form-check-input{ margin:0; }
-        .estres-card .row.g-3{ background:var(--bg); border:1px solid var(--border); border-radius:12px; padding:.9rem .7rem .7rem; margin-left:0; margin-right:0; }
-        .estres-card .form-control, .estres-card .form-select{ min-height:42px; border-radius:9px; }
-        .estres-card .col-md-1 .btn{ min-height:42px; border-radius:9px; }
-        .estres-heading{ display:flex; justify-content:space-between; align-items:flex-start; gap:1rem; }
-        .estres-heading .section-lead{ margin-bottom:1rem; }
-        .estres-help{ position:relative; flex:0 0 auto; }
-        .estres-help-btn{ width:36px; height:36px; border-radius:50%; color:#F2B134; border-color:rgba(242,177,52,.35); background:rgba(242,177,52,.07); }
-        .estres-help-popover{ position:absolute; z-index:30; right:0; top:44px; width:310px; padding:.9rem 1rem; border:1px solid var(--border); border-radius:12px; background:var(--surface); box-shadow:0 16px 36px rgba(0,0,0,.28); opacity:0; visibility:hidden; transform:translateY(-5px); transition:.18s ease; }
-        .estres-help-popover strong{ display:block; margin-bottom:.35rem; color:var(--text); }
-        .estres-help-popover span{ display:block; color:var(--text-muted); font-size:.84rem; line-height:1.5; }
-        .estres-help:hover .estres-help-popover, .estres-help:focus-within .estres-help-popover{ opacity:1; visibility:visible; transform:translateY(0); }
-        .estres-db-context{ display:flex; align-items:center; gap:.85rem; padding:.85rem 1rem; margin:0 0 1rem; background:rgba(255,255,255,.025); border:1px solid var(--border); border-radius:12px; }
-        .estres-db-icon{ width:40px; height:40px; border-radius:10px; display:grid; place-items:center; color:#F2B134; background:rgba(242,177,52,.10); border:1px solid rgba(242,177,52,.18); flex:0 0 auto; }
-        .estres-db-info{ min-width:0; display:flex; flex-direction:column; gap:.1rem; }
-        .estres-db-kicker{ font-size:.7rem; letter-spacing:.08em; text-transform:uppercase; color:var(--text-muted); }
-        .estres-db-info strong{ color:var(--text); font-size:.95rem; }
-        .estres-db-info > span:last-child{ color:var(--text-muted); font-family:var(--font-mono); font-size:.76rem; }
-        .estres-status{ margin-left:auto; display:inline-flex; align-items:center; gap:.4rem; white-space:nowrap; padding:.38rem .65rem; border-radius:999px; font-size:.7rem; font-weight:700; letter-spacing:.04em; }
-        .estres-status i{ font-size:.48rem; }
-        .estres-status.ready{ color:#67c978; background:rgba(63,185,80,.10); border:1px solid rgba(63,185,80,.22); }
-        .estres-status.running{ color:#F2B134; background:rgba(242,177,52,.10); border:1px solid rgba(242,177,52,.25); }
-        .field-help{ display:inline-grid; place-items:center; width:16px; height:16px; margin-left:.25rem; border:1px solid var(--border); border-radius:50%; color:var(--text-muted); font-size:.65rem; cursor:help; }
-        .field-caption{ display:block; margin-top:.35rem; color:var(--text-muted); font-size:.7rem; }
-        .estres-start-col{ display:flex; align-items:flex-end; }
-        .estres-start-btn{ min-height:42px; white-space:nowrap; }
-        .estres-msg{ border-radius:10px; box-shadow:0 6px 18px rgba(0,0,0,.10); }
-
-        .eval-control{ background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:1.7rem; box-shadow:0 12px 30px rgba(0,0,0,.14); }
-        .eval-control > .section-title{ margin-bottom:.35rem !important; }
-        .eval-control > .section-lead{ margin-bottom:0; }
-        .isbd-row{ gap:1.4rem; align-items:stretch; }
-        .tabla-contexto-wrap{ background:linear-gradient(145deg, var(--bg), rgba(255,255,255,.018)); border-radius:14px; padding:1.25rem 1.4rem; }
-        .tabla-contexto-titulo{ font-size:.76rem; font-family:var(--font-mono); text-transform:uppercase; letter-spacing:.065em; color:var(--text-muted); margin-bottom:.7rem; }
-        .tabla-contexto th, .tabla-contexto td{ padding:.48rem 0; }
-        .tabla-contexto tr + tr th, .tabla-contexto tr + tr td{ border-top-color:rgba(255,255,255,.055); }
-        .dash-isbd{ flex:0 0 280px; min-height:280px; display:flex; align-items:center; justify-content:center; border:1px solid var(--border); border-radius:14px; background:linear-gradient(145deg, rgba(255,255,255,.025), var(--bg)); }
-        .rosca-css{ filter:drop-shadow(0 8px 18px rgba(0,0,0,.20)); }
-        .rosca-css::before{ box-shadow:inset 0 0 0 1px rgba(255,255,255,.035); }
-        .rosca-valor{ letter-spacing:-.04em; }
-
-        .dash-mini-row{ gap:.85rem; }
-        .mini-gauge-h{ min-height:190px; display:flex; flex-direction:column; justify-content:center; background:linear-gradient(145deg, var(--bg), rgba(255,255,255,.02)); border:1px solid var(--border); border-radius:14px; transition:transform .18s ease, border-color .18s ease, box-shadow .18s ease; }
-        .mini-gauge-h:hover{ transform:translateY(-2px); box-shadow:0 10px 24px rgba(0,0,0,.14); }
-        .mini-gauge-h-valor{ letter-spacing:-.035em; }
-        .mini-ayuda-btn{ background:var(--surface); }
-
-        .comp-block{ border-radius:14px; box-shadow:0 8px 22px rgba(0,0,0,.10); }
-        .rango-fila{ grid-template-columns:minmax(190px,240px) 1fr 78px; padding:.8rem 0; }
-        .rango-track{ height:12px; overflow:visible; box-shadow:inset 0 0 0 1px rgba(255,255,255,.06); }
-        .rango-marcador{ top:-6px; height:24px; width:4px; }
-
-        .hist-fila{ border:1px solid var(--border); border-radius:10px; padding:.85rem 1rem; }
-        .hist-fila:hover{ border-color:rgba(242,177,52,.45); transform:translateX(2px); }
-        .hist-detalle{ border-left:1px solid var(--border); margin-left:1.2rem; }
-
-        @media (max-width: 768px){
-            .eval-control, .estres-card{ padding:1.2rem; }
-            .estres-db-context{ align-items:flex-start; flex-wrap:wrap; }
-            .estres-status{ margin-left:0; }
-            .estres-help-popover{ width:min(290px, calc(100vw - 4rem)); }
-            .dash-isbd{ flex:1 1 100%; min-height:250px; }
-            .tabla-contexto-wrap{ flex-basis:100%; }
-            .rango-fila{ grid-template-columns:1fr 64px; gap:.55rem; }
-            .rango-fila > :first-child{ grid-column:1 / -1; }
-            .monitor-actions .btn{ flex:1 1 180px; }
-        }
     </style>
     ';
 }

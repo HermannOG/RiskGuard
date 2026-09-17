@@ -244,13 +244,11 @@ $justificacionComponente = [
     <main class="flex-grow-1">
         <section class="section">
             <div class="container">
-                <div class="monitor-page-header">
                 <span class="section-eyebrow"><i class="fa-solid fa-heart-pulse me-2"></i><?php echo t('monitor.nav.item'); ?></span>
                 <h1 class="section-title"><?php echo htmlspecialchars($instancia['nombre']); ?></h1>
                 <p class="section-lead"><?php echo htmlspecialchars($instancia['tipo_motor']); ?> · <?php echo htmlspecialchars($instancia['host']); ?></p>
-                </div>
 
-                <div class="monitor-actions">
+                <div class="d-flex gap-2 flex-wrap mb-4">
                     <form method="post">
                         <button type="submit" name="capturar" value="1" class="btn btn-cta">
                             <i class="fa-solid fa-rotate me-2"></i><?php echo t('monitor.salud.capturar'); ?>
@@ -268,102 +266,115 @@ $justificacionComponente = [
                 <?php if ($esOracle): ?>
                     <?php $hayEstres = ($estresActivo['total'] ?? 0) > 0; ?>
                     <div class="estres-card mb-4" style="border-left:4px solid <?php echo $hayEstres ? '#F2B134' : 'var(--border)'; ?>;">
-                        <div class="estres-heading">
-                            <div>
-                                <h2 class="section-title" style="font-size:1.15rem; margin-top:0;">
-                                    <i class="fa-solid fa-gauge-high me-2"></i><?php echo t('monitor.estres.titulo'); ?>
-                                </h2>
-                                <p class="section-lead" style="max-width:none;"><?php echo t('monitor.estres.intro'); ?></p>
+
+                        <?php /* ── Cabecera con botón que despliega el panel ── */ ?>
+                        <div class="estres-card-header">
+                            <div class="estres-card-titulo">
+                                <i class="fa-solid fa-gauge-high"></i>
+                                <span><?php echo t('monitor.estres.titulo'); ?></span>
+                                <?php if ($hayEstres): ?>
+                                    <span class="estres-badge-activo"><i class="fa-solid fa-circle fa-beat" style="font-size:0.5rem;"></i> <?php echo $lang === 'en' ? 'RUNNING' : 'EN CURSO'; ?></span>
+                                <?php else: ?>
+                                    <span class="estres-badge-listo"><?php echo $lang === 'en' ? 'READY' : 'LISTO PARA PRUEBA'; ?></span>
+                                <?php endif; ?>
                             </div>
-                            <div class="estres-help">
-                                <button type="button" class="btn-ayuda estres-help-btn" aria-label="Ayuda sobre la prueba de estrés">
-                                    <i class="fa-regular fa-lightbulb"></i>
+
+                            <?php /* Info de la BD bajo análisis */ ?>
+                            <div class="estres-bd-info">
+                                <div class="estres-bd-icono"><i class="fa-solid fa-database"></i></div>
+                                <div>
+                                    <div class="estres-bd-eyebrow"><?php echo $lang === 'en' ? 'DATABASE UNDER ANALYSIS' : 'BASE DE DATOS BAJO ANÁLISIS'; ?></div>
+                                    <div class="estres-bd-nombre"><?php echo htmlspecialchars($instancia['nombre']); ?></div>
+                                    <div class="estres-bd-meta">
+                                        <?php echo strtoupper(htmlspecialchars($instancia['tipo_motor'])); ?>
+                                        &nbsp;·&nbsp;
+                                        <?php echo htmlspecialchars($instancia['host']); ?>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <?php /* Mensajes de estado (inician, errores, restauración) */ ?>
+                            <?php if ($estresMensaje): ?>
+                                <div class="estres-msg ok"><i class="fa-solid fa-circle-check"></i><span><?php echo htmlspecialchars($estresMensaje); ?></span></div>
+                            <?php endif; ?>
+                            <?php if ($estresError): ?>
+                                <div class="estres-msg err"><i class="fa-solid fa-circle-exclamation"></i><span><?php echo t('monitor.estres.error'); ?>: <?php echo htmlspecialchars($estresError); ?></span></div>
+                            <?php endif; ?>
+                            <?php if ($hayEstres): ?>
+                                <div class="estres-msg warn" id="estres-aviso">
+                                    <i class="fa-solid fa-bolt"></i>
+                                    <span><?php echo sprintf(t('monitor.estres.activo'), (int) $estresActivo['corriendo'], (int) $estresActivo['total']); ?></span>
+                                </div>
+                            <?php endif; ?>
+
+                            <?php /* Botón que despliega el panel de configuración */ ?>
+                            <?php if (!$hayEstres): ?>
+                                <button type="button" class="btn btn-ghost mt-2" data-bs-toggle="collapse" data-bs-target="#estres-panel" aria-expanded="<?php echo $estresMensaje ? 'true' : 'false'; ?>">
+                                    <i class="fa-solid fa-sliders me-2"></i><?php echo $lang === 'en' ? 'Configure and run' : 'Configurar e iniciar'; ?> <i class="fa-solid fa-chevron-down ms-1" style="font-size:0.7rem;"></i>
                                 </button>
-                                <div class="estres-help-popover">
-                                    <strong>¿Qué hace esta prueba?</strong>
-                                    <span>Genera consultas de solo lectura en varias sesiones para observar cómo reaccionan los índices de salud bajo carga. No modifica los datos.</span>
+                            <?php else: ?>
+                                <div class="d-flex gap-2 flex-wrap mt-2">
+                                    <form method="post">
+                                        <input type="hidden" name="estres" value="detener">
+                                        <button type="submit" class="btn btn-cta"><i class="fa-solid fa-stop me-2"></i><?php echo t('monitor.estres.detener'); ?></button>
+                                    </form>
+                                    <form method="post">
+                                        <input type="hidden" name="estres" value="refrescar">
+                                        <button type="submit" class="btn btn-ghost"><i class="fa-solid fa-rotate me-2"></i><?php echo t('monitor.estres.refrescar'); ?></button>
+                                    </form>
                                 </div>
-                            </div>
+                            <?php endif; ?>
                         </div>
 
-                        <div class="estres-db-context">
-                            <div class="estres-db-icon"><i class="fa-solid fa-database"></i></div>
-                            <div class="estres-db-info">
-                                <span class="estres-db-kicker">Base de datos bajo análisis</span>
-                                <strong><?php echo htmlspecialchars($instancia['nombre']); ?></strong>
-                                <span><?php echo strtoupper(htmlspecialchars($instancia['tipo_motor'])); ?> · <?php echo htmlspecialchars($instancia['nombre_bd'] ?? ''); ?> · <?php echo htmlspecialchars($instancia['host']); ?>:<?php echo htmlspecialchars((string)($instancia['puerto'] ?? '')); ?></span>
+                        <?php /* ── Panel colapsable: configuración del estrés ── */ ?>
+                        <?php if (!$hayEstres): ?>
+                        <div class="collapse <?php echo $estresMensaje ? 'show' : ''; ?>" id="estres-panel">
+                            <div class="estres-form-wrap">
+                                <form method="post">
+                                    <input type="hidden" name="estres" value="iniciar">
+                                    <div class="estres-form-grid">
+                                        <div class="estres-form-origen">
+                                            <label class="estres-label"><?php echo t('monitor.estres.origen'); ?></label>
+                                            <select name="db_link" id="estres-link-select" class="form-select">
+                                                <option value="__local__"><?php echo t('monitor.estres.origen.local'); ?></option>
+                                                <?php foreach ($dbLinks as $lk): ?>
+                                                    <option value="<?php echo htmlspecialchars($lk); ?>"><?php echo t('monitor.estres.origen.porlink'); ?> <?php echo htmlspecialchars($lk); ?></option>
+                                                <?php endforeach; ?>
+                                                <option value=""><?php echo t('monitor.estres.link.otro'); ?></option>
+                                            </select>
+                                            <input type="text" name="db_link_manual" id="estres-link-manual"
+                                                   class="form-control mt-2 d-none"
+                                                   placeholder="<?php echo t('monitor.estres.link.manual'); ?>"
+                                                   pattern="[A-Za-z0-9_$#.]+" maxlength="128">
+                                        </div>
+                                        <div>
+                                            <label class="estres-label"><?php echo t('monitor.estres.sesiones'); ?></label>
+                                            <input type="number" name="sesiones" class="form-control" value="5" min="1" max="50">
+                                            <div class="estres-sublabel"><?php echo $lang === 'en' ? 'Simultaneous connections' : 'Conexiones simultáneas'; ?></div>
+                                        </div>
+                                        <div>
+                                            <label class="estres-label"><?php echo t('monitor.estres.duracion'); ?></label>
+                                            <input type="number" name="segundos" class="form-control" value="60" min="1" max="600">
+                                            <div class="estres-sublabel"><?php echo $lang === 'en' ? 'Maximum load time' : 'Tiempo máximo de carga'; ?></div>
+                                        </div>
+                                        <div class="estres-form-btn">
+                                            <button type="submit" class="btn btn-cta w-100">
+                                                <i class="fa-solid fa-play me-2"></i><?php echo $lang === 'en' ? 'Start stress' : 'Iniciar estrés'; ?>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <p class="estres-nota"><i class="fa-solid fa-shield-halved me-1"></i><?php echo t('monitor.estres.nota'); ?></p>
+                                </form>
                             </div>
-                            <span class="estres-status <?php echo $hayEstres ? 'running' : 'ready'; ?>">
-                                <i class="fa-solid fa-circle"></i>
-                                <?php echo $hayEstres ? 'PRUEBA EN CURSO' : 'LISTO PARA PRUEBA'; ?>
-                            </span>
                         </div>
-
-                        <?php if ($estresMensaje): ?>
-                            <div class="estres-msg ok"><i class="fa-solid fa-circle-check"></i><span><?php echo htmlspecialchars($estresMensaje); ?></span></div>
-                        <?php endif; ?>
-                        <?php if ($estresError): ?>
-                            <div class="estres-msg err"><i class="fa-solid fa-circle-exclamation"></i><span><?php echo t('monitor.estres.error'); ?>: <?php echo htmlspecialchars($estresError); ?></span></div>
                         <?php endif; ?>
 
+                        <?php /* Toggle en vivo — oculto visualmente, funcional en JS */ ?>
                         <?php if ($resultado): ?>
-                            <div class="form-check form-switch mb-3">
-                                <input class="form-check-input" type="checkbox" role="switch" id="vivo-toggle">
-                                <label class="form-check-label" for="vivo-toggle"><?php echo t('monitor.estres.envivo'); ?></label>
-                                <span id="vivo-indicador" class="ms-2" style="display:none; color:#e0a800; font-weight:600;">
-                                    <i class="fa-solid fa-circle fa-beat" style="font-size:0.55rem;"></i> <?php echo t('monitor.estres.envivo.on'); ?>
-                                </span>
-                            </div>
+                            <input type="checkbox" id="vivo-toggle" style="display:none;">
+                            <span id="vivo-indicador" style="display:none;"></span>
                         <?php endif; ?>
 
-                        <?php if ($hayEstres): ?>
-                            <div class="estres-msg warn" id="estres-aviso">
-                                <i class="fa-solid fa-bolt"></i>
-                                <span><?php echo sprintf(t('monitor.estres.activo'), (int) $estresActivo['corriendo'], (int) $estresActivo['total']); ?></span>
-                            </div>
-                            <div class="d-flex gap-2 flex-wrap">
-                                <form method="post">
-                                    <input type="hidden" name="estres" value="detener">
-                                    <button type="submit" class="btn btn-cta"><i class="fa-solid fa-stop me-2"></i><?php echo t('monitor.estres.detener'); ?></button>
-                                </form>
-                                <form method="post">
-                                    <input type="hidden" name="estres" value="refrescar">
-                                    <button type="submit" class="btn btn-ghost"><i class="fa-solid fa-rotate me-2"></i><?php echo t('monitor.estres.refrescar'); ?></button>
-                                </form>
-                            </div>
-                        <?php else: ?>
-                            <form method="post" class="row g-3 align-items-end">
-                                <input type="hidden" name="estres" value="iniciar">
-                                <div class="col-md-4">
-                                    <label class="form-label"><?php echo t('monitor.estres.origen'); ?></label>
-                                    <select name="db_link" id="estres-link-select" class="form-select">
-                                        <option value="__local__"><?php echo t('monitor.estres.origen.local'); ?></option>
-                                        <?php foreach ($dbLinks as $lk): ?>
-                                            <option value="<?php echo htmlspecialchars($lk); ?>"><?php echo t('monitor.estres.origen.porlink'); ?> <?php echo htmlspecialchars($lk); ?></option>
-                                        <?php endforeach; ?>
-                                        <option value=""><?php echo t('monitor.estres.link.otro'); ?></option>
-                                    </select>
-                                    <input type="text" name="db_link_manual" id="estres-link-manual"
-                                           class="form-control mt-2 d-none"
-                                           placeholder="<?php echo t('monitor.estres.link.manual'); ?>"
-                                           pattern="[A-Za-z0-9_$#.]+" maxlength="128">
-                                </div>
-                                <div class="col-md-3">
-                                    <label class="form-label"><?php echo t('monitor.estres.sesiones'); ?> <span class="field-help" title="Cantidad de conexiones que generarán carga al mismo tiempo.">?</span></label>
-                                    <input type="number" name="sesiones" class="form-control" value="5" min="1" max="50">
-                                    <span class="field-caption">Conexiones simultáneas</span>
-                                </div>
-                                <div class="col-md-3">
-                                    <label class="form-label"><?php echo t('monitor.estres.duracion'); ?> <span class="field-help" title="Tiempo máximo durante el que se mantendrá la carga.">?</span></label>
-                                    <input type="number" name="segundos" class="form-control" value="60" min="1" max="600">
-                                    <span class="field-caption">Tiempo máximo de carga</span>
-                                </div>
-                                <div class="col-md-2 estres-start-col">
-                                    <button type="submit" class="btn btn-cta w-100 estres-start-btn"><i class="fa-solid fa-play me-2"></i>Iniciar estrés</button>
-                                </div>
-                            </form>
-                            <p class="mt-2 mb-0" style="font-size:0.8rem; color:var(--text-muted);"><i class="fa-solid fa-shield-halved me-1"></i><?php echo t('monitor.estres.nota'); ?></p>
-                        <?php endif; ?>
                     </div>
                     <script>
                         (function () {
