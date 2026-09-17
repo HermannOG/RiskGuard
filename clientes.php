@@ -267,25 +267,31 @@ function renderSqlBlock($sql, $title = 'Script SQL') {
     static $counter = 0;
     $counter++;
     $blockId = 'sql-block-' . $counter;
+    $collapseId = 'sql-collapse-' . $counter;
 
     $sql = trim($sql);
     if (empty($sql)) return '';
 
     $html = '
-    <div style="position:relative;margin-top:1.5rem;">
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:0.5rem 0.75rem;background:rgba(0,0,0,0.2);border:1px solid var(--border);border-radius:8px 8px 0 0;border-bottom:1px solid var(--border);">
-            <span style="font-size:0.85rem;color:var(--text-muted);">
-                <i class="fa-solid fa-code" style="color:var(--risk-mid);margin-right:0.5rem;"></i>
-                ' . htmlspecialchars($title) . '
-            </span>
-            <button onclick="copiarCodigo(this)" style="background:transparent;border:1px solid var(--border);border-radius:6px;padding:0.2rem 0.75rem;font-size:0.75rem;color:var(--text-muted);cursor:pointer;transition:all 0.2s;">
-                <i class="fa-regular fa-copy" style="margin-right:0.4rem;"></i>
-                Copiar
-            </button>
+    <div class="cliente-sql-block">
+        <div class="cliente-sql-head">
+            <div>
+                <span class="cliente-sql-kicker"><i class="fa-solid fa-code"></i> SQL</span>
+                <strong>' . htmlspecialchars($title) . '</strong>
+            </div>
+            <div class="cliente-sql-actions">
+                <button type="button" class="cliente-sql-toggle" data-bs-toggle="collapse" data-bs-target="#' . $collapseId . '" aria-expanded="false" aria-controls="' . $collapseId . '">
+                    <i class="fa-solid fa-chevron-down"></i><span>Ver código</span>
+                </button>
+                <button type="button" onclick="copiarCodigo(this)" class="cliente-copy-btn">
+                    <i class="fa-regular fa-copy"></i> Copiar
+                </button>
+            </div>
         </div>
-        <pre id="' . $blockId . '" style="margin:0;background:rgba(0,0,0,0.25);border:1px solid var(--border);border-top:none;border-radius:0 0 8px 8px;overflow-x:auto;padding:1rem;font-family:var(--font-mono);font-size:0.75rem;line-height:1.5;color:var(--text);"><code style="font-family:var(--font-mono);font-size:0.75rem;color:var(--text);">' . htmlspecialchars($sql) . '</code></pre>
-    </div>
-    ';
+        <div id="' . $collapseId . '" class="collapse cliente-sql-collapse">
+            <pre id="' . $blockId . '"><code>' . htmlspecialchars($sql) . '</code></pre>
+        </div>
+    </div>';
     return $html;
 }
 ?>
@@ -348,7 +354,7 @@ function renderSqlBlock($sql, $title = 'Script SQL') {
            TARJETAS DE CLIENTES
       ========================================================== -->
 
-      <div class="row g-4">
+      <div class="row g-4 clientes-grid">
 
         <?php foreach ($proyectos as $p): ?>
 
@@ -380,9 +386,9 @@ function renderSqlBlock($sql, $title = 'Script SQL') {
 
           ?>
 
-          <div class="col-md-6 col-lg-4">
+          <div class="col-12">
 
-            <div class="service-card h-100 d-flex flex-column">
+            <div class="service-card cliente-project-card h-100 d-flex flex-column">
 
               <!-- Icono -->
               <i
@@ -508,7 +514,7 @@ function renderSqlBlock($sql, $title = 'Script SQL') {
               >
 
                 <div
-                  class="mt-2 mb-4"
+                  class="mt-2 mb-4 cliente-detail-shell"
                   style="
                     background:var(--surface);
                     border:1px solid var(--border);
@@ -516,6 +522,13 @@ function renderSqlBlock($sql, $title = 'Script SQL') {
                     padding:2rem;
                   "
                 >
+
+                  <div class="cliente-detail-toolbar">
+                    <span><i class="fa-solid fa-circle-info"></i> Detalle técnico del proyecto</span>
+                    <button type="button" class="cliente-close-detail" data-bs-toggle="collapse" data-bs-target="#<?php echo $collapseId; ?>" aria-controls="<?php echo $collapseId; ?>">
+                      <i class="fa-solid fa-xmark"></i> Cerrar información
+                    </button>
+                  </div>
 
                   <!-- =================================================
                        INFORMACIÓN GENERAL
@@ -651,7 +664,7 @@ function renderSqlBlock($sql, $title = 'Script SQL') {
      - Sin bg-light, card, alert-*, table-light (no respetan modo oscuro)
 ========================================================== -->
 
-<div style="margin-top:2rem">
+<div class="cliente-db-architecture" style="margin-top:2rem">
 
     <!-- Encabezado -->
     <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem">
@@ -676,7 +689,7 @@ function renderSqlBlock($sql, $title = 'Script SQL') {
     </div>
 
     <!-- Accordion -->
-    <div class="accordion" id="accordionBD">
+    <div class="accordion cliente-tech-accordion" id="accordionBD">
 
 
         <!-- 1. ENTORNO -->
@@ -3094,6 +3107,38 @@ FROM v$log;
     </div>
 
   </section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    // Sincroniza los botones del SQL: Ver código / Ocultar código.
+    document.querySelectorAll('.cliente-sql-collapse').forEach(function (panel) {
+        var trigger = document.querySelector('[data-bs-target="#' + panel.id + '"]');
+        if (!trigger) return;
+        var label = trigger.querySelector('span');
+        var icon = trigger.querySelector('i');
+        panel.addEventListener('shown.bs.collapse', function () {
+            if (label) label.textContent = 'Ocultar código';
+            if (icon) icon.className = 'fa-solid fa-chevron-up';
+        });
+        panel.addEventListener('hidden.bs.collapse', function () {
+            if (label) label.textContent = 'Ver código';
+            if (icon) icon.className = 'fa-solid fa-chevron-down';
+        });
+    });
+
+    // Mejora accesibilidad/estado visual del acordeón técnico.
+    document.querySelectorAll('#accordionBD .accordion-collapse').forEach(function (panel) {
+        panel.addEventListener('shown.bs.collapse', function () {
+            var button = document.querySelector('[data-bs-target="#' + panel.id + '"]');
+            if (button) button.closest('.accordion-item')?.classList.add('is-open');
+        });
+        panel.addEventListener('hidden.bs.collapse', function () {
+            var button = document.querySelector('[data-bs-target="#' + panel.id + '"]');
+            if (button) button.closest('.accordion-item')?.classList.remove('is-open');
+        });
+    });
+});
+</script>
 
 </main>
 
