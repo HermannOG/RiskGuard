@@ -261,70 +261,103 @@ $detallesClientes = [
 
 ];
 
-// Función auxiliar para formatear código SQL en las secciones del accordion.
-// La función copiarCodigo() se emite UNA SOLA VEZ antes del accordion (ver más abajo).
+// Función auxiliar para presentar los scripts SQL sin convertir la página en una tira interminable.
+// El código queda plegado por defecto y conserva la acción de copiar.
 function renderSqlBlock($sql, $title = 'Script SQL') {
     static $counter = 0;
     $counter++;
-    $blockId = 'sql-block-' . $counter;
+
+    $blockId    = 'sql-block-' . $counter;
     $collapseId = 'sql-collapse-' . $counter;
 
     $sql = trim($sql);
     if (empty($sql)) return '';
 
-    $html = '
-    <div class="cliente-sql-block">
-        <div class="cliente-sql-head">
-            <div>
-                <span class="cliente-sql-kicker"><i class="fa-solid fa-code"></i> SQL</span>
-                <strong>' . htmlspecialchars($title) . '</strong>
+    return '
+    <div class="cliente-code-card">
+        <div class="cliente-code-head">
+            <div class="cliente-code-title">
+                <span class="cliente-code-icon"><i class="fa-solid fa-code"></i></span>
+                <div>
+                    <span class="cliente-code-kicker">SCRIPT SQL</span>
+                    <strong>' . htmlspecialchars($title) . '</strong>
+                </div>
             </div>
-            <div class="cliente-sql-actions">
-                <button type="button" class="cliente-sql-toggle" data-bs-toggle="collapse" data-bs-target="#' . $collapseId . '" aria-expanded="false" aria-controls="' . $collapseId . '">
-                    <i class="fa-solid fa-chevron-down"></i><span>Ver código</span>
+
+            <div class="cliente-code-actions">
+                <button type="button"
+                        class="cliente-code-toggle"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#' . $collapseId . '"
+                        aria-expanded="false"
+                        aria-controls="' . $collapseId . '">
+                    <i class="fa-solid fa-chevron-down"></i>
+                    <span>Ver código</span>
                 </button>
-                <button type="button" onclick="copiarCodigo(this)" class="cliente-copy-btn">
-                    <i class="fa-regular fa-copy"></i> Copiar
+
+                <button type="button"
+                        class="cliente-code-copy"
+                        data-code-target="' . $blockId . '"
+                        onclick="copiarCodigo(this)">
+                    <i class="fa-regular fa-copy"></i>
+                    <span>Copiar</span>
                 </button>
             </div>
         </div>
-        <div id="' . $collapseId . '" class="collapse cliente-sql-collapse">
-            <pre id="' . $blockId . '"><code>' . htmlspecialchars($sql) . '</code></pre>
+
+        <div id="' . $collapseId . '" class="collapse cliente-code-collapse">
+            <div class="cliente-code-scroll">
+                <pre id="' . $blockId . '"><code>' . htmlspecialchars($sql) . '</code></pre>
+            </div>
         </div>
     </div>';
-    return $html;
 }
 ?>
 
 <main class="flex-grow-1">
 
-  <!-- =========================================================
-       copiarCodigo() — declarada UNA SOLA VEZ aquí.
-       Usa el <pre> hermano del botón mediante closest().
-  ========================================================== -->
   <script>
   function copiarCodigo(btn) {
-      var wrapper = btn.closest('div[style*="position:relative"]');
-      var code    = wrapper.querySelector('pre code');
-      var texto   = code.textContent;
+      var targetId = btn.getAttribute('data-code-target');
+      var pre = targetId ? document.getElementById(targetId) : null;
+      if (!pre) return;
 
-      navigator.clipboard.writeText(texto).then(function () {
-          btn.innerHTML = '<i class="fa-regular fa-check" style="margin-right:0.4rem;"></i> Copiado';
+      var texto = pre.textContent;
+      var label = btn.querySelector('span');
+      var icon  = btn.querySelector('i');
+
+      function marcarCopiado() {
+          if (label) label.textContent = 'Copiado';
+          if (icon) icon.className = 'fa-solid fa-check';
+          btn.classList.add('is-copied');
+
           setTimeout(function () {
-              btn.innerHTML = '<i class="fa-regular fa-copy" style="margin-right:0.4rem;"></i> Copiar';
-          }, 2000);
-      }).catch(function () {
-          var area = document.createElement('textarea');
-          area.value = texto;
-          document.body.appendChild(area);
-          area.select();
-          document.execCommand('copy');
-          document.body.removeChild(area);
-          btn.innerHTML = '<i class="fa-regular fa-check" style="margin-right:0.4rem;"></i> Copiado';
-          setTimeout(function () {
-              btn.innerHTML = '<i class="fa-regular fa-copy" style="margin-right:0.4rem;"></i> Copiar';
-          }, 2000);
-      });
+              if (label) label.textContent = 'Copiar';
+              if (icon) icon.className = 'fa-regular fa-copy';
+              btn.classList.remove('is-copied');
+          }, 1800);
+      }
+
+      if (navigator.clipboard && window.isSecureContext) {
+          navigator.clipboard.writeText(texto).then(marcarCopiado).catch(function () {
+              copiarCodigoFallback(texto, marcarCopiado);
+          });
+      } else {
+          copiarCodigoFallback(texto, marcarCopiado);
+      }
+  }
+
+  function copiarCodigoFallback(texto, callback) {
+      var area = document.createElement('textarea');
+      area.value = texto;
+      area.style.position = 'fixed';
+      area.style.opacity = '0';
+      document.body.appendChild(area);
+      area.focus();
+      area.select();
+      document.execCommand('copy');
+      document.body.removeChild(area);
+      callback();
   }
   </script>
 
@@ -354,7 +387,7 @@ function renderSqlBlock($sql, $title = 'Script SQL') {
            TARJETAS DE CLIENTES
       ========================================================== -->
 
-      <div class="row g-4 clientes-grid">
+      <div class="row g-4">
 
         <?php foreach ($proyectos as $p): ?>
 
@@ -384,118 +417,88 @@ function renderSqlBlock($sql, $title = 'Script SQL') {
               $slug ?? uniqid()
           );
 
+          $safeSlug       = preg_replace('/[^a-zA-Z0-9_-]/', '', $slug ?? uniqid());
+          $infoId         = 'cliente-info-' . $safeSlug;
+          $organigramaId  = 'cliente-organigrama-' . $safeSlug;
+          $arquitecturaId = 'cliente-arquitectura-' . $safeSlug;
+          $accordionId    = 'accordionBD-' . $safeSlug;
+
           ?>
 
           <div class="col-12">
 
-            <div class="service-card cliente-project-card h-100 d-flex flex-column">
+            <article class="service-card cliente-project-card">
 
-              <!-- Icono -->
-              <i
-                class="fa-solid <?php echo htmlspecialchars($p['icono']); ?> mb-3"
-                style="font-size:1.6rem;color:var(--risk-mid)"
-              ></i>
-
-
-              <!-- Cliente -->
-              <?php if (!empty($p['cliente_nombre'])): ?>
-
-                <span class="cliente-badge mb-2">
-
-                  <i class="fa-solid fa-building me-1"></i>
-
-                  <?php echo htmlspecialchars($p['cliente_nombre']); ?>
-
-                  <?php if (!empty($p['cliente_sector'])): ?>
-
-                    · <?php echo htmlspecialchars($p['cliente_sector']); ?>
-
-                  <?php endif; ?>
-
-                </span>
-
-              <?php endif; ?>
-
-
-              <!-- Título -->
-              <h5 class="mb-2">
-                <?php echo htmlspecialchars($p['titulo']); ?>
-              </h5>
-
-
-              <!-- Descripción -->
-              <p
-                class="section-lead mb-3"
-                style="color:var(--text)"
-              >
-                <?php echo htmlspecialchars($p['descripcion']); ?>
-              </p>
-
-
-              <!-- Tags -->
-              <?php if ($tags): ?>
-
-                <div class="cliente-tags mt-3">
-
-                  <?php foreach ($tags as $tag): ?>
-
-                    <span class="cliente-tag">
-                      <?php echo htmlspecialchars($tag); ?>
-                    </span>
-
-                  <?php endforeach; ?>
-
+              <div class="cliente-project-main">
+                <div class="cliente-project-icon" aria-hidden="true">
+                  <i class="fa-solid <?php echo htmlspecialchars($p['icono']); ?>"></i>
                 </div>
 
-              <?php endif; ?>
+                <div class="cliente-project-content">
 
+                  <?php if (!empty($p['cliente_nombre'])): ?>
+                    <span class="cliente-badge mb-2">
+                      <i class="fa-solid fa-building me-1"></i>
+                      <?php echo htmlspecialchars($p['cliente_nombre']); ?>
+                      <?php if (!empty($p['cliente_sector'])): ?>
+                        · <?php echo htmlspecialchars($p['cliente_sector']); ?>
+                      <?php endif; ?>
+                    </span>
+                  <?php endif; ?>
 
-              <!-- =================================================
-                   BOTONES
-              ================================================== -->
+                  <h5 class="cliente-project-title">
+                    <?php echo htmlspecialchars($p['titulo']); ?>
+                  </h5>
 
-              <div class="mt-auto pt-3 d-flex flex-wrap gap-2">
+                  <p class="cliente-project-description">
+                    <?php echo htmlspecialchars($p['descripcion']); ?>
+                  </p>
 
-                <?php if ($tieneDetalle): ?>
+                  <?php if ($tags): ?>
+                    <div class="cliente-tags mt-3">
+                      <?php foreach ($tags as $tag): ?>
+                        <span class="cliente-tag"><?php echo htmlspecialchars($tag); ?></span>
+                      <?php endforeach; ?>
+                    </div>
+                  <?php endif; ?>
 
-                  <button
-                    type="button"
-                    class="btn btn-sm btn-ghost"
-                    data-bs-toggle="collapse"
-                    data-bs-target="#<?php echo $collapseId; ?>"
-                    aria-expanded="false"
-                    aria-controls="<?php echo $collapseId; ?>"
-                  >
-
-                    <i class="fa-solid fa-chevron-down me-1"></i>
-
-                    Ver información
-
-                  </button>
-
-                <?php endif; ?>
-
-
-                <?php if (!empty($p['url_demo'])): ?>
-
-                  <a
-                    href="<?php echo htmlspecialchars($p['url_demo']); ?>"
-                    class="btn btn-sm btn-ghost"
-                    target="_blank"
-                    rel="noopener"
-                  >
-
-                    <i class="fa-solid fa-arrow-up-right-from-square me-1"></i>
-
-                    <?php echo t('clientes.ver_demo'); ?>
-
-                  </a>
-
-                <?php endif; ?>
-
+                </div>
               </div>
 
-            </div>
+              <div class="cliente-project-actions">
+                <span class="cliente-project-actions-label">Proyecto documentado</span>
+                <span class="cliente-project-actions-copy">Consulta el contexto del cliente, su organigrama y la implementación técnica de la base de datos.</span>
+
+                <div class="d-flex flex-wrap gap-2">
+                  <?php if ($tieneDetalle): ?>
+                    <button
+                      type="button"
+                      class="btn btn-cta cliente-detail-toggle"
+                      data-bs-toggle="collapse"
+                      data-bs-target="#<?php echo $collapseId; ?>"
+                      aria-expanded="false"
+                      aria-controls="<?php echo $collapseId; ?>"
+                    >
+                      <i class="fa-solid fa-chevron-down me-2"></i>
+                      <span>Ver información</span>
+                    </button>
+                  <?php endif; ?>
+
+                  <?php if (!empty($p['url_demo'])): ?>
+                    <a
+                      href="<?php echo htmlspecialchars($p['url_demo']); ?>"
+                      class="btn btn-ghost"
+                      target="_blank"
+                      rel="noopener"
+                    >
+                      <i class="fa-solid fa-arrow-up-right-from-square me-2"></i>
+                      <?php echo t('clientes.ver_demo'); ?>
+                    </a>
+                  <?php endif; ?>
+                </div>
+              </div>
+
+            </article>
 
           </div>
 
@@ -510,186 +513,184 @@ function renderSqlBlock($sql, $title = 'Script SQL') {
 
               <div
                 id="<?php echo $collapseId; ?>"
-                class="collapse"
+                class="collapse cliente-detail-collapse"
               >
 
-                <div
-                  class="mt-2 mb-4 cliente-detail-shell"
-                  style="
-                    background:var(--surface);
-                    border:1px solid var(--border);
-                    border-radius:14px;
-                    padding:2rem;
-                  "
-                >
-
-                  <div class="cliente-detail-toolbar">
-                    <span><i class="fa-solid fa-circle-info"></i> Detalle técnico del proyecto</span>
-                    <button type="button" class="cliente-close-detail" data-bs-toggle="collapse" data-bs-target="#<?php echo $collapseId; ?>" aria-controls="<?php echo $collapseId; ?>">
-                      <i class="fa-solid fa-xmark"></i> Cerrar información
-                    </button>
-                  </div>
+                <div class="cliente-detail-stack">
 
                   <!-- =================================================
-                       INFORMACIÓN GENERAL
+                       INFORMACIÓN GENERAL — panel independiente
                   ================================================== -->
+                  <section class="cliente-section-card">
+                    <div class="cliente-section-heading">
+                      <button
+                        type="button"
+                        class="cliente-section-trigger"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#<?php echo $infoId; ?>"
+                        aria-expanded="true"
+                        aria-controls="<?php echo $infoId; ?>"
+                      >
+                        <span class="cliente-section-icon"><i class="fa-solid fa-building"></i></span>
+                        <span class="cliente-section-copy">
+                          <span class="cliente-section-kicker">Información del cliente</span>
+                          <strong><?php echo htmlspecialchars($p['cliente_nombre']); ?></strong>
+                          <small>Contexto general de la organización y alcance del proyecto.</small>
+                        </span>
+                        <span class="cliente-section-meta">
+                          <?php if (!empty($p['cliente_sector'])): ?>
+                            <span class="cliente-section-chip"><?php echo htmlspecialchars($p['cliente_sector']); ?></span>
+                          <?php endif; ?>
+                          <i class="fa-solid fa-chevron-down cliente-section-chevron"></i>
+                        </span>
+                      </button>
 
-                  <div class="mb-5">
-
-                    <span class="section-eyebrow">
-
-                      <i class="fa-solid fa-building me-2"></i>
-
-                      Información del cliente
-
-                    </span>
-
-                    <h3
-                      class="section-title"
-                      style="font-size:1.6rem"
-                    >
-
-                      <?php echo htmlspecialchars($p['cliente_nombre']); ?>
-
-                    </h3>
-
-                    <p
-                      style="
-                        color:var(--text);
-                        line-height:1.75;
-                        font-size:1.02rem;
-                        margin-bottom:0;
-                      "
-                    >
-
-                      <?php echo htmlspecialchars(
-                          $detallesClientes[$slug]['descripcion']
-                      ); ?>
-
-                    </p>
-
-                  </div>
-
-                    <!-- =================================================
-                             ORGANIGRAMA INSTITUCIONAL
-                        ================================================== -->
-                        
-                        <div class="mb-5">
-                        
-                          <span class="section-eyebrow">
-                        
-                            <i class="fa-solid fa-sitemap me-2"></i>
-                        
-                            Organigrama institucional
-                        
-                          </span>
-                        
-                          <h4
-                            class="section-title"
-                            style="font-size:1.4rem"
-                          >
-                            ESPH S.A.
-                          </h4>
-                        
-                          <div
-                            style="
-                              background:var(--surface);
-                              border:1px solid var(--border);
-                              border-radius:14px;
-                              overflow:hidden;
-                              margin-top:1.5rem;
-                            "
-                          >
-                        
-                            <div
-                              style="
-                                padding:0.75rem 1rem;
-                                border-bottom:1px solid var(--border);
-                                font-family:var(--font-mono);
-                                font-size:0.75rem;
-                                color:var(--text-muted);
-                              "
-                            >
-                        
-                              <i class="fa-solid fa-sitemap me-2"></i>
-                        
-                              Organigrama Institucional 2026
-                        
-                            </div>
-                        
-                            <div
-                              style="
-                                padding:1rem;
-                                overflow-x:auto;
-                                text-align:center;
-                              "
-                            >
-                        
-                              <img
-                                src="assets/img/ESPH%20Organigrama%20Institucional%202026.png"
-                                alt="Organigrama Institucional 2026 de ESPH S.A."
-                                style="
-                                  width:100%;
-                                  max-width:1400px;
-                                  height:auto;
-                                  display:block;
-                                  margin:0 auto;
-                                "
-                              >
-                        
-                            </div>
-                        
-                          </div>
-                        
+                      <div class="cliente-help">
+                        <button type="button" class="cliente-help-btn" aria-expanded="false" aria-label="Explicación de la información del cliente">
+                          <i class="fa-regular fa-lightbulb"></i>
+                        </button>
+                        <div class="cliente-help-popover" role="tooltip">
+                          <strong>¿Por qué se muestra?</strong>
+                          <span>Da contexto sobre la organización para entender a qué entorno empresarial responde la solución implementada.</span>
                         </div>
+                      </div>
+                    </div>
 
+                    <div id="<?php echo $infoId; ?>" class="collapse show cliente-section-collapse">
+                      <div class="cliente-section-body">
+                        <p class="cliente-summary-text">
+                          <?php echo htmlspecialchars($detallesClientes[$slug]['descripcion']); ?>
+                        </p>
+                      </div>
+                    </div>
+                  </section>
 
                   <!-- =================================================
-                       SEPARADOR
+                       ORGANIGRAMA — panel independiente
                   ================================================== -->
+                  <section class="cliente-section-card">
+                    <div class="cliente-section-heading">
+                      <button
+                        type="button"
+                        class="cliente-section-trigger"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#<?php echo $organigramaId; ?>"
+                        aria-expanded="false"
+                        aria-controls="<?php echo $organigramaId; ?>"
+                      >
+                        <span class="cliente-section-icon"><i class="fa-solid fa-sitemap"></i></span>
+                        <span class="cliente-section-copy">
+                          <span class="cliente-section-kicker">Organigrama institucional</span>
+                          <strong>ESPH S.A.</strong>
+                          <small>Estructura organizacional utilizada como referencia para los dominios del proyecto.</small>
+                        </span>
+                        <span class="cliente-section-meta">
+                          <span class="cliente-section-chip">2026</span>
+                          <i class="fa-solid fa-chevron-down cliente-section-chevron"></i>
+                        </span>
+                      </button>
 
-                  <div
-                    style="
-                      border-top:1px solid var(--border);
-                      margin-bottom:3rem;
-                    "
-                  ></div>
+                      <div class="cliente-help">
+                        <button type="button" class="cliente-help-btn" aria-expanded="false" aria-label="Explicación del organigrama">
+                          <i class="fa-regular fa-lightbulb"></i>
+                        </button>
+                        <div class="cliente-help-popover" role="tooltip">
+                          <strong>¿Para qué sirve aquí?</strong>
+                          <span>Permite relacionar la arquitectura de datos con las áreas y niveles organizacionales que forman parte del entorno de ESPH.</span>
+                        </div>
+                      </div>
+                    </div>
 
+                    <div id="<?php echo $organigramaId; ?>" class="collapse cliente-section-collapse">
+                      <div class="cliente-section-body">
+                        <div class="cliente-org-card">
+                          <div class="cliente-org-head">
+                            <span><i class="fa-solid fa-sitemap"></i> Organigrama Institucional 2026</span>
+                            <span class="cliente-org-hint"><i class="fa-solid fa-arrows-left-right"></i> Desplaza horizontalmente si es necesario</span>
+                          </div>
+                          <div class="cliente-org-image">
+                            <img
+                              src="assets/img/ESPH%20Organigrama%20Institucional%202026.png"
+                              alt="Organigrama Institucional 2026 de ESPH S.A."
+                            >
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </section>
 
+                  <!-- =================================================
+                       ARQUITECTURA — panel independiente y colapsable
+                  ================================================== -->
+                  <section class="cliente-section-card cliente-section-card--architecture">
+                    <div class="cliente-section-heading">
+                      <button
+                        type="button"
+                        class="cliente-section-trigger"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#<?php echo $arquitecturaId; ?>"
+                        aria-expanded="false"
+                        aria-controls="<?php echo $arquitecturaId; ?>"
+                      >
+                        <span class="cliente-section-icon"><i class="fa-solid fa-database"></i></span>
+                        <span class="cliente-section-copy">
+                          <span class="cliente-section-kicker">Implementación técnica</span>
+                          <strong>Arquitectura y configuración de la base de datos</strong>
+                          <small>Decisiones, configuración, scripts y verificaciones realizadas sobre Oracle.</small>
+                        </span>
+                        <span class="cliente-section-meta">
+                          <span class="cliente-section-chip cliente-section-chip--accent">Oracle 21c</span>
+                          <span class="cliente-section-chip">17 etapas</span>
+                          <i class="fa-solid fa-chevron-down cliente-section-chevron"></i>
+                        </span>
+                      </button>
+
+                      <div class="cliente-help">
+                        <button type="button" class="cliente-help-btn" aria-expanded="false" aria-label="Explicación de la arquitectura de base de datos">
+                          <i class="fa-regular fa-lightbulb"></i>
+                        </button>
+                        <div class="cliente-help-popover" role="tooltip">
+                          <strong>¿Qué vas a encontrar?</strong>
+                          <span>La implementación completa: entorno Oracle, tablespaces, archivos, esquemas, privilegios, modelos de datos, índices, pruebas, archivado, FRA y Redo Logs.</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div id="<?php echo $arquitecturaId; ?>" class="collapse cliente-section-collapse">
+                      <div class="cliente-section-body cliente-architecture-body">
 <!-- =========================================================
      INFORMACIÓN DE LA BASE DE DATOS
-     Adaptado al sistema de diseño de RiskGuard:
-     - Font Awesome en lugar de Bootstrap Icons
-     - Variables CSS del tema (var(--surface), var(--border), var(--risk-mid), var(--text), var(--text-muted))
-     - Sin bg-light, card, alert-*, table-light (no respetan modo oscuro)
 ========================================================== -->
 
-<div class="cliente-db-architecture" style="margin-top:2rem">
-
-    <!-- Encabezado -->
-    <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem">
-        <div style="width:2.8rem;height:2.8rem;border-radius:50%;background:rgba(242,177,52,0.12);border:1px solid rgba(242,177,52,0.3);display:flex;align-items:center;justify-content:center;flex-shrink:0">
-            <i class="fa-solid fa-database" style="color:var(--risk-mid)"></i>
-        </div>
+<div class="cliente-architecture-context">
+    <div class="cliente-architecture-db">
+        <span class="cliente-architecture-db-icon"><i class="fa-solid fa-database"></i></span>
         <div>
-            <h4 style="margin:0;font-size:1.15rem">Arquitectura y configuración de la base de datos</h4>
-            <p style="margin:0;font-size:0.82rem;color:var(--text-muted)">
-                Descripción técnica de las modificaciones realizadas sobre Oracle Database para representar el entorno empresarial de ESPH S.A.
-            </p>
+            <span>Base de datos documentada</span>
+            <strong>Oracle Database 21c XE</strong>
+            <small>PDB XEPDB1 · arquitectura empresarial por dominios</small>
         </div>
     </div>
+    <span class="cliente-architecture-status"><i class="fa-solid fa-circle-check"></i> Implementación documentada</span>
+</div>
 
-    <!-- Alerta introductoria -->
-    <div style="background:rgba(242,177,52,0.07);border:1px solid rgba(242,177,52,0.2);border-radius:8px;padding:1rem 1.25rem;margin-bottom:1.5rem;font-size:0.88rem;color:var(--text)">
-        <strong style="color:var(--risk-mid)">¿Qué se realizó?</strong><br>
-        Se diseñó y configuró una estructura de almacenamiento empresarial sobre <strong>Oracle Database 21c XE</strong>,
-        asignando un par de tablespaces exclusivos (<code>_DATA</code> e <code>_IDX</code>) a cada área de negocio,
-        junto con sus esquemas, privilegios y modelos de datos.
-        El objetivo es proporcionar una estructura organizada, controlada y escalable para representar diferentes dominios operativos de ESPH S.A.
+<div class="cliente-architecture-note">
+    <span class="cliente-note-icon"><i class="fa-regular fa-lightbulb"></i></span>
+    <div>
+        <strong>¿Qué se realizó?</strong>
+        <p>Se diseñó y configuró una estructura de almacenamiento empresarial sobre <strong>Oracle Database 21c XE</strong>, asignando un par de tablespaces exclusivos (<code>_DATA</code> e <code>_IDX</code>) a cada área de negocio, junto con sus esquemas, privilegios y modelos de datos. El objetivo es mantener una estructura organizada, controlada y escalable para los diferentes dominios operativos de ESPH S.A.</p>
     </div>
+</div>
 
-    <!-- Accordion -->
-    <div class="accordion cliente-tech-accordion" id="accordionBD">
+<div class="cliente-steps-head">
+    <div>
+        <span class="cliente-steps-kicker">Recorrido técnico</span>
+        <h5>Etapas de la implementación</h5>
+    </div>
+    <span class="cliente-steps-count">17 etapas</span>
+</div>
+
+<div class="accordion cliente-tech-accordion" id="<?php echo $accordionId; ?>">
 
 
         <!-- 1. ENTORNO -->
@@ -704,7 +705,7 @@ function renderSqlBlock($sql, $title = 'Script SQL') {
                     1. Preparación y verificación del entorno Oracle
                 </button>
             </h2>
-            <div id="collapseEntorno" class="accordion-collapse collapse" data-bs-parent="#accordionBD">
+            <div id="collapseEntorno" class="accordion-collapse collapse" data-bs-parent="#<?php echo $accordionId; ?>">
                 <div class="accordion-body" style="background:var(--surface);color:var(--text)">
 
                     <h5 style="font-size:0.95rem;margin-bottom:0.5rem">¿Qué se hizo?</h5>
@@ -786,7 +787,7 @@ END;
                     2. Organización física mediante Tablespaces
                 </button>
             </h2>
-            <div id="collapseTablespaces" class="accordion-collapse collapse" data-bs-parent="#accordionBD">
+            <div id="collapseTablespaces" class="accordion-collapse collapse" data-bs-parent="#<?php echo $accordionId; ?>">
                 <div class="accordion-body" style="background:var(--surface);color:var(--text)">
 
                     <h5 style="font-size:0.95rem;margin-bottom:0.5rem">¿Qué se hizo?</h5>
@@ -1019,7 +1020,7 @@ END;
                     3. Administración de los archivos físicos
                 </button>
             </h2>
-            <div id="collapseOMF" class="accordion-collapse collapse" data-bs-parent="#accordionBD">
+            <div id="collapseOMF" class="accordion-collapse collapse" data-bs-parent="#<?php echo $accordionId; ?>">
                 <div class="accordion-body" style="background:var(--surface);color:var(--text)">
 
                     <h5 style="font-size:0.95rem;margin-bottom:0.5rem">¿Qué se hizo?</h5>
@@ -1084,7 +1085,7 @@ WHERE name = \'db_create_file_dest\';
                     4. Creación de esquemas y separación por áreas
                 </button>
             </h2>
-            <div id="collapseUsuarios" class="accordion-collapse collapse" data-bs-parent="#accordionBD">
+            <div id="collapseUsuarios" class="accordion-collapse collapse" data-bs-parent="#<?php echo $accordionId; ?>">
                 <div class="accordion-body" style="background:var(--surface);color:var(--text)">
 
                     <h5 style="font-size:0.95rem;margin-bottom:0.5rem">¿Qué se hizo?</h5>
@@ -1189,7 +1190,7 @@ QUOTA 100M ON ESPH_TIC_IDX;
                     5. Control de privilegios
                 </button>
             </h2>
-            <div id="collapsePrivilegios" class="accordion-collapse collapse" data-bs-parent="#accordionBD">
+            <div id="collapsePrivilegios" class="accordion-collapse collapse" data-bs-parent="#<?php echo $accordionId; ?>">
                 <div class="accordion-body" style="background:var(--surface);color:var(--text)">
 
                     <h5 style="font-size:0.95rem;margin-bottom:0.5rem">¿Qué se hizo?</h5>
@@ -1729,7 +1730,7 @@ CREATE INDEX esph_tic.idx_tkt_fecha ON esph_tic.ticket(fecha_apertura) TABLESPAC
                     <?php echo $m['num']; ?>. <?php echo $m['titulo']; ?>
                 </button>
             </h2>
-            <div id="collapse<?php echo $m['id']; ?>" class="accordion-collapse collapse" data-bs-parent="#accordionBD">
+            <div id="collapse<?php echo $m['id']; ?>" class="accordion-collapse collapse" data-bs-parent="#<?php echo $accordionId; ?>">
                 <div class="accordion-body" style="background:var(--surface);color:var(--text)">
 
                     <p style="font-size:0.88rem;color:var(--text-muted)"><?php echo $m['intro']; ?></p>
@@ -1791,7 +1792,7 @@ CREATE INDEX esph_tic.idx_tkt_fecha ON esph_tic.ticket(fecha_apertura) TABLESPAC
                     10. Integridad y validación de los datos
                 </button>
             </h2>
-            <div id="collapseIntegridad" class="accordion-collapse collapse" data-bs-parent="#accordionBD">
+            <div id="collapseIntegridad" class="accordion-collapse collapse" data-bs-parent="#<?php echo $accordionId; ?>">
                 <div class="accordion-body" style="background:var(--surface);color:var(--text)">
 
                     <h5 style="font-size:0.95rem;margin-bottom:0.5rem">¿Qué se hizo?</h5>
@@ -1883,7 +1884,7 @@ id_centro NUMBER GENERATED ALWAYS AS IDENTITY
                     11. Optimización mediante índices
                 </button>
             </h2>
-            <div id="collapseIndices" class="accordion-collapse collapse" data-bs-parent="#accordionBD">
+            <div id="collapseIndices" class="accordion-collapse collapse" data-bs-parent="#<?php echo $accordionId; ?>">
                 <div class="accordion-body" style="background:var(--surface);color:var(--text)">
 
                     <p style="font-size:0.88rem;color:var(--text-muted)">
@@ -1965,7 +1966,7 @@ CREATE INDEX esph_tic.idx_tkt_fecha ON esph_tic.ticket(fecha_apertura) TABLESPAC
                     12. Carga de datos de prueba
                 </button>
             </h2>
-            <div id="collapseDatos" class="accordion-collapse collapse" data-bs-parent="#accordionBD">
+            <div id="collapseDatos" class="accordion-collapse collapse" data-bs-parent="#<?php echo $accordionId; ?>">
                 <div class="accordion-body" style="background:var(--surface);color:var(--text)">
 
                     <h5 style="font-size:0.95rem;margin-bottom:0.5rem">¿Qué se hizo?</h5>
@@ -2166,7 +2167,7 @@ COMMIT;
                     13. Verificación posterior a la implementación
                 </button>
             </h2>
-            <div id="collapseVerificacion" class="accordion-collapse collapse" data-bs-parent="#accordionBD">
+            <div id="collapseVerificacion" class="accordion-collapse collapse" data-bs-parent="#<?php echo $accordionId; ?>">
                 <div class="accordion-body" style="background:var(--surface);color:var(--text)">
 
                     <p style="font-size:0.88rem;color:var(--text-muted)">El script no se limita a crear los objetos. También realiza consultas de verificación después de la instalación.</p>
@@ -2259,7 +2260,7 @@ ORDER BY grantee, privilege;
                     14. Resultado final de la arquitectura
                 </button>
             </h2>
-            <div id="collapseResumen" class="accordion-collapse collapse" data-bs-parent="#accordionBD">
+            <div id="collapseResumen" class="accordion-collapse collapse" data-bs-parent="#<?php echo $accordionId; ?>">
                 <div class="accordion-body" style="background:var(--surface);color:var(--text)">
 
                     <h5 style="font-size:0.95rem;text-align:center;margin-bottom:1.25rem">Arquitectura de almacenamiento</h5>
@@ -2518,7 +2519,7 @@ ORDER BY
                     15. Modo de archivado — ARCHIVELOG
                 </button>
             </h2>
-            <div id="collapseArchivelog" class="accordion-collapse collapse" data-bs-parent="#accordionBD">
+            <div id="collapseArchivelog" class="accordion-collapse collapse" data-bs-parent="#<?php echo $accordionId; ?>">
                 <div class="accordion-body" style="background:var(--surface);color:var(--text)">
 
                     <h5 style="font-size:0.95rem;margin-bottom:0.5rem">¿Qué son los Redo Logs?</h5>
@@ -2691,7 +2692,7 @@ FETCH FIRST 10 ROWS ONLY;
                     16. Fast Recovery Area — control del espacio de archivado
                 </button>
             </h2>
-            <div id="collapseFRA" class="accordion-collapse collapse" data-bs-parent="#accordionBD">
+            <div id="collapseFRA" class="accordion-collapse collapse" data-bs-parent="#<?php echo $accordionId; ?>">
                 <div class="accordion-body" style="background:var(--surface);color:var(--text)">
 
                     <h5 style="font-size:0.95rem;margin-bottom:0.5rem">¿Qué es la Fast Recovery Area?</h5>
@@ -2893,7 +2894,7 @@ ORDER BY mb_usados DESC;
                     17. Redo Log Groups — dimensionamiento y protección
                 </button>
             </h2>
-            <div id="collapseRedoGroups" class="accordion-collapse collapse" data-bs-parent="#accordionBD">
+            <div id="collapseRedoGroups" class="accordion-collapse collapse" data-bs-parent="#<?php echo $accordionId; ?>">
                 <div class="accordion-body" style="background:var(--surface);color:var(--text)">
 
                     <h5 style="font-size:0.95rem;margin-bottom:0.5rem">¿Qué son los Redo Log Groups?</h5>
@@ -3092,11 +3093,15 @@ FROM v$log;
         </div>
 
 
-    </div><!-- /accordionBD -->
-</div><!-- /wrapper -->
+    </div><!-- /accordion técnico -->
 
+                      </div><!-- /cliente-architecture-body -->
+                    </div><!-- /arquitectura collapse -->
+                  </section>
 
-                  
+                </div><!-- /cliente-detail-stack -->
+              </div><!-- /detalle principal -->
+            </div><!-- /col-12 -->
 
           <?php endif; ?>
 
@@ -3108,34 +3113,78 @@ FROM v$log;
 
   </section>
 
+
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    // Sincroniza los botones del SQL: Ver código / Ocultar código.
-    document.querySelectorAll('.cliente-sql-collapse').forEach(function (panel) {
+    // Botón principal: cambia de "Ver" a "Ocultar" sin añadir botones de cierre extraños.
+    document.querySelectorAll('.cliente-detail-collapse').forEach(function (panel) {
         var trigger = document.querySelector('[data-bs-target="#' + panel.id + '"]');
-        if (!trigger) return;
+        if (!trigger || !trigger.classList.contains('cliente-detail-toggle')) return;
+
         var label = trigger.querySelector('span');
         var icon = trigger.querySelector('i');
+
+        panel.addEventListener('shown.bs.collapse', function (event) {
+            if (event.target !== panel) return;
+            if (label) label.textContent = 'Ocultar información';
+            if (icon) icon.className = 'fa-solid fa-chevron-up me-2';
+        });
+
+        panel.addEventListener('hidden.bs.collapse', function (event) {
+            if (event.target !== panel) return;
+            if (label) label.textContent = 'Ver información';
+            if (icon) icon.className = 'fa-solid fa-chevron-down me-2';
+        });
+    });
+
+    // Los scripts SQL muestran/ocultan su estado de forma clara.
+    document.querySelectorAll('.cliente-code-collapse').forEach(function (panel) {
+        var trigger = document.querySelector('[data-bs-target="#' + panel.id + '"]');
+        if (!trigger) return;
+
+        var label = trigger.querySelector('span');
+        var icon = trigger.querySelector('i');
+
         panel.addEventListener('shown.bs.collapse', function () {
             if (label) label.textContent = 'Ocultar código';
             if (icon) icon.className = 'fa-solid fa-chevron-up';
         });
+
         panel.addEventListener('hidden.bs.collapse', function () {
             if (label) label.textContent = 'Ver código';
             if (icon) icon.className = 'fa-solid fa-chevron-down';
         });
     });
 
-    // Mejora accesibilidad/estado visual del acordeón técnico.
-    document.querySelectorAll('#accordionBD .accordion-collapse').forEach(function (panel) {
-        panel.addEventListener('shown.bs.collapse', function () {
-            var button = document.querySelector('[data-bs-target="#' + panel.id + '"]');
-            if (button) button.closest('.accordion-item')?.classList.add('is-open');
+    // Bombillitos funcionales: clic para abrir/cerrar; clic fuera o Escape para cerrar.
+    var helpButtons = document.querySelectorAll('.cliente-help-btn');
+
+    function closeAllHelp(except) {
+        helpButtons.forEach(function (button) {
+            if (button === except) return;
+            button.setAttribute('aria-expanded', 'false');
+            var help = button.closest('.cliente-help');
+            if (help) help.classList.remove('is-open');
         });
-        panel.addEventListener('hidden.bs.collapse', function () {
-            var button = document.querySelector('[data-bs-target="#' + panel.id + '"]');
-            if (button) button.closest('.accordion-item')?.classList.remove('is-open');
+    }
+
+    helpButtons.forEach(function (button) {
+        button.addEventListener('click', function (event) {
+            event.stopPropagation();
+            var help = button.closest('.cliente-help');
+            var willOpen = !help.classList.contains('is-open');
+            closeAllHelp(button);
+            help.classList.toggle('is-open', willOpen);
+            button.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
         });
+    });
+
+    document.addEventListener('click', function (event) {
+        if (!event.target.closest('.cliente-help')) closeAllHelp();
+    });
+
+    document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape') closeAllHelp();
     });
 });
 </script>
