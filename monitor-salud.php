@@ -268,10 +268,36 @@ $justificacionComponente = [
                 <?php if ($esOracle): ?>
                     <?php $hayEstres = ($estresActivo['total'] ?? 0) > 0; ?>
                     <div class="estres-card mb-4" style="border-left:4px solid <?php echo $hayEstres ? '#F2B134' : 'var(--border)'; ?>;">
-                        <h2 class="section-title" style="font-size:1.15rem; margin-top:0;">
-                            <i class="fa-solid fa-gauge-high me-2"></i><?php echo t('monitor.estres.titulo'); ?>
-                        </h2>
-                        <p class="section-lead" style="max-width:none;"><?php echo t('monitor.estres.intro'); ?></p>
+                        <div class="estres-heading">
+                            <div>
+                                <h2 class="section-title" style="font-size:1.15rem; margin-top:0;">
+                                    <i class="fa-solid fa-gauge-high me-2"></i><?php echo t('monitor.estres.titulo'); ?>
+                                </h2>
+                                <p class="section-lead" style="max-width:none;"><?php echo t('monitor.estres.intro'); ?></p>
+                            </div>
+                            <div class="estres-help">
+                                <button type="button" class="btn-ayuda estres-help-btn" aria-label="Ayuda sobre la prueba de estrés">
+                                    <i class="fa-regular fa-lightbulb"></i>
+                                </button>
+                                <div class="estres-help-popover">
+                                    <strong>¿Qué hace esta prueba?</strong>
+                                    <span>Genera consultas de solo lectura en varias sesiones para observar cómo reaccionan los índices de salud bajo carga. No modifica los datos.</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="estres-db-context">
+                            <div class="estres-db-icon"><i class="fa-solid fa-database"></i></div>
+                            <div class="estres-db-info">
+                                <span class="estres-db-kicker">Base de datos bajo análisis</span>
+                                <strong><?php echo htmlspecialchars($instancia['nombre']); ?></strong>
+                                <span><?php echo strtoupper(htmlspecialchars($instancia['tipo_motor'])); ?> · <?php echo htmlspecialchars($instancia['nombre_bd'] ?? ''); ?> · <?php echo htmlspecialchars($instancia['host']); ?>:<?php echo htmlspecialchars((string)($instancia['puerto'] ?? '')); ?></span>
+                            </div>
+                            <span class="estres-status <?php echo $hayEstres ? 'running' : 'ready'; ?>">
+                                <i class="fa-solid fa-circle"></i>
+                                <?php echo $hayEstres ? 'PRUEBA EN CURSO' : 'LISTO PARA PRUEBA'; ?>
+                            </span>
+                        </div>
 
                         <?php if ($estresMensaje): ?>
                             <div class="estres-msg ok"><i class="fa-solid fa-circle-check"></i><span><?php echo htmlspecialchars($estresMensaje); ?></span></div>
@@ -308,7 +334,7 @@ $justificacionComponente = [
                         <?php else: ?>
                             <form method="post" class="row g-3 align-items-end">
                                 <input type="hidden" name="estres" value="iniciar">
-                                <div class="col-md-5">
+                                <div class="col-md-4">
                                     <label class="form-label"><?php echo t('monitor.estres.origen'); ?></label>
                                     <select name="db_link" id="estres-link-select" class="form-select">
                                         <option value="__local__"><?php echo t('monitor.estres.origen.local'); ?></option>
@@ -323,15 +349,17 @@ $justificacionComponente = [
                                            pattern="[A-Za-z0-9_$#.]+" maxlength="128">
                                 </div>
                                 <div class="col-md-3">
-                                    <label class="form-label"><?php echo t('monitor.estres.sesiones'); ?></label>
+                                    <label class="form-label"><?php echo t('monitor.estres.sesiones'); ?> <span class="field-help" title="Cantidad de conexiones que generarán carga al mismo tiempo.">?</span></label>
                                     <input type="number" name="sesiones" class="form-control" value="5" min="1" max="50">
+                                    <span class="field-caption">Conexiones simultáneas</span>
                                 </div>
                                 <div class="col-md-3">
-                                    <label class="form-label"><?php echo t('monitor.estres.duracion'); ?></label>
+                                    <label class="form-label"><?php echo t('monitor.estres.duracion'); ?> <span class="field-help" title="Tiempo máximo durante el que se mantendrá la carga.">?</span></label>
                                     <input type="number" name="segundos" class="form-control" value="60" min="1" max="600">
+                                    <span class="field-caption">Tiempo máximo de carga</span>
                                 </div>
-                                <div class="col-md-1">
-                                    <button type="submit" class="btn btn-cta w-100"><i class="fa-solid fa-play"></i></button>
+                                <div class="col-md-2 estres-start-col">
+                                    <button type="submit" class="btn btn-cta w-100 estres-start-btn"><i class="fa-solid fa-play me-2"></i>Iniciar estrés</button>
                                 </div>
                             </form>
                             <p class="mt-2 mb-0" style="font-size:0.8rem; color:var(--text-muted);"><i class="fa-solid fa-shield-halved me-1"></i><?php echo t('monitor.estres.nota'); ?></p>

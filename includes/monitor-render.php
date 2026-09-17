@@ -365,6 +365,28 @@ function renderEstilosMonitor(): string
         .estres-card .row.g-3{ background:var(--bg); border:1px solid var(--border); border-radius:12px; padding:.9rem .7rem .7rem; margin-left:0; margin-right:0; }
         .estres-card .form-control, .estres-card .form-select{ min-height:42px; border-radius:9px; }
         .estres-card .col-md-1 .btn{ min-height:42px; border-radius:9px; }
+        .estres-heading{ display:flex; justify-content:space-between; align-items:flex-start; gap:1rem; }
+        .estres-heading .section-lead{ margin-bottom:1rem; }
+        .estres-help{ position:relative; flex:0 0 auto; }
+        .estres-help-btn{ width:36px; height:36px; border-radius:50%; color:#F2B134; border-color:rgba(242,177,52,.35); background:rgba(242,177,52,.07); }
+        .estres-help-popover{ position:absolute; z-index:30; right:0; top:44px; width:310px; padding:.9rem 1rem; border:1px solid var(--border); border-radius:12px; background:var(--surface); box-shadow:0 16px 36px rgba(0,0,0,.28); opacity:0; visibility:hidden; transform:translateY(-5px); transition:.18s ease; }
+        .estres-help-popover strong{ display:block; margin-bottom:.35rem; color:var(--text); }
+        .estres-help-popover span{ display:block; color:var(--text-muted); font-size:.84rem; line-height:1.5; }
+        .estres-help:hover .estres-help-popover, .estres-help:focus-within .estres-help-popover{ opacity:1; visibility:visible; transform:translateY(0); }
+        .estres-db-context{ display:flex; align-items:center; gap:.85rem; padding:.85rem 1rem; margin:0 0 1rem; background:rgba(255,255,255,.025); border:1px solid var(--border); border-radius:12px; }
+        .estres-db-icon{ width:40px; height:40px; border-radius:10px; display:grid; place-items:center; color:#F2B134; background:rgba(242,177,52,.10); border:1px solid rgba(242,177,52,.18); flex:0 0 auto; }
+        .estres-db-info{ min-width:0; display:flex; flex-direction:column; gap:.1rem; }
+        .estres-db-kicker{ font-size:.7rem; letter-spacing:.08em; text-transform:uppercase; color:var(--text-muted); }
+        .estres-db-info strong{ color:var(--text); font-size:.95rem; }
+        .estres-db-info > span:last-child{ color:var(--text-muted); font-family:var(--font-mono); font-size:.76rem; }
+        .estres-status{ margin-left:auto; display:inline-flex; align-items:center; gap:.4rem; white-space:nowrap; padding:.38rem .65rem; border-radius:999px; font-size:.7rem; font-weight:700; letter-spacing:.04em; }
+        .estres-status i{ font-size:.48rem; }
+        .estres-status.ready{ color:#67c978; background:rgba(63,185,80,.10); border:1px solid rgba(63,185,80,.22); }
+        .estres-status.running{ color:#F2B134; background:rgba(242,177,52,.10); border:1px solid rgba(242,177,52,.25); }
+        .field-help{ display:inline-grid; place-items:center; width:16px; height:16px; margin-left:.25rem; border:1px solid var(--border); border-radius:50%; color:var(--text-muted); font-size:.65rem; cursor:help; }
+        .field-caption{ display:block; margin-top:.35rem; color:var(--text-muted); font-size:.7rem; }
+        .estres-start-col{ display:flex; align-items:flex-end; }
+        .estres-start-btn{ min-height:42px; white-space:nowrap; }
         .estres-msg{ border-radius:10px; box-shadow:0 6px 18px rgba(0,0,0,.10); }
 
         .eval-control{ background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:1.7rem; box-shadow:0 12px 30px rgba(0,0,0,.14); }
@@ -397,6 +419,9 @@ function renderEstilosMonitor(): string
 
         @media (max-width: 768px){
             .eval-control, .estres-card{ padding:1.2rem; }
+            .estres-db-context{ align-items:flex-start; flex-wrap:wrap; }
+            .estres-status{ margin-left:0; }
+            .estres-help-popover{ width:min(290px, calc(100vw - 4rem)); }
             .dash-isbd{ flex:1 1 100%; min-height:250px; }
             .tabla-contexto-wrap{ flex-basis:100%; }
             .rango-fila{ grid-template-columns:1fr 64px; gap:.55rem; }
